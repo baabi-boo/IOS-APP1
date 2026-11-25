@@ -64,8 +64,11 @@ struct TodayView: View {
         .onAppear {
             appeared = true
             if LaunchOptions.screenshot == "celebrate" {
+                // Demo recording: two sips, the second one reaches the goal.
                 Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(2.2))
+                    try? await Task.sleep(for: .seconds(2.5))
+                    add(.water, amount: 500)
+                    try? await Task.sleep(for: .seconds(3))
                     add(.water, amount: 500)
                 }
             }

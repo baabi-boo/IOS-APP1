@@ -50,10 +50,11 @@ private struct ConfettiPiece {
     let angle: Double
     let speed: Double
     let spin: Double
-    let size: CGFloat
-    let color: Color
-    let kind: Int
     let drift: Double
+    let isDroplet: Bool
+    let color: Color
+    /// The piece's outline, centered on the origin so it can be rotated in place.
+    let path: Path
 
     init(seed: Int) {
         func random(_ salt: Double) -> Double {
@@ -63,10 +64,21 @@ private struct ConfettiPiece {
         angle = -Double.pi * (0.1 + 0.8 * random(1))
         speed = 420 + 520 * random(2)
         spin = (random(3) - 0.5) * 14
-        size = CGFloat(7 + 7 * random(4))
-        color = Palette.confetti[seed % Palette.confetti.count]
-        kind = seed % 4
         drift = (random(5) - 0.5) * 60
+        let s = CGFloat(7 + 7 * random(4))
+        let kind = seed % 4
+        isDroplet = kind == 3
+        color = kind == 2 ? Palette.blush : Palette.confetti[seed % Palette.confetti.count]
+        switch kind {
+        case 0:
+            path = Path(roundedRect: CGRect(x: -s / 2, y: -s * 0.35, width: s, height: s * 0.7), cornerRadius: 2)
+        case 1:
+            path = Path(ellipseIn: CGRect(x: -s / 2, y: -s / 2, width: s, height: s))
+        case 2:
+            path = HeartShape().path(in: CGRect(x: -s * 0.6, y: -s * 0.6, width: s * 1.2, height: s * 1.1))
+        default:
+            path = DropletShape().path(in: CGRect(x: -s * 0.5, y: -s * 0.65, width: s, height: s * 1.3))
+        }
     }
 }
 
@@ -89,31 +101,16 @@ struct ConfettiView: View {
                 let gravity = 980.0
                 let ox = Double(size.width) * Double(origin.x)
                 let oy = Double(size.height) * Double(origin.y)
+                // Every piece fades together, so set opacity once and draw plain
+                // transformed paths (no per-piece layers — much cheaper to render).
+                context.opacity = max(0, min(1, (duration - t) / 0.8))
                 for piece in pieces {
                     let vx = cos(piece.angle) * piece.speed * 0.75
                     let vy = sin(piece.angle) * piece.speed
                     let x = CGFloat(ox + vx * t * 0.9 + piece.drift * sin(t * 3))
                     let y = CGFloat(oy + vy * t + 0.5 * gravity * t * t)
-                    let fade = max(0, min(1, (duration - t) / 0.8))
-                    context.drawLayer { layer in
-                        layer.opacity = fade
-                        layer.translateBy(x: x, y: y)
-                        layer.rotate(by: .radians(piece.spin * t))
-                        let s = piece.size
-                        switch piece.kind {
-                        case 0:
-                            let rect = CGRect(x: -s / 2, y: -s * 0.35, width: s, height: s * 0.7)
-                            layer.fill(Path(roundedRect: rect, cornerRadius: 2), with: .color(piece.color))
-                        case 1:
-                            layer.fill(Path(ellipseIn: CGRect(x: -s / 2, y: -s / 2, width: s, height: s)), with: .color(piece.color))
-                        case 2:
-                            let rect = CGRect(x: -s * 0.6, y: -s * 0.6, width: s * 1.2, height: s * 1.1)
-                            layer.fill(HeartShape().path(in: rect), with: .color(Palette.blush))
-                        default:
-                            let rect = CGRect(x: -s * 0.5, y: -s * 0.65, width: s, height: s * 1.3)
-                            layer.fill(DropletShape().path(in: rect), with: .color(theme.waterTop))
-                        }
-                    }
+                    let transform = CGAffineTransform(translationX: x, y: y).rotated(by: CGFloat(piece.spin * t))
+                    context.fill(piece.path.applying(transform), with: .color(piece.isDroplet ? theme.waterTop : piece.color))
                 }
             }
         }

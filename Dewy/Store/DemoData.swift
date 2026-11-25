@@ -56,7 +56,7 @@ enum DemoData {
         // Today
         let todays: [(Int, DrinkKind, Double)]
         if LaunchOptions.screenshot == "celebrate" {
-            todays = [(7 * 60 + 45, .water, 500), (9 * 60 + 10, .coffee, 250), (11 * 60, .water, 500), (13 * 60 + 20, .tea, 300), (15 * 60, .water, 330)]
+            todays = [(7 * 60 + 45, .water, 500), (9 * 60 + 10, .coffee, 250), (11 * 60, .water, 330), (13 * 60 + 20, .tea, 300)]
         } else {
             todays = [(7 * 60 + 45, .water, 250), (9 * 60 + 10, .coffee, 200), (10 * 60 + 30, .water, 500), (12 * 60 + 40, .tea, 300), (14 * 60 + 5, .sparkling, 330)]
         }
