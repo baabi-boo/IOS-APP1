@@ -1,0 +1,99 @@
+{
+  "identifier" : "6A1B2C3D",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "39.99",
+      "familyShareable" : true,
+      "internalID" : "6A1B2C41",
+      "localizations" : [
+        {
+          "description" : "Unlock everything in Dewy forever.",
+          "displayName" : "Dewy+ Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "dewy.plus.lifetime",
+      "referenceName" : "Dewy+ Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "6A1B2C3E",
+      "localizations" : [
+
+      ],
+      "name" : "Dewy Plus",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "19.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "6A1B2C3F",
+          "introductoryOffer" : {
+            "internalID" : "6A1B2C42",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
+          "localizations" : [
+            {
+              "description" : "All themes, drinks and insights, billed yearly.",
+              "displayName" : "Dewy+ Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "dewy.plus.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Dewy+ Yearly",
+          "subscriptionGroupID" : "6A1B2C3E",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : true,
+          "groupNumber" : 2,
+          "internalID" : "6A1B2C40",
+          "localizations" : [
+            {
+              "description" : "All themes, drinks and insights, billed monthly.",
+              "displayName" : "Dewy+ Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "dewy.plus.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Dewy+ Monthly",
+          "subscriptionGroupID" : "6A1B2C3E",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
