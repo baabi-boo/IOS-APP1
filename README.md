@@ -9,6 +9,10 @@ Log drinks, watch Dewy fill up, keep your streak, and grow a garden that blooms 
 
 SwiftUI · iOS 17+ · Swift Charts · StoreKit 2 · no third-party dependencies
 
+[![iOS build & screenshots](https://github.com/mirzotipi-wq/APP2/actions/workflows/ios.yml/badge.svg)](https://github.com/mirzotipi-wq/APP2/actions/workflows/ios.yml)
+
+<img src="docs/demo.gif" width="300" alt="Dewy filling up and celebrating the daily goal" />
+
 </div>
 
 ---
@@ -40,7 +44,7 @@ SwiftUI · iOS 17+ · Swift Charts · StoreKit 2 · no third-party dependencies
 </p>
 </details>
 
-> Screenshots are captured from the iOS Simulator by CI (`.github/workflows/ios.yml` → `scripts/screenshots.sh`).
+> Every screenshot above is a real iOS Simulator capture, taken by CI on each push (`.github/workflows/ios.yml` → `scripts/screenshots.sh`). The GIF comes from the simulator recording in `docs/raw/`. CI simulators have no GPU, so the GIF plays less smoothly than the app does on a real iPhone.
 
 ---
 
