@@ -36,6 +36,13 @@ struct RootView: View {
         .task {
             await purchases.start()
         }
+        .task {
+            // Demo mode: tell the screenshot script once launch animations have settled.
+            guard LaunchOptions.isDemo else { return }
+            try? await Task.sleep(for: .seconds(3.5))
+            let marker = FileManager.default.temporaryDirectory.appendingPathComponent("dewy-ready")
+            try? Data().write(to: marker)
+        }
         .onChange(of: store.profile) {
             store.save()
         }

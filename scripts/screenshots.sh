@@ -7,7 +7,6 @@ cd "$(dirname "$0")/.."
 OUT=docs/screenshots
 RAW=docs/raw
 BUNDLE=com.dewyapp.Dewy
-WAIT=${WAIT:-14}
 mkdir -p "$OUT" "$RAW"
 
 echo "▸ $(xcodebuild -version | head -1)"
@@ -47,12 +46,22 @@ xcrun simctl status_bar "$UDID" override --time "9:41" --dataNetwork wifi --wifi
   --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100 || true
 xcrun simctl install "$UDID" "$APP"
 
+DATA=$(xcrun simctl get_app_container "$UDID" "$BUNDLE" data)
+READY="$DATA/tmp/dewy-ready"
+
 shoot() {
   local name=$1; shift
   xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
+  rm -f "$READY"
   sleep 1
   xcrun simctl launch "$UDID" "$BUNDLE" "$@" >/dev/null
-  sleep "$WAIT"
+  # In demo mode the app writes a marker once its launch animations have settled.
+  for _ in $(seq 1 60); do
+    [ -f "$READY" ] && break
+    sleep 1
+  done
+  [ -f "$READY" ] || echo "  … $name never signalled ready"
+  sleep 2
   # CI simulators render on the CPU and can be slow to show the first frame:
   # a blank launch screen compresses to a tiny PNG, so retry until it's real.
   for _ in 1 2 3 4 5 6; do
