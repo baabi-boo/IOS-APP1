@@ -19,34 +19,27 @@ struct DrinkPickerSheet: View {
         ZStack {
             DreamyBackground()
 
-            VStack(spacing: 18) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Add a drink")
-                            .font(.dewy(26, .heavy))
-                            .foregroundStyle(theme.ink)
-                        Text("Every sip makes Dewy happier")
-                            .font(.dewy(14, .medium))
-                            .foregroundStyle(theme.inkSoft)
-                    }
-                    Spacer()
-                    CircleIconButton(systemImage: "xmark") { dismiss() }
+            ScrollView {
+                VStack(spacing: 18) {
+                    header
+                    preview
+                    amountControls
+                    drinkGrid
+                    afterCard
                 }
-                .padding(.top, 8)
-
-                preview
-                amountControls
-                drinkGrid
-
-                Spacer(minLength: 0)
-
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
+            }
+            .scrollIndicators(.hidden)
+            .scrollBounceBehavior(.basedOnSize)
+            .safeAreaInset(edge: .bottom) {
                 PrimaryButton(title: "Add \(store.format(amount))", systemImage: "drop.fill") {
                     onAdd(kind, amount)
                     dismiss()
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 12)
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
@@ -57,6 +50,22 @@ struct DrinkPickerSheet: View {
     }
 
     // MARK: Sections
+
+    private var header: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Add a drink")
+                    .font(.dewy(26, .heavy))
+                    .foregroundStyle(theme.ink)
+                Text("Every sip makes Dewy happier")
+                    .font(.dewy(14, .medium))
+                    .foregroundStyle(theme.inkSoft)
+            }
+            Spacer()
+            CircleIconButton(systemImage: "xmark") { dismiss() }
+        }
+        .padding(.top, 20)
+    }
 
     private var preview: some View {
         HStack(spacing: 22) {
@@ -89,6 +98,35 @@ struct DrinkPickerSheet: View {
             Spacer(minLength: 0)
         }
         .glassCard()
+    }
+
+    /// Shows what today's progress will look like once this drink is logged.
+    private var afterCard: some View {
+        let after = store.todayTotal + amount * kind.hydration
+        let progress = after / store.goal
+        return HStack(spacing: 14) {
+            MascotView(progress: progress, mood: DewyMood(progress: progress), size: 44)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("After this drink")
+                        .font(.dewy(14, .semibold))
+                        .foregroundStyle(theme.inkSoft)
+                    Spacer()
+                    Text("\(Int((progress * 100).rounded()))%")
+                        .font(.dewy(15, .heavy))
+                        .foregroundStyle(theme.accent)
+                        .contentTransition(.numericText(value: progress))
+                }
+                Text("\(store.format(after)) of \(store.format(store.goal))")
+                    .font(.dewy(16, .bold))
+                    .foregroundStyle(theme.ink)
+                    .contentTransition(.numericText(value: after))
+                ProgressCapsule(progress: progress)
+                    .frame(height: 8)
+            }
+        }
+        .glassCard(padding: 16)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: after)
     }
 
     private var amountControls: some View {

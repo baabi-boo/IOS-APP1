@@ -110,10 +110,10 @@ struct OnboardingView: View {
                     .foregroundStyle(theme.inkSoft)
                     .multilineTextAlignment(.center)
             }
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 pill("💧", "Track sips")
                 pill("🌸", "Grow flowers")
-                pill("🔔", "Gentle nudges")
+                pill("🔔", "Reminders")
             }
             Spacer(minLength: 0)
         }
@@ -123,11 +123,14 @@ struct OnboardingView: View {
     private func pill(_ emoji: String, _ text: String) -> some View {
         HStack(spacing: 5) {
             Text(emoji)
+                .font(.system(size: 13))
             Text(text)
                 .font(.dewy(13, .bold))
                 .foregroundStyle(theme.ink)
+                .lineLimit(1)
         }
-        .padding(.horizontal, 11)
+        .fixedSize()
+        .padding(.horizontal, 10)
         .frame(height: 34)
         .background(theme.card, in: Capsule())
         .overlay(Capsule().strokeBorder(theme.cardStroke, lineWidth: 1))

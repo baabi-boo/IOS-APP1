@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 OUT=docs/screenshots
 RAW=docs/raw
 BUNDLE=com.dewyapp.Dewy
-WAIT=${WAIT:-7}
+WAIT=${WAIT:-14}
 mkdir -p "$OUT" "$RAW"
 
 echo "▸ $(xcodebuild -version | head -1)"
@@ -50,14 +50,24 @@ xcrun simctl install "$UDID" "$APP"
 shoot() {
   local name=$1; shift
   xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
+  sleep 1
   xcrun simctl launch "$UDID" "$BUNDLE" "$@" >/dev/null
   sleep "$WAIT"
-  xcrun simctl io "$UDID" screenshot "$OUT/$name.png" >/dev/null 2>&1
+  # CI simulators render on the CPU and can be slow to show the first frame:
+  # a blank launch screen compresses to a tiny PNG, so retry until it's real.
+  for _ in 1 2 3 4 5 6; do
+    xcrun simctl io "$UDID" screenshot "$OUT/$name.png" >/dev/null 2>&1
+    local size
+    size=$(stat -f%z "$OUT/$name.png")
+    if [ "$size" -gt 400000 ]; then break; fi
+    echo "  … $name still launching ($size bytes)"
+    sleep 6
+  done
   echo "  📸 $name"
 }
 
 # Warm-up launch so the first real shot isn't caught mid-launch.
-xcrun simctl launch "$UDID" "$BUNDLE" -screenshot today >/dev/null; sleep 8
+xcrun simctl launch "$UDID" "$BUNDLE" -screenshot today >/dev/null; sleep 20
 
 shoot 01-today       -screenshot today
 shoot 02-add-drink   -screenshot add
@@ -78,7 +88,7 @@ xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$RAW/celebrate.mp4" >/
 REC=$!
 sleep 2
 xcrun simctl launch "$UDID" "$BUNDLE" -screenshot celebrate >/dev/null
-sleep 9
+sleep 24
 kill -INT "$REC"
 wait "$REC" || true
 echo "  🎬 celebrate.mp4"
