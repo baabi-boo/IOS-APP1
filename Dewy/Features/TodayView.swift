@@ -5,8 +5,8 @@ struct TodayView: View {
     @Environment(PurchaseManager.self) private var purchases
     @Environment(\.dewyTheme) private var theme
 
-    @State private var showPicker = LaunchOptions.screenshot == "add"
-    @State private var showPaywall = LaunchOptions.screenshot == "paywall"
+    @State private var showPicker = false
+    @State private var showPaywall = false
     @State private var bounce = 0
     @State private var celebrate = 0
     @State private var toast: DrinkEntry?
@@ -63,6 +63,17 @@ struct TodayView: View {
         }
         .onAppear {
             appeared = true
+            if LaunchOptions.screenshot == "add" || LaunchOptions.screenshot == "paywall" {
+                // Demo screenshots: present the sheet once the screen is on display.
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.8))
+                    if LaunchOptions.screenshot == "add" {
+                        showPicker = true
+                    } else {
+                        showPaywall = true
+                    }
+                }
+            }
             if LaunchOptions.screenshot == "celebrate" {
                 // Demo recording: two sips, the second one reaches the goal.
                 Task { @MainActor in
