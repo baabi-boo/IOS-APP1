@@ -77,6 +77,12 @@ final class HydrationStore {
 
     @discardableResult
     func add(_ kind: DrinkKind, amount: Double, at date: Date = .now) -> DrinkEntry {
+        var date = date
+        // Demo data puts today's sips at fixed times that can be later than "now";
+        // keep new drinks after them so they pour in on top of Dewy's layers.
+        if LaunchOptions.isDemo, let latest = entries(on: date).map(\.date).max(), latest >= date {
+            date = latest.addingTimeInterval(60)
+        }
         let entry = DrinkEntry(date: date, amount: amount, kind: kind)
         entries.append(entry)
         save()
