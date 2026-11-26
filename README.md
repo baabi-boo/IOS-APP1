@@ -2,16 +2,16 @@
 
 <img src="Dewy/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="128" alt="Dewy app icon" />
 
-# Dewy — cute water tracker
+# Dewy — cute clay water tracker
 
-**A glassy droplet buddy who lives in a little sky world and fills up, layer by colorful layer, with every sip.**
-Log drinks, watch Dewy fill with the colors of what you drank, keep your streak, join week-long challenges, find Dewy's friends and grow a garden that blooms every day you hit your goal.
+**A translucent jelly droplet who lives in a soft 3D clay world and fills up, layer by pastel layer, with every sip.**
+Tilt your phone to slosh the water inside Dewy, travel to a new illustrated world on every goal day, collect 12 clay friends, dress Dewy in 14 outfits, decorate the pond, sync with Apple Health and log straight from the Dynamic Island.
 
-SwiftUI · iOS 17+ · Swift Charts · StoreKit 2 · no third-party dependencies
+SwiftUI · iOS 17+ · Swift Charts · HealthKit · ActivityKit · CoreMotion · StoreKit 2 · no third-party dependencies
 
-[![iOS build & screenshots](https://github.com/mirzotipi-wq/APP2/actions/workflows/ios.yml/badge.svg)](https://github.com/mirzotipi-wq/APP2/actions/workflows/ios.yml)
+[![iOS build & screenshots](https://github.com/baabi-boo/IOS-APP1/actions/workflows/ios.yml/badge.svg)](https://github.com/baabi-boo/IOS-APP1/actions/workflows/ios.yml)
 
-<img src="docs/demo.gif" width="300" alt="Dewy filling up and celebrating the daily goal" />
+<img src="docs/demo.gif" width="300" alt="Dewy filling up with clay confetti celebration" />
 
 </div>
 
@@ -20,79 +20,78 @@ SwiftUI · iOS 17+ · Swift Charts · StoreKit 2 · no third-party dependencies
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/01-today.png" width="240" alt="Today: Dewy on the lily pad in the Lagoon world" />
-  <img src="docs/screenshots/02-add-drink.png" width="240" alt="Add a drink" />
-  <img src="docs/screenshots/03-insights.png" width="240" alt="Insights with the week as little droplets" />
+  <img src="docs/screenshots/01-today.png" width="240" alt="Today: Dewy on the lily pad with companions and pond decor" />
+  <img src="docs/screenshots/02-add-drink.png" width="240" alt="Add a drink: 12 clay drinks with hydration and caffeine info" />
+  <img src="docs/screenshots/03-journey.png" width="240" alt="Journey: full-bleed clay adventure chapter with 4 daily story moments" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/04-garden.png" width="240" alt="Dew Garden with Dewy and friends" />
-  <img src="docs/screenshots/05-challenges.png" width="240" alt="Challenges and friends" />
-  <img src="docs/screenshots/10-share.png" width="240" alt="Share your day card" />
+  <img src="docs/screenshots/04-friends.png" width="240" alt="Friends: dressing-room stage and collectible droplet cast" />
+  <img src="docs/screenshots/05-wardrobe.png" width="240" alt="Wardrobe: dress Dewy in hats, glasses and neckwear" />
+  <img src="docs/screenshots/06-insights.png" width="240" alt="Insights: weekly droplets, Swift Charts trends, streak calendar and caffeine" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/08-welcome.png" width="240" alt="Onboarding: Meet Dewy" />
-  <img src="docs/screenshots/09-goal.png" width="240" alt="Onboarding: your daily goal" />
-  <img src="docs/screenshots/06-paywall.png" width="240" alt="Dewy+ paywall" />
+  <img src="docs/screenshots/07-paywall.png" width="240" alt="Dewy+ paywall with exclusive friends and rainbow stage" />
+  <img src="docs/screenshots/08-me.png" width="240" alt="Me: profile hero, daily goal and settings" />
+  <img src="docs/screenshots/11-share.png" width="240" alt="Share your day: exportable clay postcard" />
 </p>
 <p align="center">
-  <img src="docs/screenshots/07-settings.png" width="240" alt="Me: profile and settings" />
-  <img src="docs/screenshots/15-widgets.png" width="240" alt="Worlds and Home Screen widgets" />
-  <img src="docs/screenshots/11-sunset.png" width="240" alt="Sunset world" />
+  <img src="docs/screenshots/09-welcome.png" width="240" alt="Onboarding: Meet Dewy" />
+  <img src="docs/screenshots/10-goal.png" width="240" alt="Onboarding: personalized daily goal and Apple Health" />
+  <img src="docs/screenshots/15-widgets.png" width="240" alt="Live Activity, Home Screen widgets and Apple Health" />
 </p>
 
 <details>
-<summary><b>More worlds</b> (Midnight · Meadow · Dreamy)</summary>
+<summary><b>More worlds, skies &amp; challenges</b> (Dusk · Starlight Night · Worlds · Challenges)</summary>
 <p align="center">
-  <img src="docs/screenshots/14-midnight.png" width="240" alt="Midnight world" />
-  <img src="docs/screenshots/12-meadow.png" width="240" alt="Meadow world garden" />
-  <img src="docs/screenshots/13-dreamy.png" width="240" alt="Dreamy world insights" />
+  <img src="docs/screenshots/12-dusk.png" width="240" alt="Seaside world at dusk" />
+  <img src="docs/screenshots/13-night.png" width="240" alt="Starlight world at night" />
+  <img src="docs/screenshots/16-worlds.png" width="240" alt="Cloudland world and Worlds picker" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/14-challenges.png" width="240" alt="Week-long hydration challenges with outfit rewards" />
 </p>
 </details>
 
-> Every screenshot above is a real iOS Simulator capture, taken by CI on each push (`.github/workflows/ios.yml` → `scripts/screenshots.sh`). The GIF comes from the simulator recording in `docs/raw/`. CI simulators have no GPU, so the GIF plays less smoothly than the app does on a real iPhone.
+> Every screenshot above is a real iOS Simulator capture, taken by CI on each push (`.github/workflows/ios.yml` → `scripts/screenshots.sh`). The GIF comes from the simulator recording in `docs/raw/`. CI simulators render on the CPU, so the GIF plays less smoothly than the app does on a real iPhone.
 
 ---
 
-## Design language
+## Visual language
 
-Dewy is built on one idea: **a tiny world in a drop.** Every screen is a place in the same little world, lit by the same sun, and every element follows the same handful of rules, so the app reads as one designed thing rather than a pile of screens.
+Dewy is designed as a cohesive **soft 3D clay toybox** rather than a flat utility tracker. Every surface, character and animation follows the same physical rules:
 
 | | Rule | In the app |
 | --- | --- | --- |
-| 🌤 | **Worlds, not themes.** Each theme is a place with its own three-stop sky, sun or moon, horizon water and accent. | Lagoon (island with a palm), Sunset (a sun sinking into the sea), Meadow (hills and a pond), Dreamy (cloud banks), Midnight (moon and stars). The sky also follows the real time of day: dawn, day, dusk and night. |
-| 💧 | **One hero.** Dewy is the only character-sized thing on screen and always stands *in* the world: on a lily pad, a cloud, or a hill. | A glassy droplet with a little flick at the tip, stubby arms and feet, and a "parfait" of drink-colored layers inside. |
-| 🍬 | **Candy depth.** Anything you can press sits on a darker "lip" and squishes down when tapped, like a gummy key. | Buttons, chips, drink tiles, plan cards, challenge cards and stat tiles all share the same 3D lip. |
-| 🎨 | **Illustrated, never emoji.** Drinks, medals, flames and flowers are drawn in one flat style: soft white gloss top-left, deeper tone bottom-right, no outlines. | 12 drink illustrations (glass, mug, can, carton, mason jar, coconut…) and candy medals for badges. |
-| 🔤 | **Two voices.** Fredoka for headlines, numbers and buttons; SF Pro Rounded for reading. | Fredoka's round terminals echo Dewy's shape. |
-| 🫧 | **Everything is liquid.** Motion uses springs, squash & stretch and ripples. Ambient motion is slow and stops with Reduce Motion. | Waves roll inside Dewy, the lily pad ripples on every sip, clouds drift, Dewy breathes, blinks and waves back when poked. |
+| 🫧 | **Soft 3D clay surfaces.** Every card, pill and sheet uses the same `ClaySurface` recipe: a bright top inner highlight rim, warm subtle bottom shade, and a soft tinted drop shadow. | Warm cream canvas (`#FFF8F0`), deep plum-brown ink (`#3E2F45`), white clay cards, and tinted glows matching each drink, friend or chapter. |
+| 🍬 | **Puffy candy buttons.** Interactive CTAs sit on a darker 3D lip with a top gloss pill and squash down onto the lip when pressed. | `PrimaryButton`, `ChipButton`, `ClaySegmented`, and the raised aqua `+` in the floating tab bar. |
+| 💧 | **Code-drawn jelly hero, illustrated clay cast.** Dewy, the layered liquid, waves, bubbles, limbs and sparkles are drawn in SwiftUI `Canvas` for 60 Hz physics; the cast, drinks, outfits, props and worlds are custom clay illustrations. | Dewy tilts and sloshes with `CoreMotion` spring physics, stacks drink-colored layers like a parfait, and wears hats, glasses and scarves over the live canvas. |
+| 🌤 | **Living worlds & real-time skies.** Worlds are places with 3D landmarks, parallax clay clouds, interactive tap-to-ripple ponds, and skies that follow the real time of day. | Dawn, Day, Dusk and Night palettes across Lagoon, Seaside, Meadow, Cloudland and Starlight. |
+| 🔤 | **Two rounded voices.** Fredoka for headlines, big numbers and buttons; SF Pro Rounded for body copy and labels. | Warm, friendly letterforms with generous spacing and zero harsh black borders. |
+| ✨ | **Tactile feedback everywhere.** Springs, flying pour-in arcs, splash bursts, clay confetti, synthesized bloops/chimes and matched haptics — all respecting Reduce Motion. | Every sip arcs from its tile into Dewy, splashes on the lily pad, pops a `+Dew Drops` badge and animates the liquid level. |
 
-**Colors.** Every world defines the same tokens (`sky`, `sea`, `sunGlow`, `accent`, `accentDeep`, `accentSoft`, `canvas`, `card`, `ink`). Each drink has a matched `light / color / deep` family with similar brightness, so the layers inside Dewy stack like a parfait and the dark face always stays readable. Dewy+ has its own violet and gold identity in every world.
-
-**Art pipeline.** Illustrations live as SVG in `design/` and are exported to the asset catalog with `node scripts/export-art.js` (Playwright + Chromium), so the art stays editable and crisp. The mascot, scenes and lily pad are drawn in code with `Canvas` from the same design coordinates.
+---
 
 ## Features
 
-- 💧 **Dewy, a living mascot.** Fills with a layer for every drink, with rolling waves and bubbles. Four moods (thirsty → okay → happy → ecstatic), blinking, breathing, a squish when you drink and a wave when you poke it.
-- 🌍 **Living worlds.** Five illustrated worlds with drifting clouds, sparkling water and a sky that changes with the time of day.
-- ⚡️ **Log from anywhere.** A raised "+" in the tab bar opens the drink sheet from any tab; quick-sip tiles log a drink's usual serving in one tap; undo is one tap away.
-- 🍵 **12 drinks** with their own illustrations, hydration factors, caffeine and sugar: water, sparkling, tea, coffee, juice, milk, smoothie, soda, lemonade, hot cocoa, coconut water and matcha.
-- ☕️ **Caffeine and sugar tracking.** Today's caffeine and sugar at a glance, a caffeine budget you choose (200/300/400 mg) and a caffeine card in Insights.
-- 🏆 **Challenges.** Week-long quests with daily rules: Morning Glass, Perfect Week, Soda Detox, Caffeine Cut, Tea Ritual and Taste Rainbow, each with Dewy dressed for the occasion.
-- 🎉 **Goal celebration.** Confetti, a goal chime, haptics and a "Goal smashed!" card when you reach 100%.
-- 📈 **Insights.** Your week as seven little Dewy droplets, a streak hero, daily bars stacked by drink color, stat tiles, a month calendar with streak capsules, a "what you drink" donut, caffeine and sip rhythm.
-- 🌸 **Dew Garden.** Dewy and the friends you've found hang out in a meadow where a flower grows for every goal day. Garden levels, 9 collectible **Dewy friends** (Sunny, Sprout, Berry, Frosty, Royal…) with drawn outfits, and 9 candy medals.
-- 📱 **Widgets.** Home Screen widgets show Dewy filling up in your world's colors; the medium one logs water, tea or coffee with one tap, no app launch needed. Lock Screen widgets show a progress gauge.
-- 🗣 **Shortcuts & Siri.** A "Log a drink" action with any drink and amount.
-- 📤 **Share your day.** A shareable card with Dewy holding today's drinks, your total and your drink of the day.
-- 🔔 **Gentle reminders** between wake-up and bedtime, with rotating cute messages.
-- 🔊 **Sound and touch.** Original synthesized bloop, pour and goal sounds (they respect the silent switch) and haptics; both can be turned off.
-- 🧭 **Personalized onboarding.** Weight, activity, climate and schedule set your daily goal, revealed with a counting animation.
-- ♿️ **Accessible.** VoiceOver labels on the mascot, charts, tiles and slider; Reduce Motion stops ambient animation.
-- 🔒 **Private by design.** Everything is stored on the device in a single JSON file. Saved data from older versions keeps loading.
+- 💧 **Dewy, a living jelly mascot.** Fills with a pastel layer for every drink, with rolling waves, rising bubbles and **tilt-slosh** (`CoreMotion` damped spring physics when you tilt or shake your phone). Four moods (`thirsty` → `okay` → `happy` → `ecstatic`), blinking, breathing, squash-and-stretch hops and a wave when poked.
+- 🗺 **Daily Journey (8 illustrated chapters).** Every day you hit your goal, Dewy travels to a new clay world — Misty Spring, Bubble Brook, Lily Meadow, Rainbow Falls, Coral Cove, Cloud Peak, Lantern Grove and Starlight Lake — unlocking 4 story moments at 25%, 50%, 75% and 100%, with a trail map and adventure archive.
+- 🐾 **Dewy & Friends (12 collectible characters).** Adopt Mochi, Lulu, Pip, Coral, Honey, Pebble, Clem, Sunny, Bao, Stella, Sprout and Inky using Dew Drops, and invite up to two companions to bob on lily pads beside Dewy.
+- 👒 **Wardrobe (14 outfits) & Pond Decor (10 items).** Dress Dewy in hats, glasses and neckwear (Cozy Beanie, Sun Hat, Royal Crown, Flower Crown, Heart Shades, Knit Scarf, Lo-fi Phones, Wizard Hat…) and place tulips, a rubber duck, lanterns, a swan float, blossom tree or rainbow around the pond.
+- 💎 **Dew Drops (earned, never sold).** Earn drops from sips, story moments, daily goals, streaks, challenges and badges — spend them in the Friends, Wardrobe and Decor shelves.
+- 🍵 **12 clay drinks** with hydration factors, caffeine and sugar: water, sparkling, tea, coffee, juice, milk, smoothie, soda, lemonade, hot cocoa, coconut water and matcha.
+- 🏆 **Challenges & Badges.** Six week-long quests (Morning Glass, Perfect Week, Soda Detox, Caffeine Cut, Tea Ritual, Taste Rainbow) that award exclusive outfits + drops, plus 9 clay achievement medals.
+- 📈 **Insights.** Weekly Dewy droplet strip, 7-day / 30-day / yearly Swift Charts bar trends with interactive scrubbing, streak calendar with joined pastel run capsules, drink-mix donut, hourly sip rhythm and caffeine budget tracker.
+- ❤️ **Apple Health sync.** Writes logged drinks as Dietary Water (tagged for clean undo deletion) and reads body weight to tune your recommended daily goal.
+- 📱 **Live Activity, Dynamic Island & Widgets.** Track today's progress on the Lock Screen and Dynamic Island with one-tap `+150` / `+250` / `+500` quick-sip buttons, plus Home Screen and Lock Screen widgets and Siri/Shortcuts support.
+- 📤 **Share your day.** Export a crisp 3× clay postcard showing Dewy in your world, today's drinks, total, streak and drops earned.
+- 🧭 **Personalized onboarding & gentle reminders.** Weight, activity, climate and wake/sleep schedule calculate your goal; optional reminders nudge you between wake-up and bedtime.
+- ♿️ **Accessible & private.** VoiceOver labels across controls and charts, Reduce Motion support, and local-only JSON storage with backward-compatible decoding.
+
+---
 
 ## Monetization (Dewy+)
 
-StoreKit 2, implemented in `PurchaseManager.swift`:
+StoreKit 2, implemented in [`PurchaseManager.swift`](Dewy/Store/PurchaseManager.swift):
 
 | Product ID | Type | Price |
 | --- | --- | --- |
@@ -100,66 +99,43 @@ StoreKit 2, implemented in `PurchaseManager.swift`:
 | `dewy.plus.monthly` | Auto-renewable | $2.99 / month |
 | `dewy.plus.lifetime` | Non-consumable | $39.99 |
 
-**Free:** core tracking, the Lagoon world, water/tea/coffee/juice, 7-day insights, challenges, garden and badges.
-**Dewy+:** 4 more worlds, 8 more drinks, 30-day insights and custom reminder intervals.
+- **Free:** core tracking, Lagoon world, water/tea/coffee/juice, 7-day insights, daily Journey + 7-day archive, challenges, badges, core friends/outfits/decor, Live Activity and Apple Health water sync.
+- **Dewy+:** exclusive friends (Stella, Sprout, Inky), 4 more worlds (Seaside, Meadow, Cloudland, Starlight), 8 more drinks, premium outfits & decor, **2× Dew Drops** on daily goals, full adventure archive, 30-day & yearly insights, Apple Health history and custom reminder intervals.
 
-`Dewy.storekit` is wired into the shared scheme, so purchases work in the simulator with no App Store Connect setup.
+`Dewy.storekit` is wired into the shared scheme so purchases work in the simulator without App Store Connect setup.
 
-## Why this app?
-
-**People already pay for this.** Water tracking is one of the most searched-for habits in Health & Fitness, and the *cute* version of it sells well:
-
-| App | Angle | Third-party revenue estimate |
-| --- | --- | --- |
-| Waterllama | Cute characters + water tracking | ~$90K–160K / month (estimates vary, some much higher) |
-| Finch | Cute pet that grows as you build habits | ~$1M / month |
-
-Those numbers come from analytics sites (Screensdesign, Adapty, AppGoblin), so treat them as rough. What they show is that a **cute mascot plus a simple daily habit** keeps people coming back and paying.
-
-**Why $1K/month is realistic.** At $19.99/year, that's about **50–60 new yearly subscribers a month**. With a typical 2–4% download-to-paid conversion, that takes roughly **1,500–3,000 downloads a month** (≈50–100 a day). A well-made niche app with good App Store optimization (ASO) can reach that.
+---
 
 ## Project structure
 
 ```
 Dewy/
-├── App/DewyApp.swift            # entry point, router, floating tab bar with the add button
-├── Design/                      # world tokens, Fredoka type, candy buttons, cards, chips, haptics, sounds
-├── Components/                  # MascotView (Dewy), Scene (worlds, lily pad), shapes, confetti, flowers
-├── Models/Models.swift          # drinks, profile, challenges, achievements, Dewy friends, tips
-├── Store/                       # HydrationStore (state + stats), StoreKit, reminders, demo data
-├── Features/                    # Today, Drink sheet, Insights, Garden, Me, Paywall, Onboarding, Share card
-├── Widgets/                     # widget views and the "Log a drink" App Intent (shared with the extension)
+├── App/DewyApp.swift            # entry point, AppRouter, floating clay tab bar, Health & Live Activity hooks
+├── Design/                      # Theme (SkyPhase, AppTheme, Palette, Ink, Fredoka), Modifiers (ClaySurface, CandyButtonStyle), SoundFX
+├── Components/                  # MascotView (jelly Dewy + tilt-slosh + outfits), Scene (ClayWorld, LilyPad), Effects, Shapes
+├── Models/Models.swift          # DrinkKind, UserProfile, Friend, Outfit, Decor, Chapter, CollectionState, Challenges, Achievements
+├── Store/                       # HydrationStore, Economy (Dew Drops, shop, Journey), HealthSync, LiveActivityManager, MotionManager, PurchaseManager, ReminderScheduler, DemoData
+├── Features/                    # TodayView, JourneyView, FriendsView, InsightsView, DrinkPickerSheet, SettingsView (Me), PaywallView, OnboardingView, ShareCardView
+├── Widgets/                     # WidgetViews, LogDrinkIntent, LiveActivity (shared with DewyWidgetExtension)
 └── Resources/                   # Fredoka fonts (OFL) and synthesized sound effects
-DewyWidget/                      # WidgetKit extension (Home and Lock Screen widgets)
-Config/                          # entitlements (App Group shared by the app and the widget)
-design/                          # SVG sources for the drink illustrations and the app icon
-scripts/export-art.js            # exports the SVGs into the asset catalog
-scripts/screenshots.sh           # builds and captures simulator screenshots
+DewyWidget/                      # WidgetKit extension (Home Screen, Lock Screen & Live Activity / Dynamic Island)
+Config/                          # App & Widget entitlements (App Group + HealthKit)
+scripts/
+├── screenshots.sh               # builds for iOS Simulator and captures all 16 screenshots + celebrate.mp4
+├── make-gif.sh                  # converts docs/raw/celebrate.mp4 into docs/demo.gif
+└── clay-art.py                  # transparent-background & pngquant asset catalog pipeline
 ```
+
+---
 
 ## Build & run
 
 1. Open `Dewy.xcodeproj` in **Xcode 16 or later**.
-2. Choose your team under *Signing & Capabilities* for both targets and change the bundle IDs (`com.dewyapp.Dewy`, `com.dewyapp.Dewy.Widget`) and the App Group (`group.com.dewyapp.Dewy`, used in `Config/*.entitlements` and `Persistence.appGroup`).
-3. Run on an iPhone or simulator running iOS 17+.
+2. Under *Signing & Capabilities* for both targets, select your team and update the bundle IDs (`com.dewyapp.Dewy`, `com.dewyapp.Dewy.Widget`) and App Group (`group.com.dewyapp.Dewy` in `Config/*.entitlements` and `Persistence.appGroup`).
+3. Ensure **HealthKit** and **Push Notifications / Live Activities** (`NSSupportsLiveActivities = YES`) capabilities are enabled for the app target.
+4. Run on an iPhone or simulator running **iOS 17+**.
 
-**Demo mode.** Launch with `-screenshot today|add|insights|garden|challenges|share|settings|widgets|paywall|onboarding|celebrate` to load sample data. Optional flags: `-theme peach|matcha|lavender|midnight`, `-premium YES`, `-step 0…5`. Run `bash scripts/screenshots.sh` to regenerate every screenshot.
-
-**Art.** Edit the SVGs in `design/`, then run `node scripts/export-art.js` to refresh the asset catalog.
-
-## Shipping checklist
-
-- [ ] Set your bundle ID and team, and create the 3 products above in App Store Connect.
-- [ ] Replace the Terms and Privacy links in `PaywallView.swift` with your own.
-- [ ] App Store title idea: **"Dewy: Cute Water Tracker"**. Subtitle: *"Drink reminder & hydration pet"*.
-- [ ] Keywords: `water,reminder,hydration,drink,tracker,intake,habit,cute,pet,daily,goal,log`.
-- [ ] Post short TikTok/Reels clips of Dewy celebrating. Cute mascots spread well on short-video apps.
-
-## Roadmap ideas
-
-- Apple Health water sync
-- Live Activity and Apple Watch quick-log
-- A wardrobe so you can dress Dewy in the outfits your friends wear
+**Demo mode.** Launch with `-screenshot today|add|journey|friends|wardrobe|places|insights|challenges|badges|share|me|widgets|paywall|onboarding|celebrate` to load sample data. Optional flags: `-theme lagoon|peach|matcha|lavender|midnight`, `-phase dawn|day|dusk|night`, `-premium YES`, `-step 0…5`. Run `bash scripts/screenshots.sh` on macOS to regenerate every screenshot.
 
 ## Credits
 
