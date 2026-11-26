@@ -659,20 +659,7 @@ private struct SplashBurst: View {
         TimelineView(.animation(paused: start == nil)) { timeline in
             Canvas { context, size in
                 guard let start else { return }
-                let t = timeline.date.timeIntervalSince(start)
-                guard t < 0.9 else { return }
-                let origin = CGPoint(x: size.width / 2, y: size.height * 0.28)
-                context.opacity = max(0, 1 - t / 0.9)
-                for index in 0..<12 {
-                    let angle = -Double.pi / 2 + (Double(index) / 11 - 0.5) * 2.2
-                    let speed = 150 + Double(index % 3) * 50
-                    let x = origin.x + CGFloat(cos(angle) * speed * t)
-                    let y = origin.y + CGFloat(sin(angle) * speed * t + 420 * t * t)
-                    let r = CGFloat(4 + (index % 3) * 1.5)
-                    let drop = DewyShape().path(in: CGRect(x: x - r, y: y - r * 1.3, width: r * 2, height: r * 2.6))
-                    context.fill(drop, with: .color(Palette.aquaLight))
-                    context.fill(Path(ellipseIn: CGRect(x: x - r * 0.45, y: y - r * 0.2, width: r * 0.6, height: r * 0.6)), with: .color(.white.opacity(0.9)))
-                }
+                draw(in: &context, size: size, time: timeline.date.timeIntervalSince(start))
             }
         }
         .allowsHitTesting(false)
@@ -682,6 +669,26 @@ private struct SplashBurst: View {
                 try? await Task.sleep(for: .seconds(1))
                 start = nil
             }
+        }
+    }
+
+    private func draw(in context: inout GraphicsContext, size: CGSize, time t: Double) {
+        guard t >= 0, t < 0.9 else { return }
+        let origin = CGPoint(x: size.width / 2, y: size.height * 0.28)
+        context.opacity = max(0, 1 - t / 0.9)
+        for index in 0..<12 {
+            let spread = Double(index) / 11.0 - 0.5
+            let angle = -Double.pi / 2.0 + spread * 2.2
+            let speed = 150.0 + Double(index % 3) * 50.0
+            let dx = CGFloat(cos(angle) * speed * t)
+            let dy = CGFloat(sin(angle) * speed * t + 420.0 * t * t)
+            let x = origin.x + dx
+            let y = origin.y + dy
+            let r = CGFloat(4.0 + Double(index % 3) * 1.5)
+            let dropRect = CGRect(x: x - r, y: y - r * 1.3, width: r * 2, height: r * 2.6)
+            let glintRect = CGRect(x: x - r * 0.45, y: y - r * 0.2, width: r * 0.6, height: r * 0.6)
+            context.fill(DewyShape().path(in: dropRect), with: .color(Palette.aquaLight))
+            context.fill(Path(ellipseIn: glintRect), with: .color(.white.opacity(0.9)))
         }
     }
 }

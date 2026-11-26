@@ -173,17 +173,25 @@ struct ClayWorld: View {
         let standing = decor.filter { !$0.flies && !$0.floats }
         ForEach(Array(flying.enumerated()), id: \.element) { index, item in
             let drift = CGFloat(sin(t * 0.6 + Double(index))) * 6
-            art(item.imageName, width: item == .rainbow ? 150 : 62, at: CGPoint(x: size.width * (index == 0 ? 0.24 : 0.6), y: min(horizon * 0.42, 200) + drift), anchorBottom: false)
+            let xFactor: CGFloat = index == 0 ? 0.24 : 0.6
+            let yPos = min(horizon * 0.42, 200) + drift
+            let itemWidth: CGFloat = item == .rainbow ? 150 : 62
+            art(item.imageName, width: itemWidth, at: CGPoint(x: size.width * xFactor, y: yPos), anchorBottom: false)
         }
         if hasPond {
             ForEach(Array(standing.enumerated()), id: \.element) { index, item in
-                let x: CGFloat = index == 0 ? 0.1 : (index == 1 ? 0.9 : 0.3)
-                art(item.imageName, width: item == .blossom ? 92 : 58, at: CGPoint(x: size.width * x, y: horizon + 70 + CGFloat(index) * 6), anchorBottom: true)
+                let xFactor: CGFloat = index == 0 ? 0.1 : (index == 1 ? 0.9 : 0.3)
+                let yPos = horizon + 70 + CGFloat(index) * 6
+                let itemWidth: CGFloat = item == .blossom ? 92 : 58
+                art(item.imageName, width: itemWidth, at: CGPoint(x: size.width * xFactor, y: yPos), anchorBottom: true)
             }
             ForEach(Array(floating.enumerated()), id: \.element) { index, item in
                 let bob = CGFloat(sin(t * 1.4 + Double(index) * 2)) * 2.5
                 let sway = CGFloat(sin(t * 0.3 + Double(index))) * 10
-                art(item.imageName, width: 50, at: CGPoint(x: size.width * (index == 0 ? 0.78 : 0.2) + sway, y: horizon + 110 + bob), anchorBottom: true)
+                let xFactor: CGFloat = index == 0 ? 0.78 : 0.2
+                let xPos = size.width * xFactor + sway
+                let yPos = horizon + 110 + bob
+                art(item.imageName, width: 50, at: CGPoint(x: xPos, y: yPos), anchorBottom: true)
             }
         }
     }

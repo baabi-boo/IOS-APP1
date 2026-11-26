@@ -154,17 +154,23 @@ struct RollingNumber: View {
             .contentTransition(.numericText(value: Double(shown)))
             .monospacedDigit()
             .task(id: value) {
-                shown = 0
-                guard value > 0 else { return }
-                try? await Task.sleep(for: .seconds(delay))
-                let steps = min(value, 18)
-                for step in 1...steps {
-                    try? await Task.sleep(for: .milliseconds(55))
-                    withAnimation(.snappy(duration: 0.12)) {
-                        shown = Int((Double(value) * Double(step) / Double(steps)).rounded())
-                    }
-                    if step.isMultiple(of: 2) { Haptics.tick() }
-                }
+                await roll()
             }
+    }
+
+    @MainActor
+    private func roll() async {
+        shown = 0
+        guard value > 0 else { return }
+        try? await Task.sleep(for: .seconds(delay))
+        let steps = min(value, 18)
+        for step in 1...steps {
+            try? await Task.sleep(for: .milliseconds(55))
+            let next = Int((Double(value) * Double(step) / Double(steps)).rounded())
+            withAnimation(.snappy(duration: 0.12)) {
+                shown = next
+            }
+            if step.isMultiple(of: 2) { Haptics.tick() }
+        }
     }
 }
