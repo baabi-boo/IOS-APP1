@@ -4,8 +4,8 @@
 
 # Dewy — cute water tracker
 
-**A tiny droplet buddy who gets happier with every sip.**
-Log drinks, watch Dewy fill up, keep your streak, and grow a garden that blooms every day you hit your goal.
+**A tiny droplet buddy who fills up, layer by colorful layer, with every sip.**
+Log drinks, watch Dewy fill with the colors of what you drank, keep your streak, collect Dewy's friends, and grow a garden that blooms every day you hit your goal.
 
 SwiftUI · iOS 17+ · Swift Charts · StoreKit 2 · no third-party dependencies
 
@@ -61,16 +61,26 @@ Those numbers come from analytics sites (Screensdesign, Adapty, AppGoblin), so t
 
 **Why $1K/month is realistic.** The goal is ~$1K/month, not millions. At $19.99/year, that's about **50–60 new yearly subscribers a month**. With a typical 2–4% download-to-paid conversion, that takes roughly **1,500–3,000 downloads a month** (≈50–100 a day). A well-made niche app with good App Store optimization (ASO) can reach that.
 
-**Why it's easy to build.** One screen does most of the work, all data stays on the device (no backend, no accounts), and the code is about 4K lines of SwiftUI.
+**Why it's easy to build.** One screen does most of the work, all data stays on the device (no backend, no accounts), and the code is about 6K lines of SwiftUI.
+
+## Design
+
+The look follows the playbook of the best-loved character habit apps (Waterllama is the main reference): **bold flat color, a character that fills up, chunky rounded type, and big friendly buttons.**
+
+- **Color worlds, not pastel haze.** Every screen opens on a saturated hero color (turquoise Lagoon, coral Peachy, green Matcha, purple Lavender or deep-navy Midnight) and content sits on solid white cards.
+- **Dewy fills with what you drink.** Every drink you log pours a new layer into Dewy in that drink's color, with rolling waves and rising bubbles, so your day reads at a glance.
+- **Flat, colorful cups.** Water and sparkling come in glasses, tea and coffee in mugs, juice, smoothies and soda in tumblers with straws.
+- **Chunky type and dark pill buttons.** SF Rounded in heavy and black weights, all-caps labels, and navy capsule buttons that read like stickers.
+- **Motion everywhere.** Halo ripples behind Dewy, drifting bubbles and twinkles, a turning sunburst on the paywall, swaying flowers and confetti when you hit your goal.
 
 ## Features
 
-- 💧 **Dewy, a living mascot.** A droplet with animated waves, rising bubbles, blinking eyes and four moods (thirsty → okay → happy → ecstatic). It squishes when you drink and wobbles when you poke it.
-- ⚡️ **One-tap logging.** Sip / Glass / Bottle buttons, plus a drink sheet with an animated cup, slider and presets.
+- 💧 **Dewy, a living mascot.** A droplet that fills with a layer for every drink, with waves, bubbles, blinking eyes and four moods (thirsty → okay → happy → ecstatic). It squishes when you drink and wobbles when you poke it.
+- ⚡️ **One-tap logging.** A quick-add row of drink cups logs each drink's usual serving. The drink sheet takes on the drink's color and has a live cup, slider and presets.
 - 🍵 **8 drinks with hydration factors.** Coffee counts as 80%, soda as 60%, and so on.
-- 🎉 **Goal celebration.** A confetti, heart and droplet burst with haptics when you hit 100%.
-- 📈 **Insights.** Swift Charts bar chart with a goal line, a donut chart of what you drink, an hourly "sip rhythm", streaks and hit rate.
-- 🌸 **Dew Garden.** Every day you hit your goal grows a swaying flower. Garden levels and 9 collectible badges.
+- 🎉 **Goal celebration.** A burst of confetti, hearts, droplets and sparkles with haptics when you hit 100%.
+- 📈 **Insights.** A streak ring, a month calendar where goal streaks join into bold colored capsules, daily bars stacked by drink color, stat tiles, a "what you drink" donut and an hourly sip rhythm.
+- 🌸 **Dew Garden.** An illustrated landscape under your theme's sky (a moon and stars in Midnight) where a flower grows for every goal day. Garden levels, 9 collectible **Dewy friends** (Sunny, Sprout, Berry, Frosty, Royal…) and 9 badges.
 - 🔔 **Gentle reminders.** Local notifications between wake-up and bedtime, with rotating cute messages.
 - 🎨 **5 themes.** Lagoon (free), plus Peachy, Matcha, Lavender and a dark Midnight theme.
 - 🧭 **Personalized onboarding.** Weight, activity, climate and schedule set your daily goal, revealed with a counting animation.
@@ -96,9 +106,9 @@ StoreKit 2, implemented in `PurchaseManager.swift`:
 ```
 Dewy/
 ├── App/DewyApp.swift            # entry point, root routing, floating tab bar
-├── Design/                      # themes, colors, typography, glass cards, buttons, haptics
-├── Components/                  # MascotView (Dewy), shapes, waves, confetti, background, flowers
-├── Models/Models.swift          # drinks, profile, achievements, tips
+├── Design/                      # color worlds, typography, cards, pill buttons, chips, haptics
+├── Components/                  # MascotView (Dewy + layered liquid), shapes, drink cups, hero backdrop, garden landscape, confetti
+├── Models/Models.swift          # drinks, profile, achievements, Dewy friends, tips
 ├── Store/                       # HydrationStore (state + stats), StoreKit, reminders, demo data
 └── Features/                    # Today, Drink picker, Insights, Garden, Settings, Paywall, Onboarding
 Dewy.xcodeproj                   # Xcode 16 project (folder-synced; new files are picked up automatically)

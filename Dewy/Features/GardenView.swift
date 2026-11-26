@@ -35,8 +35,9 @@ struct GardenView: View {
                     header(flowers: flowers)
                         .padding(.horizontal, 22)
                         .floatIn(appeared, index: 0)
+                    // Leaves a window onto the hills and flowers drawn behind the scroll view.
                     Color.clear
-                        .frame(height: 250)
+                        .frame(height: 272)
                     VStack(spacing: 22) {
                         levelCard(flowers: flowers).floatIn(appeared, index: 1)
                         friendsSection(flowers: flowers).floatIn(appeared, index: 2)

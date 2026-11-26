@@ -110,6 +110,19 @@ struct MainTabView: View {
                 insertion: .opacity.combined(with: .offset(y: 14)),
                 removal: .opacity
             ))
+
+            // Paint the status bar in the screen's hero color, so the white clock stays
+            // readable when the light content scrolls up underneath it.
+            GeometryReader { proxy in
+                VStack(spacing: 0) {
+                    (tab == .garden ? theme.sky[0] : theme.hero)
+                        .frame(height: proxy.safeAreaInsets.top)
+                    Spacer(minLength: 0)
+                }
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            .animation(.smooth(duration: 0.4), value: tab)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             FloatingTabBar(selection: $tab)
