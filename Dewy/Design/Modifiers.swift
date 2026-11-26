@@ -237,13 +237,15 @@ struct ChipButton: View {
         Button(action: action) {
             HStack(spacing: 4) {
                 Text(title)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
                 if isLocked {
                     Image(systemName: "lock.fill").font(.system(size: 10, weight: .heavy))
                 }
             }
             .font(.display(16))
             .foregroundStyle(isSelected ? (tint == nil ? theme.onAccent : .white) : theme.ink)
-            .padding(.horizontal, 15)
+            .padding(.horizontal, 12)
             .frame(height: 40)
         }
         .buttonStyle(CandyButtonStyle(fill: isSelected ? selectedColor : theme.well, lip: lip, depth: 3))

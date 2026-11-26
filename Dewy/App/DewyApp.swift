@@ -55,8 +55,10 @@ struct RootView: View {
             store.save()
         }
         .onChange(of: scenePhase) {
-            if scenePhase == .background {
-                store.save()
+            switch scenePhase {
+            case .background: store.save()
+            case .active: store.reloadFromDisk()
+            default: break
             }
         }
     }
@@ -120,7 +122,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch LaunchOptions.screenshot {
         case "insights": .insights
         case "garden", "challenges": .garden
-        case "settings": .settings
+        case "settings", "widgets": .settings
         default: .today
         }
     }
@@ -152,20 +154,30 @@ struct MainTabView: View {
             ))
 
             // Paint the status bar in the sky's top color, so the white clock stays
-            // readable when light content scrolls up underneath it.
+            // readable when light content scrolls up underneath it. The reader keeps the
+            // safe area, so it can measure the inset and draw the strip just above itself.
             GeometryReader { proxy in
                 VStack(spacing: 0) {
                     theme.sky[0].frame(height: proxy.safeAreaInsets.top)
-                    Spacer(minLength: 0)
+                    LinearGradient(colors: [theme.sky[0], theme.sky[0].opacity(0)], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 10)
                 }
+                .offset(y: -proxy.safeAreaInsets.top)
+                .frame(maxHeight: .infinity, alignment: .top)
             }
-            .ignoresSafeArea()
             .allowsHitTesting(false)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             FloatingTabBar()
                 .padding(.horizontal, 20)
                 .padding(.bottom, 4)
+                .background(alignment: .bottom) {
+                    // Content fades out softly behind the floating bar.
+                    LinearGradient(colors: [theme.canvas.opacity(0), theme.canvas.opacity(0.92), theme.canvas], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 120)
+                        .ignoresSafeArea(edges: .bottom)
+                        .allowsHitTesting(false)
+                }
         }
         .sheet(isPresented: $router.showAddDrink) {
             DrinkPickerSheet { kind, amount in

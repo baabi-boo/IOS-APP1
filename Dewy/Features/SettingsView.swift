@@ -25,37 +25,49 @@ struct SettingsView: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                header
-                    .padding(.horizontal, 22)
-                    .padding(.top, 6)
+        ScrollViewReader { reader in
+            ScrollView {
+                VStack(spacing: 0) {
+                    header
+                        .padding(.horizontal, 22)
+                        .padding(.top, 6)
+                        .padding(.bottom, 30)
+                        .floatIn(appeared, index: 0)
+                        .background(alignment: .top) {
+                            SkyHeaderBackground(height: 300, sunY: 40)
+                        }
+                    VStack(spacing: 18) {
+                        if !purchases.isPremium {
+                            premiumCard.floatIn(appeared, index: 1)
+                        }
+                        goalCard.floatIn(appeared, index: 2)
+                        worldsCard.floatIn(appeared, index: 3)
+                        widgetsCard.floatIn(appeared, index: 3).id("widgets")
+                        remindersCard.floatIn(appeared, index: 4)
+                        feelCard.floatIn(appeared, index: 5)
+                        profileCard.floatIn(appeared, index: 6)
+                        dataCard.floatIn(appeared, index: 7)
+                        footer
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 24)
                     .padding(.bottom, 30)
-                    .floatIn(appeared, index: 0)
-                    .background(alignment: .top) {
-                        SkyHeaderBackground(height: 300, sunY: 40)
-                    }
-                VStack(spacing: 18) {
-                    if !purchases.isPremium {
-                        premiumCard.floatIn(appeared, index: 1)
-                    }
-                    goalCard.floatIn(appeared, index: 2)
-                    worldsCard.floatIn(appeared, index: 3)
-                    remindersCard.floatIn(appeared, index: 4)
-                    feelCard.floatIn(appeared, index: 5)
-                    profileCard.floatIn(appeared, index: 6)
-                    dataCard.floatIn(appeared, index: 7)
-                    footer
+                    .canvasSheet()
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 24)
-                .padding(.bottom, 30)
-                .canvasSheet()
+            }
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
+            .onAppear {
+                appeared = true
+                if LaunchOptions.screenshot == "widgets" {
+                    // Demo screenshot: show the worlds and the widget previews.
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .seconds(0.6))
+                        reader.scrollTo("widgets", anchor: .center)
+                    }
+                }
             }
         }
-        .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.interactively)
-        .onAppear { appeared = true }
         .sheet(isPresented: $showPaywall) { PaywallView() }
         .onChange(of: reminderSignature) {
             ReminderScheduler.reschedule(for: store.profile)
@@ -299,6 +311,35 @@ struct SettingsView: View {
             .scrollClipDisabled()
         }
         .dewyCard()
+    }
+
+    // MARK: Widgets
+
+    private var widgetsCard: some View {
+        let snapshot = DewySnapshot.make(from: AppData(profile: store.profile, entries: store.entries, hasOnboarded: true), at: .now)
+        return VStack(alignment: .leading, spacing: 14) {
+            SettingsLabel(icon: "square.grid.2x2.fill", tint: Color(hex: 0x5B8CFF), title: "Widgets", subtitle: "Touch and hold your Home Screen, tap +, find Dewy")
+            ScrollView(.horizontal) {
+                HStack(spacing: 12) {
+                    widgetPreview(width: 150) { DewyWidgetSmall(snapshot: snapshot) }
+                    widgetPreview(width: 322) { DewyWidgetMedium(snapshot: snapshot) }
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 2)
+            }
+            .scrollIndicators(.hidden)
+            .scrollClipDisabled()
+        }
+        .dewyCard()
+    }
+
+    private func widgetPreview<Content: View>(width: CGFloat, @ViewBuilder content: () -> Content) -> some View {
+        content()
+            .frame(width: width, height: 150)
+            .background(WidgetSky(theme: theme))
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: theme.sky[0].opacity(0.25), radius: 10, x: 0, y: 6)
+            .allowsHitTesting(false)
     }
 
     // MARK: Reminders

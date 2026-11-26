@@ -21,7 +21,7 @@ struct OnboardingView: View {
     var body: some View {
         ZStack {
             GeometryReader { proxy in
-                WorldScene(horizon: proxy.size.height * 0.78, sunPosition: CGPoint(x: 0.82, y: 130))
+                WorldScene(horizon: proxy.size.height * 0.87, sunPosition: CGPoint(x: 0.82, y: 130))
             }
             .ignoresSafeArea()
 

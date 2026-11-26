@@ -8,8 +8,8 @@ struct DrinkPickerSheet: View {
     @Environment(PurchaseManager.self) private var purchases
     @Environment(\.dewyTheme) private var theme
 
-    @State private var kind: DrinkKind = LaunchOptions.screenshot == "add" ? .matcha : .water
-    @State private var amount: Double = LaunchOptions.screenshot == "add" ? 350 : 250
+    @State private var kind: DrinkKind = LaunchOptions.screenshot == "add" ? .coffee : .water
+    @State private var amount: Double = 250
     @State private var showPaywall = false
     @State private var pop = 0
 

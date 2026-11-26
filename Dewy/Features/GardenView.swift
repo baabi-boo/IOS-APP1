@@ -303,9 +303,9 @@ private struct GardenScene: View {
     var flowers: Int
     var height: CGFloat
 
-    private let far = HillShape(left: 0.6, peakX: 0.22, peakY: 0.5, right: 0.66)
-    private let mid = HillShape(left: 0.76, peakX: 0.76, peakY: 0.6, right: 0.66)
-    private let near = HillShape(left: 0.84, peakX: 0.36, peakY: 0.76, right: 0.86)
+    private let far = HillShape(left: 0.5, peakX: 0.22, peakY: 0.4, right: 0.56)
+    private let mid = HillShape(left: 0.66, peakX: 0.76, peakY: 0.5, right: 0.57)
+    private let near = HillShape(left: 0.78, peakX: 0.38, peakY: 0.68, right: 0.8)
 
     /// Flower spots as (hill, x, size): 0 = middle hill, 1 = near hill.
     private let spots: [(Int, CGFloat, CGFloat)] = [
@@ -336,12 +336,12 @@ private struct GardenScene: View {
                         near.fill(LinearGradient(colors: theme.isDark ? [Color(hex: 0x1A5E48), Color(hex: 0x134A39)] : [Color(hex: 0x58C978), Color(hex: 0x3DB563)], startPoint: .top, endPoint: .bottom))
 
                         // Dewy and friends stand on the near hill.
-                        resident(.classic, x: 0.5, size: 104, width: w, height: h)
+                        resident(.classic, x: 0.5, size: 118, width: w, height: h)
                         if flowers >= DewyFriend.sunny.flowersNeeded {
-                            resident(.sunny, x: 0.23, size: 70, width: w, height: h)
+                            resident(.sunny, x: 0.22, size: 80, width: w, height: h)
                         }
                         if flowers >= DewyFriend.sprout.flowersNeeded {
-                            resident(.sprout, x: 0.79, size: 70, width: w, height: h)
+                            resident(.sprout, x: 0.8, size: 80, width: w, height: h)
                         }
 
                         ForEach(0..<spots.count, id: \.self) { index in

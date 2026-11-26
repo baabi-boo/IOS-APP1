@@ -133,46 +133,19 @@ struct MascotView: View {
     private var isLive: Bool { animated && !reduceMotion && !LaunchOptions.freezesMotion }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: !isLive)) { timeline in
-            let now = timeline.date
-            let t = isLive ? now.timeIntervalSinceReferenceDate : 0.6
-            let wave = waveAmount(at: now)
-            MascotCanvas(
-                level: animated ? level : targetLevel,
-                bands: resolvedBands,
-                mood: mood,
-                time: t,
-                accessory: accessory,
-                backdrop: backdrop,
-                wave: wave,
-                blinks: isLive && (!LaunchOptions.isDemo || LaunchOptions.screenshot == "celebrate"),
-                showsShadow: showsShadow
-            )
-            .frame(width: size, height: height)
-            .scaleEffect(x: 1 - CGFloat(sin(t * 2.2)) * 0.008, y: 1 + CGFloat(sin(t * 2.2)) * 0.014, anchor: .bottom)
+        Group {
+            if animated {
+                TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: !isLive)) { timeline in
+                    let now = timeline.date
+                    figure(time: isLive ? now.timeIntervalSinceReferenceDate : 0.6, wave: waveAmount(at: now))
+                }
+            } else {
+                // Decorative and widget mascots are a single still frame: no timeline at all.
+                figure(time: 0.6, wave: 0)
+            }
         }
         .frame(width: size, height: height)
-        .keyframeAnimator(initialValue: Squish(), trigger: bounceTrigger) { content, value in
-            content
-                .scaleEffect(x: value.x, y: value.y, anchor: .bottom)
-                .offset(y: value.lift)
-        } keyframes: { _ in
-            KeyframeTrack(\.x) {
-                CubicKeyframe(1.12, duration: 0.12)
-                SpringKeyframe(0.95, duration: 0.2)
-                SpringKeyframe(1.0, duration: 0.5, spring: .bouncy)
-            }
-            KeyframeTrack(\.y) {
-                CubicKeyframe(0.88, duration: 0.12)
-                SpringKeyframe(1.07, duration: 0.2)
-                SpringKeyframe(1.0, duration: 0.5, spring: .bouncy)
-            }
-            KeyframeTrack(\.lift) {
-                CubicKeyframe(0, duration: 0.12)
-                SpringKeyframe(-size * 0.08, duration: 0.2)
-                SpringKeyframe(0, duration: 0.5, spring: .bouncy)
-            }
-        }
+        .modifier(SquishEffect(trigger: bounceTrigger, size: size, enabled: animated))
         .onAppear {
             withAnimation(.spring(duration: 1.4, bounce: 0.3).delay(0.15)) {
                 level = targetLevel
@@ -190,6 +163,27 @@ struct MascotView: View {
         .accessibilityLabel("Dewy is \(mood.rawValue), \(Int(progress * 100)) percent of today's goal")
     }
 
+    private func figure(time t: Double, wave: Double) -> some View {
+        MascotCanvas(
+            level: animated ? level : targetLevel,
+            bands: resolvedBands,
+            mood: mood,
+            time: t,
+            accessory: accessory,
+            backdrop: backdrop,
+            wave: wave,
+            blinks: isLive && (!LaunchOptions.isDemo || LaunchOptions.screenshot == "celebrate"),
+            showsShadow: showsShadow
+        )
+        .frame(width: size, height: height)
+        .scaleEffect(x: breath(t, by: -0.008), y: breath(t, by: 0.014), anchor: .bottom)
+    }
+
+    /// Dewy's slow breathing, as a scale factor around 1.
+    private func breath(_ t: Double, by amount: Double) -> CGFloat {
+        CGFloat(1 + sin(t * 2.2) * amount)
+    }
+
     /// 0…1 envelope of the little wave Dewy does after being tapped.
     private func waveAmount(at now: Date) -> Double {
         guard let waveStart else { return 0 }
@@ -198,6 +192,42 @@ struct MascotView: View {
         let rise = min(elapsed / 0.18, 1)
         let fall = min(max((1.6 - elapsed) / 0.35, 0), 1)
         return rise * fall
+    }
+}
+
+/// The squash-and-stretch hop Dewy does when you drink or poke it.
+private struct SquishEffect: ViewModifier {
+    var trigger: Int
+    var size: CGFloat
+    var enabled: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if enabled {
+            content.keyframeAnimator(initialValue: Squish(), trigger: trigger) { view, value in
+                view
+                    .scaleEffect(x: value.x, y: value.y, anchor: .bottom)
+                    .offset(y: value.lift)
+            } keyframes: { _ in
+                KeyframeTrack(\.x) {
+                    CubicKeyframe(1.12, duration: 0.12)
+                    SpringKeyframe(0.95, duration: 0.2)
+                    SpringKeyframe(1.0, duration: 0.5, spring: .bouncy)
+                }
+                KeyframeTrack(\.y) {
+                    CubicKeyframe(0.88, duration: 0.12)
+                    SpringKeyframe(1.07, duration: 0.2)
+                    SpringKeyframe(1.0, duration: 0.5, spring: .bouncy)
+                }
+                KeyframeTrack(\.lift) {
+                    CubicKeyframe(0, duration: 0.12)
+                    SpringKeyframe(-size * 0.08, duration: 0.2)
+                    SpringKeyframe(0, duration: 0.5, spring: .bouncy)
+                }
+            }
+        } else {
+            content
+        }
     }
 }
 
@@ -250,13 +280,17 @@ private struct MascotCanvas: View, Animatable {
             context.fill(ellipse(122, 214, 17, 9), with: .color(limbShade))
 
             // Arms: the right one waves after a tap.
-            let sway = sin(time * 1.6) * 0.05
-            let leftArm = armPath(center: p(26, 150), radians: 28 * .pi / 180 + sway, u: u)
+            let sway: Double = sin(time * 1.6) * 0.05
+            let degree: Double = Double.pi / 180
+            let leftArm = armPath(center: p(26, 150), radians: 28 * degree + sway, u: u)
             context.fill(leftArm, with: .color(limb))
             let w = CGFloat(wave)
-            let rightCenter = CGPoint(x: p(174, 150).x + (p(182, 116).x - p(174, 150).x) * w,
-                                      y: p(174, 150).y + (p(182, 116).y - p(174, 150).y) * w)
-            let rightAngle = (-28 + (54 + sin(time * 16) * 14) * Double(w)) * .pi / 180 - sway
+            let restPoint = p(174, 150)
+            let wavePoint = p(182, 116)
+            let rightCenter = CGPoint(x: restPoint.x + (wavePoint.x - restPoint.x) * w,
+                                      y: restPoint.y + (wavePoint.y - restPoint.y) * w)
+            let flap: Double = 54 + sin(time * 16) * 14
+            let rightAngle: Double = (flap * wave - 28) * degree - sway
             context.fill(armPath(center: rightCenter, radians: rightAngle, u: u), with: .color(limb))
 
             // Glass body
@@ -431,7 +465,8 @@ private struct MascotCanvas: View, Animatable {
 
         if mood == .thirsty {
             // Worried brows and a tiny sweat drop.
-            for (outer, inner) in [(CGFloat(63), CGFloat(84)), (137, 116)] {
+            let brows: [(CGFloat, CGFloat)] = [(63, 84), (137, 116)]
+            for (outer, inner) in brows {
                 var brow = Path()
                 brow.move(to: p(outer, 119))
                 brow.addLine(to: p(inner, 113))
@@ -506,7 +541,11 @@ private struct MascotCanvas: View, Animatable {
                 layer.fill(crown, with: .color(Color(hex: 0xFFC93D)))
                 layer.stroke(crown, with: .color(Color(hex: 0xFFC93D)), style: StrokeStyle(lineWidth: 4 * u, lineJoin: .round))
                 layer.fill(Path(roundedRect: CGRect(origin: q(-24, 6), size: CGSize(width: 48 * u, height: 9 * u)), cornerRadius: 4 * u), with: .color(Color(hex: 0xF29A1B)))
-                for (x, y, r, c) in [(CGFloat(0), CGFloat(-15), CGFloat(4), Color(hex: 0xFF6FA5)), (-24, -8, 3.4, .white), (24, -8, 3.4, .white), (0, 10.5, 3, Color(hex: 0x4DB4FF))] {
+                let jewels: [(CGFloat, CGFloat, CGFloat, Color)] = [
+                    (0, -15, 4, Color(hex: 0xFF6FA5)), (-24, -8, 3.4, Color.white),
+                    (24, -8, 3.4, Color.white), (0, 10.5, 3, Color(hex: 0x4DB4FF))
+                ]
+                for (x, y, r, c) in jewels {
                     layer.fill(Path(ellipseIn: CGRect(x: (x - r) * u, y: (y - r) * u, width: r * 2 * u, height: r * 2 * u)), with: .color(c))
                 }
             }
@@ -565,7 +604,8 @@ private struct MascotCanvas: View, Animatable {
             drawHeart(in: &context, center: p(36, 76 - float), size: 13 * u, color: Color(hex: 0xFF8FB1))
 
         case .snowflakes:
-            for (x, y, s, speed) in [(CGFloat(30), CGFloat(70), CGFloat(20), 25.0), (170, 60, 14, -35), (178, 120, 10, 40)] {
+            let flakes: [(CGFloat, CGFloat, CGFloat, Double)] = [(30, 70, 20, 25), (170, 60, 14, -35), (178, 120, 10, 40)]
+            for (x, y, s, speed) in flakes {
                 local(x, y, rotation: time * speed) { layer, q in
                     var flake = Path()
                     for index in 0..<3 {

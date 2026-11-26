@@ -45,7 +45,9 @@ echo "▸ Building…"
 SECONDS=0
 xcodebuild -project Dewy.xcodeproj -scheme Dewy -configuration Debug \
   -sdk iphonesimulator -destination "id=$UDID" -derivedDataPath build \
-  CODE_SIGNING_ALLOWED=NO -quiet build
+  CODE_SIGNING_ALLOWED=NO \
+  OTHER_SWIFT_FLAGS='$(inherited) -Xfrontend -warn-long-expression-type-checking=150 -Xfrontend -warn-long-function-bodies=400' \
+  -quiet build
 echo "▸ Built in ${SECONDS}s"
 
 APP=build/Build/Products/Debug-iphonesimulator/Dewy.app
@@ -111,6 +113,7 @@ shoot 11-sunset      -screenshot today -theme peach
 shoot 12-meadow      -screenshot garden -theme matcha -premium YES
 shoot 13-dreamy      -screenshot insights -theme lavender -premium YES
 shoot 14-midnight    -screenshot today -theme midnight
+shoot 15-widgets     -screenshot widgets
 echo "▸ Screenshots took ${SECONDS}s"
 
 # A short screen recording of Dewy reaching the daily goal (converted to a GIF later).

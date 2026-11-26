@@ -1,5 +1,6 @@
 import SwiftUI
 import Observation
+import WidgetKit
 
 /// The single source of truth for Dewy: profile, drink log, stats and achievements.
 @MainActor
@@ -127,7 +128,20 @@ final class HydrationStore {
     }
 
     func save() {
-        persistence?.save(AppData(profile: profile, entries: entries, hasOnboarded: hasOnboarded, challenges: challenges))
+        guard let persistence else { return }
+        persistence.save(AppData(profile: profile, entries: entries, hasOnboarded: hasOnboarded, challenges: challenges))
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// Picks up drinks logged from a widget while the app was in the background.
+    func reloadFromDisk() {
+        guard let persistence, let data = persistence.load() else { return }
+        if data.entries != entries {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                entries = data.entries
+            }
+        }
+        challenges = data.challenges
     }
 
     // MARK: Stats
@@ -333,12 +347,26 @@ final class HydrationStore {
 // MARK: - Persistence
 
 struct Persistence {
+    /// Shared with the widget so both can read and log drinks.
+    static let appGroup = "group.com.dewyapp.Dewy"
+
     private let url: URL
 
     init() {
-        let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        url = directory.appendingPathComponent("dewy.json")
+        let fileManager = FileManager.default
+        let legacyDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let legacyURL = legacyDirectory.appendingPathComponent("dewy.json")
+        if let shared = fileManager.containerURL(forSecurityApplicationGroupIdentifier: Persistence.appGroup) {
+            let sharedURL = shared.appendingPathComponent("dewy.json")
+            // Bring data saved before widgets existed into the shared container, once.
+            if !fileManager.fileExists(atPath: sharedURL.path), fileManager.fileExists(atPath: legacyURL.path) {
+                try? fileManager.copyItem(at: legacyURL, to: sharedURL)
+            }
+            url = sharedURL
+        } else {
+            try? fileManager.createDirectory(at: legacyDirectory, withIntermediateDirectories: true)
+            url = legacyURL
+        }
     }
 
     func load() -> AppData? {

@@ -49,6 +49,8 @@ struct WorldScene: View {
     /// Where the sun (or moon) sits, as a fraction of the width, measured from the top.
     var sunPosition = CGPoint(x: 0.84, y: 120)
     var animated = true
+    /// Low clouds drifting along the horizon (only where nothing important sits there).
+    var drawsHorizonClouds = false
 
     @Environment(\.dewyTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -169,7 +171,8 @@ struct WorldScene: View {
         let r: CGFloat = 30
         context.fill(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)),
                      with: .linearGradient(Gradient(colors: [Color(hex: 0xFFF6D8), Color(hex: 0xFFE08A)]), startPoint: CGPoint(x: center.x - r, y: center.y - r), endPoint: CGPoint(x: center.x + r, y: center.y + r)))
-        for (dx, dy, cr) in [(CGFloat(-9), CGFloat(-6), CGFloat(6)), (10, 8, 4.5), (6, -12, 3)] {
+        let craters: [(CGFloat, CGFloat, CGFloat)] = [(-9, -6, 6), (10, 8, 4.5), (6, -12, 3)]
+        for (dx, dy, cr) in craters {
             context.fill(Path(ellipseIn: CGRect(x: center.x + dx - cr, y: center.y + dy - cr, width: cr * 2, height: cr * 2)), with: .color(Color(hex: 0xF2C96B).opacity(0.6)))
         }
     }
@@ -180,7 +183,9 @@ struct WorldScene: View {
             let seed = Double(index)
             let x = CGFloat(noise(seed, 1)) * size.width
             let y = CGFloat(noise(seed, 2)) * max(limit, 0)
-            let twinkle = 0.45 + 0.55 * (0.5 + 0.5 * sin(t * (1 + noise(seed, 3) * 2) + seed))
+            let speed: Double = 1 + noise(seed, 3) * 2
+            let wave: Double = sin(t * speed + seed)
+            let twinkle: Double = 0.45 + 0.55 * (0.5 + 0.5 * wave)
             let r = CGFloat(0.8 + noise(seed, 4) * 1.6)
             context.opacity = twinkle
             context.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)), with: .color(.white))
@@ -204,32 +209,44 @@ struct WorldScene: View {
     }
 
     private func drawClouds(in context: inout GraphicsContext, size: CGSize, time t: Double, far: Bool) {
-        // (y as a fraction of the horizon, width, speed, phase)
-        let clouds: [(CGFloat, CGFloat, Double, Double)] = far
-            ? [(0.42, 150, 3.2, 0.1), (0.62, 120, 2.4, 0.55), (0.2, 96, 2.0, 0.8)]
-            : [(0.3, 128, 6.0, 0.35), (0.78, 160, 4.6, 0.02)]
-        let span = size.width + 260
-        let skyHeight = min(horizon, size.height)
-        for cloud in clouds {
-            let travel = (t * cloud.2 + cloud.3 * Double(span)).truncatingRemainder(dividingBy: Double(span))
-            let x = CGFloat(travel) - 160
-            let width = cloud.1
-            let height = width * 0.42
-            let y = skyHeight * cloud.0 - height
-            let rect = CGRect(x: x, y: y, width: width, height: height)
-            let path = cloudPath(in: rect)
-            context.opacity = far ? (theme.isDark ? 0.14 : 0.5) : (theme.isDark ? 0.22 : 0.96)
-            context.fill(path, with: .linearGradient(
-                Gradient(colors: [.white, theme.cloudShade]),
-                startPoint: CGPoint(x: rect.midX, y: rect.minY), endPoint: CGPoint(x: rect.midX, y: rect.maxY)
-            ))
+        if far {
+            // Calm clouds keep to the sunny top-right corner, away from titles on the left.
+            let calm: [(CGFloat, CGFloat, CGFloat, Double)] = [(0.9, 70, 118, 0), (0.7, 128, 80, 2.1)]
+            for cloud in calm {
+                let width = cloud.2
+                let height = width * 0.42
+                let sway = CGFloat(sin(t * 0.12 + cloud.3)) * 12
+                let rect = CGRect(x: size.width * cloud.0 - width / 2 + sway, y: cloud.1 - height / 2, width: width, height: height)
+                fillCloud(in: &context, rect: rect, opacity: theme.isDark ? 0.16 : 0.62)
+            }
+            return
         }
+        // Low clouds drift along the horizon behind Dewy.
+        guard drawsHorizonClouds, horizon < size.height else { return }
+        let drifting: [(CGFloat, Double, Double, CGFloat)] = [(150, 4.2, 0.05, 36), (110, 3.1, 0.6, 58)]
+        let span = Double(size.width + 260)
+        for cloud in drifting {
+            let width = cloud.0
+            let height = width * 0.42
+            let travel = (t * cloud.1 + cloud.2 * span).truncatingRemainder(dividingBy: span)
+            let rect = CGRect(x: CGFloat(travel) - 160, y: horizon - height - cloud.3, width: width, height: height)
+            fillCloud(in: &context, rect: rect, opacity: theme.isDark ? 0.2 : 0.95)
+        }
+    }
+
+    private func fillCloud(in context: inout GraphicsContext, rect: CGRect, opacity: Double) {
+        context.opacity = opacity
+        context.fill(cloudPath(in: rect), with: .linearGradient(
+            Gradient(colors: [.white, theme.cloudShade]),
+            startPoint: CGPoint(x: rect.midX, y: rect.minY), endPoint: CGPoint(x: rect.midX, y: rect.maxY)
+        ))
         context.opacity = 1
     }
 
     private func drawCloudBank(in context: inout GraphicsContext, size: CGSize) {
         let y = horizon
-        for (x, width) in [(CGFloat(-40), CGFloat(170)), (size.width * 0.32, 150), (size.width * 0.66, 190)] {
+        let bank: [(CGFloat, CGFloat)] = [(-40, 170), (size.width * 0.32, 150), (size.width * 0.66, 190)]
+        for (x, width) in bank {
             let rect = CGRect(x: x, y: y - width * 0.36, width: width, height: width * 0.42)
             context.fill(cloudPath(in: rect), with: .color(Color(hex: 0xFFEFFA).opacity(0.85)))
         }
@@ -255,9 +272,11 @@ struct WorldScene: View {
         front.closeSubpath()
         context.fill(front, with: .color(Color(hex: 0x6FD08F)))
         // Little round trees on the back hill.
-        for (fx, scale) in [(CGFloat(0.2), CGFloat(1)), (0.27, 0.75), (0.82, 0.9)] {
+        let trees: [(CGFloat, CGFloat)] = [(0.2, 1), (0.27, 0.75), (0.82, 0.9)]
+        for (fx, scale) in trees {
             let x = w * fx
-            let y = base - (fx < 0.5 ? 50 : 38)
+            let lift: CGFloat = fx < 0.5 ? 50 : 38
+            let y = base - lift
             context.fill(Path(CGRect(x: x - 2, y: y, width: 4, height: 14 * scale)), with: .color(Color(hex: 0x8A6A4E)))
             context.fill(Path(ellipseIn: CGRect(x: x - 11 * scale, y: y - 18 * scale, width: 22 * scale, height: 24 * scale)), with: .color(Color(hex: 0x3FB874)))
         }
@@ -288,11 +307,16 @@ struct WorldScene: View {
     private func drawSea(in context: inout GraphicsContext, size: CGSize, time t: Double) {
         let w = size.width
         let top = horizon
+        /// Height of the gentle swell along the horizon at `x`.
+        func swell(_ x: CGFloat) -> CGFloat {
+            let angle: Double = Double(x / w) * Double.pi * 3 + t * 0.6
+            return top + 2.5 * CGFloat(sin(angle))
+        }
         var sea = Path()
         sea.move(to: CGPoint(x: 0, y: top))
         var x: CGFloat = 0
         while x <= w + 8 {
-            sea.addLine(to: CGPoint(x: x, y: top + 2.5 * CGFloat(sin(Double(x / w) * .pi * 3 + t * 0.6))))
+            sea.addLine(to: CGPoint(x: x, y: swell(x)))
             x += 8
         }
         sea.addLine(to: CGPoint(x: w, y: size.height))
@@ -303,9 +327,9 @@ struct WorldScene: View {
         // Bright glint where water meets sky.
         var glint = Path()
         x = 0
-        glint.move(to: CGPoint(x: 0, y: top + 2.5 * CGFloat(sin(t * 0.6))))
+        glint.move(to: CGPoint(x: 0, y: swell(0)))
         while x <= w + 8 {
-            glint.addLine(to: CGPoint(x: x, y: top + 2.5 * CGFloat(sin(Double(x / w) * .pi * 3 + t * 0.6))))
+            glint.addLine(to: CGPoint(x: x, y: swell(x)))
             x += 8
         }
         context.stroke(glint, with: .color(theme.seaGlint.opacity(0.9)), lineWidth: 5)
@@ -315,7 +339,8 @@ struct WorldScene: View {
             let cx = theme == .peach ? w * 0.68 : w * sunPosition.x
             for row in 0..<6 {
                 let y = top + 14 + CGFloat(row) * 15
-                let half = CGFloat(46 - row * 6) * (0.85 + 0.15 * CGFloat(sin(t * 1.4 + Double(row))))
+                let shimmer: Double = 0.85 + 0.15 * sin(t * 1.4 + Double(row))
+                let half = CGFloat(46 - row * 6) * CGFloat(shimmer)
                 var stripe = Path()
                 stripe.move(to: CGPoint(x: cx - half, y: y))
                 stripe.addLine(to: CGPoint(x: cx + half, y: y))
@@ -336,7 +361,8 @@ struct WorldScene: View {
             var dash = Path()
             dash.move(to: CGPoint(x: CGFloat(px), y: y))
             dash.addLine(to: CGPoint(x: CGFloat(px) + length, y: y))
-            context.opacity = 0.25 + 0.3 * (0.5 + 0.5 * sin(t * 1.3 + seed))
+            let flicker: Double = sin(t * 1.3 + seed)
+            context.opacity = 0.25 + 0.3 * (0.5 + 0.5 * flicker)
             context.stroke(dash, with: .color(.white), style: StrokeStyle(lineWidth: 3, lineCap: .round))
         }
         context.opacity = 1
@@ -450,13 +476,15 @@ struct SkyHeaderBackground: View {
     /// Horizon measured from the top of the header; `nil` shows only sky.
     var horizon: CGFloat?
     var sunY: CGFloat = 70
+    var sunX: CGFloat = 0.86
+    var drawsHorizonClouds = false
 
     @Environment(\.dewyTheme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
             theme.sky[0].frame(height: 800)
-            WorldScene(horizon: horizon ?? height + 1_000, sunPosition: CGPoint(x: 0.86, y: sunY))
+            WorldScene(horizon: horizon ?? height + 1_000, sunPosition: CGPoint(x: sunX, y: sunY), drawsHorizonClouds: drawsHorizonClouds)
                 .frame(height: height)
         }
         .frame(height: height, alignment: .bottom)

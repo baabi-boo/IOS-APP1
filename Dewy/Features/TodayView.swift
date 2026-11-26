@@ -23,6 +23,10 @@ struct TodayView: View {
     private let stageHeight: CGFloat = 250
     private let amountHeight: CGFloat = 132
     private let mascotSize: CGFloat = 200
+    /// The scene runs 60 points under the sheet so its rounded corners show sky, not canvas.
+    private var sceneHeight: CGFloat { headerHeight + stageHeight + amountHeight + 94 }
+    /// The sea starts behind Dewy's lower half, so the lily pad floats on it.
+    private var horizonY: CGFloat { headerHeight + 154 }
 
     var body: some View {
         ZStack {
@@ -123,7 +127,7 @@ struct TodayView: View {
         .padding(.bottom, 30)
         .background(alignment: .top) {
             // The sea starts behind Dewy's lower half, so the lily pad floats on it.
-            SkyHeaderBackground(height: 4 + headerHeight + stageHeight + amountHeight + 30 + 60, horizon: 4 + headerHeight + 150, sunY: 40)
+            SkyHeaderBackground(height: sceneHeight, horizon: horizonY, sunY: 150, sunX: 0.16, drawsHorizonClouds: true)
         }
     }
 
@@ -152,7 +156,7 @@ struct TodayView: View {
             // Dewy's feet rest at 93% of the figure's height, right on the pad.
             let mascotHeight = mascotSize * DewyGeometry.canvas.height / DewyGeometry.canvas.width
             LilyPad(width: 150, rippleTrigger: ripple)
-                .offset(y: mascotHeight * 0.935 - 150 * 0.25 + 6)
+                .offset(y: mascotHeight * 0.935 - 31.5)
             MascotView(
                 progress: store.todayProgress,
                 mood: store.mood,

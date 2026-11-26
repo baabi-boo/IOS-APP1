@@ -23,7 +23,7 @@ struct ShareDaySheet: View {
             .padding(.top, 26)
 
             DayCard(theme: theme, store: store)
-                .frame(width: 300, height: 400)
+                .frame(width: 300, height: 420)
                 .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                 .shadow(color: theme.sky[0].opacity(0.3), radius: 24, x: 0, y: 14)
                 .rotationEffect(.degrees(-2))
@@ -59,7 +59,7 @@ struct ShareDaySheet: View {
 
     @MainActor
     private func render() {
-        let renderer = ImageRenderer(content: DayCard(theme: theme, store: store).frame(width: 360, height: 480))
+        let renderer = ImageRenderer(content: DayCard(theme: theme, store: store).frame(width: 360, height: 504))
         renderer.scale = 3
         if let image = renderer.uiImage {
             rendered = Image(uiImage: image)
@@ -85,7 +85,7 @@ struct DayCard: View {
                 VStack(spacing: 0) {
                     Spacer()
                     theme.seaGradient
-                        .frame(height: 150 * s)
+                        .frame(height: 160 * s)
                         .overlay(alignment: .top) {
                             Rectangle().fill(theme.seaGlint).frame(height: 4 * s)
                         }
@@ -94,14 +94,14 @@ struct DayCard: View {
                     CapsLabel(text: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()), color: .white.opacity(0.85), size: 10 * s)
                         .padding(.top, 26 * s)
                     (Text("My ") + Text((favorite?.name ?? "Water").lowercased()).foregroundColor(Color(hex: 0xFFE27A)) + Text("\n") + Text(Date.now.formatted(.dateTime.weekday(.wide))))
-                        .font(.display(32 * s))
+                        .font(.display(30 * s))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
-                        .lineSpacing(-4 * s)
+                        .fixedSize(horizontal: false, vertical: true)
                     MascotView(
                         progress: store.todayProgress,
                         mood: store.mood,
-                        size: 150 * s,
+                        size: 132 * s,
                         bands: store.todayBands,
                         animated: false
                     )
@@ -117,7 +117,7 @@ struct DayCard: View {
                     .foregroundStyle(.white)
                     HStack(spacing: -6 * s) {
                         ForEach(Array(Set(store.todayEntries.map(\.kind))).sorted { $0.rawValue < $1.rawValue }.prefix(6)) { kind in
-                            DrinkBadge(kind: kind, size: 34 * s)
+                            DrinkBadge(kind: kind, size: 32 * s)
                                 .overlay(RoundedRectangle(cornerRadius: 12 * s, style: .continuous).stroke(Color.white, lineWidth: 2.5 * s))
                         }
                     }

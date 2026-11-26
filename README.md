@@ -36,13 +36,14 @@ SwiftUI · iOS 17+ · Swift Charts · StoreKit 2 · no third-party dependencies
 </p>
 <p align="center">
   <img src="docs/screenshots/07-settings.png" width="240" alt="Me: profile and settings" />
+  <img src="docs/screenshots/15-widgets.png" width="240" alt="Worlds and Home Screen widgets" />
   <img src="docs/screenshots/11-sunset.png" width="240" alt="Sunset world" />
-  <img src="docs/screenshots/14-midnight.png" width="240" alt="Midnight world" />
 </p>
 
 <details>
-<summary><b>More worlds</b> (Meadow · Dreamy)</summary>
+<summary><b>More worlds</b> (Midnight · Meadow · Dreamy)</summary>
 <p align="center">
+  <img src="docs/screenshots/14-midnight.png" width="240" alt="Midnight world" />
   <img src="docs/screenshots/12-meadow.png" width="240" alt="Meadow world garden" />
   <img src="docs/screenshots/13-dreamy.png" width="240" alt="Dreamy world insights" />
 </p>
@@ -80,6 +81,8 @@ Dewy is built on one idea: **a tiny world in a drop.** Every screen is a place i
 - 🎉 **Goal celebration.** Confetti, a goal chime, haptics and a "Goal smashed!" card when you reach 100%.
 - 📈 **Insights.** Your week as seven little Dewy droplets, a streak hero, daily bars stacked by drink color, stat tiles, a month calendar with streak capsules, a "what you drink" donut, caffeine and sip rhythm.
 - 🌸 **Dew Garden.** Dewy and the friends you've found hang out in a meadow where a flower grows for every goal day. Garden levels, 9 collectible **Dewy friends** (Sunny, Sprout, Berry, Frosty, Royal…) with drawn outfits, and 9 candy medals.
+- 📱 **Widgets.** Home Screen widgets show Dewy filling up in your world's colors; the medium one logs water, tea or coffee with one tap, no app launch needed. Lock Screen widgets show a progress gauge.
+- 🗣 **Shortcuts & Siri.** A "Log a drink" action with any drink and amount.
 - 📤 **Share your day.** A shareable card with Dewy holding today's drinks, your total and your drink of the day.
 - 🔔 **Gentle reminders** between wake-up and bedtime, with rotating cute messages.
 - 🔊 **Sound and touch.** Original synthesized bloop, pour and goal sounds (they respect the silent switch) and haptics; both can be turned off.
@@ -125,7 +128,10 @@ Dewy/
 ├── Models/Models.swift          # drinks, profile, challenges, achievements, Dewy friends, tips
 ├── Store/                       # HydrationStore (state + stats), StoreKit, reminders, demo data
 ├── Features/                    # Today, Drink sheet, Insights, Garden, Me, Paywall, Onboarding, Share card
+├── Widgets/                     # widget views and the "Log a drink" App Intent (shared with the extension)
 └── Resources/                   # Fredoka fonts (OFL) and synthesized sound effects
+DewyWidget/                      # WidgetKit extension (Home and Lock Screen widgets)
+Config/                          # entitlements (App Group shared by the app and the widget)
 design/                          # SVG sources for the drink illustrations and the app icon
 scripts/export-art.js            # exports the SVGs into the asset catalog
 scripts/screenshots.sh           # builds and captures simulator screenshots
@@ -134,10 +140,10 @@ scripts/screenshots.sh           # builds and captures simulator screenshots
 ## Build & run
 
 1. Open `Dewy.xcodeproj` in **Xcode 16 or later**.
-2. Choose your team under *Signing & Capabilities* and change the bundle ID (`com.dewyapp.Dewy`).
+2. Choose your team under *Signing & Capabilities* for both targets and change the bundle IDs (`com.dewyapp.Dewy`, `com.dewyapp.Dewy.Widget`) and the App Group (`group.com.dewyapp.Dewy`, used in `Config/*.entitlements` and `Persistence.appGroup`).
 3. Run on an iPhone or simulator running iOS 17+.
 
-**Demo mode.** Launch with `-screenshot today|add|insights|garden|challenges|share|settings|paywall|onboarding|celebrate` to load sample data. Optional flags: `-theme peach|matcha|lavender|midnight`, `-premium YES`, `-step 0…5`. Run `bash scripts/screenshots.sh` to regenerate every screenshot.
+**Demo mode.** Launch with `-screenshot today|add|insights|garden|challenges|share|settings|widgets|paywall|onboarding|celebrate` to load sample data. Optional flags: `-theme peach|matcha|lavender|midnight`, `-premium YES`, `-step 0…5`. Run `bash scripts/screenshots.sh` to regenerate every screenshot.
 
 **Art.** Edit the SVGs in `design/`, then run `node scripts/export-art.js` to refresh the asset catalog.
 
@@ -151,7 +157,6 @@ scripts/screenshots.sh           # builds and captures simulator screenshots
 
 ## Roadmap ideas
 
-- Home and Lock Screen widgets (most-requested feature for water apps)
 - Apple Health water sync
 - Live Activity and Apple Watch quick-log
 - A wardrobe so you can dress Dewy in the outfits your friends wear
