@@ -43,7 +43,7 @@ struct TodayView: View {
                 .ignoresSafeArea()
 
             if showGoalBanner {
-                GoalBanner(goal: store.format(store.goal), streak: store.currentStreak)
+                GoalBanner(goal: store.format(store.goal), streak: store.currentStreak, bands: store.todayBands, progress: store.todayProgress)
                     .padding(.horizontal, 24)
                     .transition(.scale(scale: 0.6).combined(with: .opacity))
                     .zIndex(2)
@@ -421,10 +421,12 @@ struct GoalBanner: View {
     @Environment(\.dewyTheme) private var theme
     var goal: String
     var streak: Int
+    var bands: [LiquidBand]
+    var progress: Double
 
     var body: some View {
         VStack(spacing: 6) {
-            MascotView(progress: 1.1, mood: .ecstatic, size: 120, accessory: .sparkles, showsShadow: false)
+            MascotView(progress: progress, mood: .ecstatic, size: 120, accessory: .sparkles, bands: bands, animated: false, showsShadow: false)
             Text("Goal smashed!")
                 .font(.display(32))
                 .foregroundStyle(theme.ink)
