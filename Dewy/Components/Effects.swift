@@ -344,10 +344,11 @@ struct GardenLandscape: View {
                     celestial(time: t)
                         .position(x: w * 0.8, y: h * 0.27)
 
+                    // Clouds drift below the title area so they never hide white text.
                     CloudView(width: 92, color: Color.white.opacity(theme.isDark ? 0.14 : 0.92))
-                        .position(x: wrap(w * 0.2 + CGFloat(t * 6), width: w), y: h * 0.2)
+                        .position(x: wrap(w * 0.2 + CGFloat(t * 6), width: w), y: h * 0.38)
                     CloudView(width: 64, color: Color.white.opacity(theme.isDark ? 0.1 : 0.75))
-                        .position(x: wrap(w * 0.62 + CGFloat(t * 4), width: w), y: h * 0.34)
+                        .position(x: wrap(w * 0.62 + CGFloat(t * 4), width: w), y: h * 0.47)
 
                     far.fill(theme.isDark ? Color(hex: 0x1F4A63) : Color(hex: 0x9BE3A6))
                     mid.fill(theme.isDark ? Color(hex: 0x1C6550) : Color(hex: 0x5ECB7B))
