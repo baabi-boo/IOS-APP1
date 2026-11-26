@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.76" numOctaves="3" seed="17" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.055 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="barkG" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#8A6454"/>
+    <stop offset="100%" stop-color="#4A322D"/>
+  </linearGradient>
+  <radialGradient id="cloudBack" cx="45%" cy="40%" r="60%">
+    <stop offset="0%" stop-color="#F7A8C2"/>
+    <stop offset="100%" stop-color="#D46F92"/>
+  </radialGradient>
+  <radialGradient id="cloudMid" cx="38%" cy="34%" r="62%">
+    <stop offset="0%" stop-color="#FFF0F5"/>
+    <stop offset="56%" stop-color="#FBC1D4"/>
+    <stop offset="100%" stop-color="#E488A8"/>
+  </radialGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="106" cy="208" rx="64" ry="10.5" fill="#3B2B23" opacity="0.14"/>
+  <!-- Deep dappled sakura shadow clouds behind upper boughs -->
+  <path d="M52 126 C30 116 28 84 52 72 C60 44 96 34 122 48 C148 30 190 42 196 74 C216 82 214 116 188 122 C172 136 142 132 128 122 C104 134 72 136 52 126 Z" fill="url(#cloudBack)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.6" stroke-linejoin="round"/>
+  <!-- Graceful asymmetrical windswept gnarled sakura trunk & sweeping right bough -->
+  <path d="M84 204 C94 176 96 150 92 126 C78 114 66 106 58 96 C76 100 88 106 98 114 C106 98 124 88 156 80 C138 96 124 108 116 124 C112 148 118 176 132 204 C118 206 98 206 84 204 Z" fill="url(#barkG)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.8" stroke-linejoin="round"/>
+  <!-- Moss cushion & tiny sunlit bark ridge -->
+  <path d="M98 188 Q102 154 100 130" fill="none" stroke="#B28C78" stroke-width="2.4" stroke-linecap="round" opacity="0.55"/>
+  <path d="M72 203 C82 194 98 194 106 203 Z" fill="#6CAE6E" stroke="#342638" stroke-opacity="0.78" stroke-width="2"/>
+  <!-- Overlapping windswept foreground sakura foliage clusters (painterly depth!) -->
+  <path d="M40 104 C28 88 38 62 62 60 C72 40 104 38 118 56 C132 66 124 96 100 102 C82 114 52 116 40 104 Z" fill="url(#cloudMid)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M114 78 C112 52 136 32 164 38 C188 42 204 64 196 86 C210 96 202 120 176 120 C156 126 130 116 126 98 C118 92 114 86 114 78 Z" fill="url(#cloudMid)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.4" stroke-linejoin="round"/>
+  <!-- Sunlit gouache highlight arcs -->
+  <path d="M58 68 C72 52 94 50 106 58" fill="none" stroke="#FFF9FB" stroke-width="4.5" stroke-linecap="round" opacity="0.78"/>
+  <path d="M140 52 C160 44 180 54 186 70" fill="none" stroke="#FFF9FB" stroke-width="4.5" stroke-linecap="round" opacity="0.78"/>
+  <!-- Individual hand-painted 5-petal sakura blossoms -->
+  <g transform="translate(76 80)">
+    <circle cx="0" cy="-7.5" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="7.2" cy="-2.2" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="4.5" cy="6.5" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="-4.5" cy="6.5" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="-7.2" cy="-2.2" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="3.8" fill="#F2BE4E"/>
+  </g>
+  <g transform="translate(160 76) scale(1.06)">
+    <circle cx="0" cy="-7.5" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="7.2" cy="-2.2" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="4.5" cy="6.5" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="-4.5" cy="6.5" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="-7.2" cy="-2.2" r="5.8" fill="#FFF5F8" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="3.8" fill="#F2BE4E"/>
+  </g>
+  <g transform="translate(182 104) scale(0.84)">
+    <circle cx="0" cy="-7.5" r="5.8" fill="#FFEBF2" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.6"/>
+    <circle cx="7.2" cy="-2.2" r="5.8" fill="#FFEBF2" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.6"/>
+    <circle cx="4.5" cy="6.5" r="5.8" fill="#FFEBF2" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.6"/>
+    <circle cx="-4.5" cy="6.5" r="5.8" fill="#FFEBF2" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.6"/>
+    <circle cx="-7.2" cy="-2.2" r="5.8" fill="#FFEBF2" stroke="#9C4D6B" stroke-opacity="0.5" stroke-width="1.6"/>
+    <circle cx="0" cy="0" r="3.8" fill="#F2BE4E"/>
+  </g>
+  <!-- Wind-borne drifting cherry petals -->
+  <ellipse cx="152" cy="146" rx="6.2" ry="3.4" transform="rotate(24 152 146)" fill="#FBB4CB" stroke="#7A3C54" stroke-opacity="0.55" stroke-width="1.5"/>
+  <ellipse cx="182" cy="158" rx="5.5" ry="3" transform="rotate(-18 182 158)" fill="#FFD5E3" stroke="#7A3C54" stroke-opacity="0.55" stroke-width="1.5"/>
+  <ellipse cx="164" cy="182" rx="5.2" ry="2.8" transform="rotate(12 164 182)" fill="#FBB4CB" stroke="#7A3C54" stroke-opacity="0.55" stroke-width="1.5"/>
+  <ellipse cx="64" cy="154" rx="5" ry="2.8" transform="rotate(-32 64 154)" fill="#FFD5E3" stroke="#7A3C54" stroke-opacity="0.55" stroke-width="1.5"/>
+</g>
+</svg>

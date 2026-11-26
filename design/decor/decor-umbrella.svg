@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="17" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="paraCoral" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#F08B78"/>
+    <stop offset="100%" stop-color="#C84E40"/>
+  </linearGradient>
+  <linearGradient id="paraCream" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#FFFBF2"/>
+    <stop offset="100%" stop-color="#EAE0CE"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="122" cy="208" rx="64" ry="11" fill="#3B2B23" opacity="0.14"/>
+  <g transform="rotate(-12 120 130)">
+    <!-- Turned birch-wood parasol pole -->
+    <path d="M116 40 L116 206 Q120 210 124 206 L124 40 Z" fill="#D9B182" stroke="#342638" stroke-opacity="0.80" stroke-width="2.81" stroke-linejoin="round"/>
+    <!-- Interior canopy underside shadow -->
+    <ellipse cx="120" cy="126" rx="82" ry="18" fill="#8C413A" stroke="#342638" stroke-opacity="0.80" stroke-width="2.66"/>
+    <!-- Outer coral canopy base dome -->
+    <path d="M34 126 C40 68 80 46 120 46 C160 46 200 68 206 126 Q190 116 174 126 Q156 116 138 126 Q120 116 102 126 Q84 116 66 126 Q50 116 34 126 Z" fill="url(#paraCoral)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.96" stroke-linejoin="round"/>
+    <!-- Alternating warm cream scalloped stripe panels -->
+    <path d="M120 46 C94 56 76 84 66 126 Q84 116 102 126 C106 88 112 60 120 46 Z" fill="url(#paraCream)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.37" stroke-linejoin="round"/>
+    <path d="M120 46 C146 56 164 84 174 126 Q156 116 138 126 C134 88 128 60 120 46 Z" fill="url(#paraCream)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.37" stroke-linejoin="round"/>
+    <!-- Center coral panel seam & crisp outline -->
+    <path d="M120 46 C112 60 106 88 102 126 Q120 116 138 126 C134 88 128 60 120 46 Z" fill="url(#paraCoral)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.52" stroke-linejoin="round"/>
+    <!-- Subtle brass finial bead on crown -->
+    <circle cx="120" cy="40" r="8" fill="#E8B94A" stroke="#342638" stroke-opacity="0.80" stroke-width="2.52"/>
+    <circle cx="117.5" cy="37.5" r="2.5" fill="#FFF8D8"/>
+  </g>
+</g>
+</svg>

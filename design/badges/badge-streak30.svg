@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.76" numOctaves="3" seed="24" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.06 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="brassRim" x1="0.15" y1="0" x2="0.85" y2="1">
+    <stop offset="0%" stop-color="#FCE79C"/>
+    <stop offset="48%" stop-color="#DDA43E"/>
+    <stop offset="100%" stop-color="#9A6719"/>
+  </linearGradient>
+  <radialGradient id="enamelDisk" cx="40%" cy="34%" r="68%">
+    <stop offset="0%" stop-color="#FCE6A2"/>
+    <stop offset="56%" stop-color="#E2A63B"/>
+    <stop offset="100%" stop-color="#A66A17"/>
+  </radialGradient>
+
+  <linearGradient id="cloisonneSheen" x1="0.2" y1="0" x2="0.6" y2="1">
+    <stop offset="0%" stop-color="#FFFDF8" stop-opacity="0.40"/>
+    <stop offset="55%" stop-color="#FFFDF8" stop-opacity="0.12"/>
+    <stop offset="100%" stop-color="#FFFDF8" stop-opacity="0"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="120" cy="218" rx="60" ry="9" fill="#3B2B23" opacity="0.13"/>
+  <!-- Heirloom woven ribbon tails behind medal -->
+  <path d="M84 166 L64 222 L92 208 L108 226 L118 176 Z" fill="#C94E48" stroke="#3B2820" stroke-opacity="0.78" stroke-width="2.74" stroke-linejoin="round"/>
+  <path d="M156 166 L176 222 L148 208 L132 226 L122 176 Z" fill="#B5403B" stroke="#3B2820" stroke-opacity="0.78" stroke-width="2.74" stroke-linejoin="round"/>
+  <path d="M88 174 L75 212" stroke="#F4A89A" stroke-width="1.87" stroke-linecap="round" opacity="0.65"/>
+  <path d="M152 174 L165 212" stroke="#F4A89A" stroke-width="1.87" stroke-linecap="round" opacity="0.55"/>
+  <!-- Scalloped antique hammered-brass bezel -->
+  <path d="M109.8 30.8 Q120.0 24.0 130.2 30.8 Q140.4 37.7 152.7 36.9 Q165.0 36.1 170.4 47.1 Q175.9 58.1 186.9 63.6 Q197.9 69.0 197.1 81.3 Q196.3 93.6 203.2 103.8 Q210.0 114.0 203.2 124.2 Q196.3 134.4 197.1 146.7 Q197.9 159.0 186.9 164.4 Q175.9 169.9 170.4 180.9 Q165.0 191.9 152.7 191.1 Q140.4 190.3 130.2 197.2 Q120.0 204.0 109.8 197.2 Q99.6 190.3 87.3 191.1 Q75.0 191.9 69.6 180.9 Q64.1 169.9 53.1 164.4 Q42.1 159.0 42.9 146.7 Q43.7 134.4 36.8 124.2 Q30.0 114.0 36.8 103.8 Q43.7 93.6 42.9 81.3 Q42.1 69.0 53.1 63.6 Q64.1 58.1 69.6 47.1 Q75.0 36.1 87.3 36.9 Q99.6 37.7 109.8 30.8 Z" fill="url(#brassRim)" stroke="#3B2820" stroke-opacity="0.78" stroke-width="3.02" stroke-linejoin="round"/>
+  <circle cx="195.0" cy="114.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="189.3" cy="142.7" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="173.0" cy="167.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="148.7" cy="183.3" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="120.0" cy="189.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="91.3" cy="183.3" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="67.0" cy="167.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="50.7" cy="142.7" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="45.0" cy="114.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="50.7" cy="85.3" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="67.0" cy="61.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="91.3" cy="44.7" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="120.0" cy="39.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="148.7" cy="44.7" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="173.0" cy="61.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="189.3" cy="85.3" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <!-- Cloisonne gouache enamel disk -->
+  <circle cx="120" cy="114" r="68" fill="url(#enamelDisk)" stroke="#3B2820" stroke-opacity="0.78" stroke-width="2.74"/>
+  <circle cx="120" cy="114" r="62" fill="none" stroke="#FFFDF6" stroke-width="1.4" stroke-dasharray="4 5" opacity="0.45"/>
+  <!-- Soft enamel dome glaze highlight -->
+  <path d="M66 92 A54 54 0 0 1 138 61" fill="none" stroke="#FFFDF8" stroke-width="3.96" stroke-linecap="round" opacity="0.42"/>
+  <!-- Bespoke storybook center emblem -->
+  <g>
+    <!-- Trophy handles -->
+    <path d="M90 88 C74 88 74 114 94 118" fill="none" stroke="#3B2820" stroke-opacity="0.78" stroke-width="6.48" stroke-linecap="round"/>
+    <path d="M90 88 C74 88 74 114 94 118" fill="none" stroke="#FFF1B8" stroke-width="2.88" stroke-linecap="round"/>
+    <path d="M150 88 C166 88 166 114 146 118" fill="none" stroke="#3B2820" stroke-opacity="0.78" stroke-width="6.48" stroke-linecap="round"/>
+    <path d="M150 88 C166 88 166 114 146 118" fill="none" stroke="#FFF1B8" stroke-width="2.88" stroke-linecap="round"/>
+    <!-- Chalice stem & pedestal -->
+    <path d="M112 128 L112 146 L96 154 L144 154 L128 146 L128 128 Z" fill="#FBE59E" stroke="#3B2820" stroke-opacity="0.78" stroke-width="2.59" stroke-linejoin="round"/>
+    <!-- Sculpted trophy cup -->
+    <path d="M88 78 L152 78 C152 114 138 132 120 132 C102 132 88 114 88 78 Z" fill="#FFF5CA" stroke="#3B2820" stroke-opacity="0.78" stroke-width="2.74" stroke-linejoin="round"/>
+    <!-- Dewdrop crest embossed on chalice -->
+    <path d="M120 90 C125 99 130 105 130 111 C130 117 125.5 121 120 121 C114.5 121 110 117 110 111 C110 105 115 99 120 90 Z" fill="#52B5D8" stroke="#3B2820" stroke-opacity="0.78" stroke-width="1.87"/>
+  </g>
+  <!-- Delicate cloisonne glass enamel dome sheen -->
+  <path d="M62 106 A58 58 0 0 1 174 96 Q120 118 62 106 Z" fill="url(#cloisonneSheen)"/>
+</g>
+</svg>

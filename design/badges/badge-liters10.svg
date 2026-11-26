@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.76" numOctaves="3" seed="28" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.06 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="brassRim" x1="0.15" y1="0" x2="0.85" y2="1">
+    <stop offset="0%" stop-color="#FCE79C"/>
+    <stop offset="48%" stop-color="#DDA43E"/>
+    <stop offset="100%" stop-color="#9A6719"/>
+  </linearGradient>
+  <radialGradient id="enamelDisk" cx="40%" cy="34%" r="68%">
+    <stop offset="0%" stop-color="#FBC0D4"/>
+    <stop offset="56%" stop-color="#DD7398"/>
+    <stop offset="100%" stop-color="#A34168"/>
+  </radialGradient>
+
+  <linearGradient id="cloisonneSheen" x1="0.2" y1="0" x2="0.6" y2="1">
+    <stop offset="0%" stop-color="#FFFDF8" stop-opacity="0.40"/>
+    <stop offset="55%" stop-color="#FFFDF8" stop-opacity="0.12"/>
+    <stop offset="100%" stop-color="#FFFDF8" stop-opacity="0"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="120" cy="218" rx="60" ry="9" fill="#3B2B23" opacity="0.13"/>
+
+  <!-- Scalloped antique hammered-brass bezel -->
+  <path d="M110.8 30.5 Q120.0 24.0 129.2 30.5 Q138.5 37.1 149.6 35.2 Q160.8 33.3 166.3 43.2 Q171.7 53.1 182.6 56.2 Q193.5 59.4 194.1 70.7 Q194.8 82.0 203.2 89.5 Q211.6 97.1 207.3 107.5 Q203.0 118.0 207.3 128.5 Q211.6 138.9 203.2 146.5 Q194.8 154.0 194.1 165.3 Q193.5 176.6 182.6 179.8 Q171.7 182.9 166.3 192.8 Q160.8 202.7 149.6 200.8 Q138.5 198.9 129.2 205.5 Q120.0 212.0 110.8 205.5 Q101.5 198.9 90.4 200.8 Q79.2 202.7 73.7 192.8 Q68.3 182.9 57.4 179.8 Q46.5 176.6 45.9 165.3 Q45.2 154.0 36.8 146.5 Q28.4 138.9 32.7 128.5 Q37.0 118.0 32.7 107.5 Q28.4 97.1 36.8 89.5 Q45.2 82.0 45.9 70.7 Q46.5 59.4 57.4 56.2 Q68.3 53.1 73.7 43.2 Q79.2 33.3 90.4 35.2 Q101.5 37.1 110.8 30.5 Z" fill="url(#brassRim)" stroke="#3B2820" stroke-opacity="0.78" stroke-width="3.02" stroke-linejoin="round"/>
+  <circle cx="199.0" cy="118.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="193.0" cy="148.2" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="175.9" cy="173.9" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="150.2" cy="191.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="120.0" cy="197.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="89.8" cy="191.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="64.1" cy="173.9" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="47.0" cy="148.2" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="41.0" cy="118.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="47.0" cy="87.8" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="64.1" cy="62.1" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="89.8" cy="45.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="120.0" cy="39.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="150.2" cy="45.0" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="175.9" cy="62.1" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <circle cx="193.0" cy="87.8" r="2.2" fill="#FFF4D0" opacity="0.82"/>
+  <!-- Cloisonne gouache enamel disk -->
+  <circle cx="120" cy="118" r="72" fill="url(#enamelDisk)" stroke="#3B2820" stroke-opacity="0.78" stroke-width="2.74"/>
+  <circle cx="120" cy="118" r="66" fill="none" stroke="#FFFDF6" stroke-width="1.4" stroke-dasharray="4 5" opacity="0.45"/>
+  <!-- Soft enamel dome glaze highlight -->
+  <path d="M62 96 A58 58 0 0 1 138 61" fill="none" stroke="#FFFDF8" stroke-width="3.96" stroke-linecap="round" opacity="0.42"/>
+  <!-- Bespoke storybook center emblem -->
+  <g>
+    <!-- Shimmering impact ripple ring beneath splash crown -->
+    <ellipse cx="120" cy="146" rx="44" ry="11" fill="#8CDDF0" fill-opacity="0.6" stroke="#3B2820" stroke-opacity="0.55" stroke-width="1.58"/>
+    <!-- Unmistakable flaring water-splash crown arcing outward into tips -->
+    <path d="M84 144 C74 126 68 108 76 102 C82 98 92 114 98 124 C100 108 106 96 112 96 C117 96 118 112 120 122 C122 112 123 96 128 96 C134 96 140 108 142 124 C148 114 158 98 164 102 C172 108 166 126 156 144 C144 152 96 152 84 144 Z" fill="#D8F6FC" stroke="#245B78" stroke-opacity="0.78" stroke-width="2.02" stroke-linejoin="round"/>
+    <path d="M90 143 Q120 150 150 143" fill="none" stroke="#58BEE0" stroke-width="2.88" stroke-linecap="round" opacity="0.75"/>
+    <!-- Five dynamic leaping pearlescent splash beads bursting from crown tips -->
+    <path d="M120 72 C125 80 128 86 128 90 C128 94.5 124.5 98 120 98 C115.5 98 112 94.5 112 90 C112 86 115 80 120 72 Z" fill="#FFFDF8" stroke="#245B78" stroke-opacity="0.72" stroke-width="1.73" stroke-linejoin="round"/>
+    <ellipse cx="94" cy="84" rx="5.5" ry="7.5" transform="rotate(-26 94 84)" fill="#EAF9FD" stroke="#245B78" stroke-opacity="0.7" stroke-width="1.58"/>
+    <ellipse cx="146" cy="84" rx="5.5" ry="7.5" transform="rotate(26 146 84)" fill="#EAF9FD" stroke="#245B78" stroke-opacity="0.7" stroke-width="1.58"/>
+    <circle cx="72" cy="88" r="4.5" fill="#FFFDF8" stroke="#245B78" stroke-opacity="0.65" stroke-width="1.44"/>
+    <circle cx="168" cy="88" r="4.5" fill="#FFFDF8" stroke="#245B78" stroke-opacity="0.65" stroke-width="1.44"/>
+  </g>
+  <!-- Delicate cloisonne glass enamel dome sheen -->
+  <path d="M58 110 A62 62 0 0 1 178 100 Q120 122 58 110 Z" fill="url(#cloisonneSheen)"/>
+</g>
+</svg>

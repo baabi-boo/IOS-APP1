@@ -23,23 +23,36 @@ struct DewyApp: App {
 struct RootView: View {
     @Environment(HydrationStore.self) private var store
     @Environment(PurchaseManager.self) private var purchases
+    @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
     @State private var motion = MotionManager()
+
+    /// True whenever the active screen displays a deep twilight or night sky beneath the status bar.
+    private var usesLightStatusBar: Bool {
+        guard store.hasOnboarded else { return false }
+        if router.tab == .journey {
+            return store.todayChapter == .grove || store.todayChapter == .lake
+        }
+        return store.theme.prefersLightStatusBar && (router.tab == .today || router.tab == .friends)
+    }
 
     var body: some View {
         ZStack {
             if store.hasOnboarded {
                 MainTabView()
-                    .transition(.opacity.combined(with: .scale(scale: 1.04)))
+                    .transition(.opacity.combined(with: .scale(scale: 1.03)))
             } else {
                 OnboardingView()
-                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
             }
         }
-        .animation(.smooth(duration: 0.6), value: store.hasOnboarded)
+        .animation(.smooth(duration: 0.55), value: store.hasOnboarded)
         .environment(\.dewyTheme, store.theme)
         .environment(\.dewySlosh, motion.slosh)
-        .preferredColorScheme(.light)
+        // Pin all cotton-paper chrome and controls to warm light mode while letting the
+        // window's status bar switch cleanly to crisp white over twilight/night skies.
+        .environment(\.colorScheme, .light)
+        .preferredColorScheme(usesLightStatusBar ? .dark : .light)
         .tint(store.theme.accent)
         .task {
             await purchases.start()
@@ -112,7 +125,7 @@ struct QueuedDrink: Equatable {
     var amount: Double
 }
 
-/// App-wide navigation state, so the tab bar's add button works from every tab.
+/// App-wide navigation state, so the dock's add stamp works from every tab.
 @MainActor
 @Observable
 final class AppRouter {
@@ -154,6 +167,15 @@ enum AppTab: String, CaseIterable, Identifiable {
         }
     }
 
+    var inactiveIcon: String {
+        switch self {
+        case .today: "drop"
+        case .journey: "map"
+        case .friends: "heart"
+        case .insights: "chart.bar"
+        }
+    }
+
     static var initial: AppTab {
         switch LaunchOptions.screenshot {
         case "insights": .insights
@@ -185,41 +207,44 @@ struct MainTabView: View {
             }
             .id(router.tab)
             .transition(.asymmetric(
-                insertion: .opacity.combined(with: .offset(y: 16)).combined(with: .scale(scale: 0.985)),
+                insertion: .opacity.combined(with: .offset(y: 12)).combined(with: .scale(scale: 0.99)),
                 removal: .opacity
             ))
 
-            // Content fades out softly behind the floating tab bar.
+            // Subtle airy paper mist tucked strictly behind the dock.
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
                 LinearGradient(
                     stops: [
                         .init(color: theme.canvas.opacity(0), location: 0),
-                        .init(color: theme.canvas.opacity(0.92), location: 0.5),
+                        .init(color: theme.canvas.opacity(0.84), location: 0.62),
                         .init(color: theme.canvas, location: 1)
                     ],
                     startPoint: .top, endPoint: .bottom
                 )
-                .frame(height: 140)
+                .frame(height: 56)
             }
             .ignoresSafeArea(edges: .bottom)
             .allowsHitTesting(false)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             FloatingTabBar()
-                .padding(.horizontal, 18)
-                .padding(.bottom, 2)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 4)
         }
         .sheet(isPresented: $router.showAddDrink) {
             DrinkPickerSheet { kind, amount in
                 router.log(kind, amount: amount)
             }
+            .preferredColorScheme(.light)
         }
         .sheet(isPresented: $router.showMe) {
             SettingsView()
+                .preferredColorScheme(.light)
         }
         .sheet(isPresented: $router.showPaywall) {
             PaywallView()
+                .preferredColorScheme(.light)
         }
         .onAppear {
             Task { @MainActor in
@@ -235,7 +260,7 @@ struct MainTabView: View {
     }
 }
 
-/// The floating clay tab bar, with a puffy aqua "+" in the middle for logging a drink.
+/// Tactile cotton-paper floating storybook dock with a nested circular cerulean stamp "+" button.
 struct FloatingTabBar: View {
     @Environment(\.dewyTheme) private var theme
     @Environment(AppRouter.self) private var router
@@ -250,9 +275,9 @@ struct FloatingTabBar: View {
             tabButton(.insights)
         }
         .padding(.horizontal, 8)
-        .frame(height: 72)
+        .frame(height: 62)
         .background {
-            ClaySurface(shape: RoundedRectangle(cornerRadius: 30, style: .continuous), fill: .white, glow: Palette.shadow, elevation: 1)
+            PaperSurface(shape: Capsule(), fill: Palette.paper, tint: Palette.shadow, elevation: 0.9)
         }
     }
 
@@ -261,53 +286,67 @@ struct FloatingTabBar: View {
         return Button {
             guard !isSelected else { return }
             Haptics.select()
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.76)) {
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
                 router.tab = item
             }
         } label: {
             VStack(spacing: 3) {
-                Image(systemName: item.icon)
-                    .font(.system(size: 19, weight: .heavy))
+                Image(systemName: isSelected ? item.icon : item.inactiveIcon)
+                    .font(.system(size: 17.5, weight: isSelected ? .bold : .medium))
                     .symbolEffect(.bounce, value: isSelected)
-                    .frame(width: 50, height: 32)
+                    .frame(width: 44, height: 28)
                     .background {
                         if isSelected {
                             Capsule()
-                                .fill(LinearGradient(colors: [Palette.aquaSoft, Color(hex: 0xC9ECFA)], startPoint: .top, endPoint: .bottom))
-                                .overlay(Capsule().stroke(.white, lineWidth: 1.2))
+                                .fill(Palette.aquaSoft)
+                                .overlay(Capsule().stroke(Palette.aqua.opacity(0.22), lineWidth: 1))
                                 .matchedGeometryEffect(id: "tab", in: namespace)
                         }
                     }
-                    .foregroundStyle(isSelected ? Palette.aquaDeep : theme.inkFaint)
+                    .foregroundStyle(isSelected ? Palette.aquaDeep : theme.inkSoft.opacity(0.82))
                 Text(item.title)
-                    .font(.dewy(10.5, .heavy))
+                    .font(.dewy(10, isSelected ? .bold : .semibold))
+                    .tracking(0.15)
                     .foregroundStyle(isSelected ? theme.ink : theme.inkSoft)
             }
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
         }
-        .buttonStyle(SquishyButtonStyle(scale: 0.86))
+        .buttonStyle(SquishyButtonStyle(scale: 0.9))
         .accessibilityLabel(item.title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var addButton: some View {
-        Button {
-            Haptics.tap()
-            SoundFX.play(.pop, volume: 0.35)
-            router.showAddDrink = true
-        } label: {
-            Image(systemName: "plus")
-                .font(.system(size: 26, weight: .black))
-                .foregroundStyle(.white)
-                .shadow(color: Palette.aquaDeep.opacity(0.5), radius: 0, x: 0, y: 1.5)
-                .frame(width: 62, height: 58)
-                .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        ZStack {
+            Circle()
+                .fill(Palette.paper)
+                .overlay(Circle().stroke(Ink.hairline, lineWidth: 1))
+                .frame(width: 52, height: 52)
+
+            Button {
+                Haptics.tap()
+                SoundFX.play(.pop, volume: 0.35)
+                router.showAddDrink = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 19, weight: .bold))
+                    .foregroundStyle(Palette.paper)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Circle())
+            }
+            .buttonStyle(
+                StampButtonStyle(
+                    fill: theme.accent,
+                    lip: theme.accentDeep,
+                    shape: AnyShape(Circle()),
+                    depth: 2.5
+                )
+            )
+            .shadow(color: theme.accentDeep.opacity(0.24), radius: 6, x: 0, y: 3)
+            .offset(y: 0.5)
         }
-        .buttonStyle(CandyButtonStyle(fill: theme.accent, lip: theme.accentDeep, shape: AnyShape(RoundedRectangle(cornerRadius: 22, style: .continuous)), depth: 5))
-        .shadow(color: theme.accent.opacity(0.4), radius: 12, x: 0, y: 8)
-        .offset(y: -14)
-        .frame(width: 76)
+        .frame(width: 60)
         .accessibilityLabel("Add a drink")
     }
 }

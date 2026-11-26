@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// The Journey tab: every day the goal is reached, Dewy travels somewhere new.
-/// Today's place fills the top of the screen, with its four story moments, the trail,
-/// past adventures, week-long challenges and badges below.
+/// The Journey tab: every day the goal is reached, Dewy travels to a new illustrated chapter.
+/// A live multi-layer storybook panorama fills the top, followed by the poetic story journal,
+/// botanical trail, past adventure postcards, week-long challenges and cloisonné badges.
 struct JourneyView: View {
     @Environment(HydrationStore.self) private var store
     @Environment(PurchaseManager.self) private var purchases
@@ -13,16 +13,16 @@ struct JourneyView: View {
     @State private var selectedBadge: Achievement?
     @State private var confetti = 0
 
-    /// Visible height of the scene above the sheet.
-    private let heroHeight: CGFloat = 452
-    /// Extra art drawn above the scroll view so the scene runs under the status bar.
+    /// Visible height of the panorama above the sheet overlap.
+    private let heroHeight: CGFloat = 446
+    /// Extra panorama drawn above the scroll view so it bleeds seamlessly under the status bar.
     private let heroBleed: CGFloat = 130
-    /// The sheet tucks over the bottom of the scene.
+    /// Rounded cotton-paper sheet overlaps the lower foreground border.
     private let sheetOverlap: CGFloat = 40
-    /// Art aspect ratio (1290×1728).
-    private let artAspect: CGFloat = 1290.0 / 1728.0
-    /// Where the open ground sits in every journey picture.
-    private let groundY: CGFloat = 0.785
+
+    private var isDarkChapter: Bool {
+        store.todayChapter == .grove || store.todayChapter == .lake
+    }
 
     var body: some View {
         ScrollViewReader { reader in
@@ -46,8 +46,9 @@ struct JourneyView: View {
         }
         .sheet(item: $selectedBadge) { badge in
             BadgeDetailSheet(badge: badge, unlocked: store.unlockedAchievements().contains(badge))
-                .presentationDetents([.height(430)])
-                .presentationCornerRadius(38)
+                .preferredColorScheme(.light)
+                .presentationDetents([.height(436)])
+                .presentationCornerRadius(34)
                 .presentationBackground(theme.canvas)
         }
     }
@@ -57,73 +58,118 @@ struct JourneyView: View {
     private var hero: some View {
         let chapter = store.todayChapter
         let unlocked = store.beatsUnlocked
+        let dark = isDarkChapter
+        let totalSceneHeight = heroHeight + heroBleed
+        let feetY = totalSceneHeight * 0.835 - heroBleed
+
         return GeometryReader { proxy in
             let width = proxy.size.width
-            let artHeight = max(heroHeight + heroBleed, width / artAspect)
-            let artWidth = artHeight * artAspect
-            let feet = heroHeight - artHeight * (1 - groundY)
-
             ZStack(alignment: .top) {
-                // The place, anchored to the bottom so the ground always lines up with Dewy.
-                Image(chapter.imageName)
-                    .resizable()
-                    .interpolation(.high)
-                    .frame(width: max(artWidth, width), height: artHeight)
-                    .frame(width: width, height: heroHeight + heroBleed, alignment: .bottom)
-                    .clipped()
+                JourneySceneView(chapter: chapter)
+                    .frame(width: width, height: totalSceneHeight)
                     .overlay(alignment: .top) {
-                        LinearGradient(colors: [.white.opacity(0.6), .white.opacity(0)], startPoint: .top, endPoint: .bottom)
-                            .frame(height: heroBleed + 200)
+                        headerScrim(isDark: dark)
+                            .frame(height: heroBleed + (dark ? 185 : 165))
                     }
-                    // Taller than its frame: the extra art spills up under the status bar.
                     .frame(width: width, height: heroHeight, alignment: .bottom)
 
-                header(chapter: chapter, unlocked: unlocked)
+                header(chapter: chapter, unlocked: unlocked, isDark: dark)
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
                     .floatIn(appeared, index: 0)
 
-                travellers
-                    .position(x: width / 2, y: feet)
+                travellers(isDark: dark)
+                    .position(x: width * 0.5, y: feetY)
                     .floatIn(appeared, index: 1)
             }
             .frame(width: width, height: heroHeight)
         }
         .frame(height: heroHeight)
         .background(alignment: .top) {
-            // Overscrolling past the top shows more sky, never a gap.
-            chapter.tint.blended(with: .white, by: 0.55)
-                .frame(height: 900)
-                .offset(y: -900)
+            overscrollSky(for: chapter)
+                .frame(height: 600)
+                .offset(y: -600)
         }
     }
 
-    private func header(chapter: Chapter, unlocked: Int) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private func headerScrim(isDark: Bool) -> LinearGradient {
+        if isDark {
+            return LinearGradient(
+                stops: [
+                    .init(color: Color(hex: 0x1D224E).opacity(0.76), location: 0),
+                    .init(color: Color(hex: 0x262C60).opacity(0.42), location: 0.58),
+                    .init(color: Color.clear, location: 1)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+        return LinearGradient(
+            stops: [
+                .init(color: Palette.paper.opacity(0.46), location: 0),
+                .init(color: Palette.paper.opacity(0.14), location: 0.62),
+                .init(color: Color.clear, location: 1)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private func overscrollSky(for chapter: Chapter) -> Color {
+        switch chapter {
+        case .spring: Color(hex: 0xE2F7EE)
+        case .brook: Color(hex: 0xDDF4FF)
+        case .meadow: Color(hex: 0xEFFBE8)
+        case .falls: Color(hex: 0xDCEAFF)
+        case .cove: Color(hex: 0xFFE9DB)
+        case .peak: Color(hex: 0xFFEAD4)
+        case .grove: Color(hex: 0x24244E)
+        case .lake: Color(hex: 0x131B3E)
+        }
+    }
+
+    private func header(chapter: Chapter, unlocked: Int, isDark: Bool) -> some View {
+        let titleColor: Color = isDark ? Ink.starlight : Ink.primary
+        let haloColor: Color = isDark ? Color(hex: 0x121638).opacity(0.55) : Palette.paper.opacity(0.75)
+
+        return VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 HStack(spacing: 6) {
-                    ClayIcon(glyph: .map, size: 20)
-                    CapsLabel(text: "Lap \(store.journeyLap) · Stop \(stopNumber(chapter)) of \(Chapter.allCases.count)", color: theme.inkSoft, size: 10.5)
+                    ClayIcon(glyph: .map, size: 18)
+                    CapsLabel(
+                        text: "Lap \(store.journeyLap) · Stop \(stopNumber(chapter)) of \(Chapter.allCases.count)",
+                        color: theme.inkSoft,
+                        size: 10
+                    )
                 }
                 .padding(.leading, 8)
                 .padding(.trailing, 12)
                 .frame(height: 32)
-                .background { ClaySurface(shape: Capsule(), fill: .white.opacity(0.92), glow: chapter.tint, elevation: 0.45) }
+                .background {
+                    PaperSurface(shape: Capsule(), fill: Palette.paper.opacity(0.94), tint: chapter.tint, elevation: 0.45)
+                }
+
                 Spacer(minLength: 0)
+
                 CountPill(glyph: .drop, value: store.dropBalance, tint: Palette.coral, compact: true)
             }
+
             Text(chapter.title)
                 .font(.display(36, .bold))
-                .foregroundStyle(Ink.primary)
-                .shadow(color: .white.opacity(0.9), radius: 10, x: 0, y: 0)
-            MomentsMeter(unlocked: unlocked, tint: chapter.tint)
+                .tracking(-0.5)
+                .foregroundStyle(titleColor)
+                .shadow(color: haloColor, radius: 10, x: 0, y: 1)
+
+            MomentsMeter(unlocked: unlocked, tint: chapter.tint, isDark: isDark)
         }
     }
 
-    /// Dewy (and the first companion) standing on the path.
-    private var travellers: some View {
-        let size: CGFloat = 132
+    /// Dewy and the first companion standing grounded on the chapter panorama's mossy foreground ledge.
+    private func travellers(isDark: Bool) -> some View {
+        let size: CGFloat = 128
         let height = size * DewyGeometry.canvas.height / DewyGeometry.canvas.width
+        let shadowColor = isDark ? Color(hex: 0x101432).opacity(0.36) : Color(hex: 0x2F4432).opacity(0.24)
+
         return HStack(alignment: .bottom, spacing: -6) {
             MascotView(
                 progress: store.todayProgress,
@@ -132,23 +178,30 @@ struct JourneyView: View {
                 outfits: store.outfits,
                 sparkles: store.todayProgress >= 1,
                 bands: store.todayBands,
-                showsShadow: false
+                showsShadow: false,
+                isNight: isDark
             )
+            .liveMeniscusGlow(strength: 0.12)
+
             if let friend = store.companions.first {
-                ArtImage(name: friend.imageName, fallback: "pawprint.fill", tint: friend.tint, size: 78)
-                    .offset(y: 2)
+                FriendView(
+                    friend: friend,
+                    size: 74,
+                    animated: true,
+                    isNight: isDark
+                )
+                .offset(y: 4)
             }
         }
         .background(alignment: .bottom) {
             Ellipse()
-                .fill(Color(hex: 0x3E5A3A).opacity(0.22))
-                .frame(width: store.companions.isEmpty ? 110 : 180, height: 20)
+                .fill(shadowColor)
+                .frame(width: store.companions.isEmpty ? 104 : 174, height: 18)
                 .blur(radius: 5)
                 .offset(y: 6)
         }
         .frame(height: height, alignment: .bottom)
-        // `.position` places the center; lift by half so the feet land on the ground line.
-        .offset(y: -height / 2 + 6)
+        .offset(y: -height * 0.5 + 6)
     }
 
     private func stopNumber(_ chapter: Chapter) -> Int {
@@ -168,7 +221,7 @@ struct JourneyView: View {
                 .id("badges")
         }
         .padding(.top, 26)
-        .padding(.bottom, 130)
+        .padding(.bottom, 128)
         .frame(maxWidth: .infinity)
         .canvasSheet()
     }
@@ -192,7 +245,7 @@ struct JourneyView: View {
                     )
                 }
             }
-            .dewyCard(padding: 16, glow: chapter.tint)
+            .dewyCard(padding: 18, glow: chapter.tint)
             .padding(.horizontal, 20)
         }
     }
@@ -245,9 +298,9 @@ struct JourneyView: View {
                 .padding(.horizontal, 20)
             if stops.isEmpty {
                 HStack(spacing: 14) {
-                    ClayIcon(glyph: .chest, size: 52)
-                    Text("Reach your goal and every place Dewy visits will be kept here.")
-                        .font(.dewy(14.5, .semibold))
+                    ClayIcon(glyph: .chest, size: 48)
+                    Text("Reach your goal and every place Dewy visits will be kept here like a postcard.")
+                        .font(.editorialItalic(14.5))
                         .foregroundStyle(theme.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
@@ -270,7 +323,7 @@ struct JourneyView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 2)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, 14)
                 }
                 .scrollIndicators(.hidden)
                 .scrollClipDisabled()
@@ -308,7 +361,6 @@ struct JourneyView: View {
                 store.join(challenge)
                 confetti += 1
             case .failed:
-                // Start again from today.
                 Haptics.success()
                 store.join(challenge)
             case .active:
@@ -361,40 +413,51 @@ struct JourneyView: View {
 
 // MARK: - Moments meter
 
-/// Four little clay stones that light up as the day's story unfolds.
+/// Four antique-brass wax seal tokens that illuminate as the chapter's story unfolds.
 private struct MomentsMeter: View {
     var unlocked: Int
     var tint: Color
+    var isDark: Bool
 
     var body: some View {
+        let labelInk: Color = isDark ? Ink.starlight.opacity(0.90) : Ink.primary.opacity(0.80)
+        let unlitFill: Color = isDark ? Ink.starlight.opacity(0.18) : Palette.paper.opacity(0.84)
+        let unlitInk: Color = isDark ? Ink.starlight.opacity(0.70) : Ink.soft
+
         HStack(spacing: 6) {
             ForEach(0..<4, id: \.self) { index in
                 let lit = index < unlocked
                 ZStack {
                     Circle()
-                        .fill(lit ? AnyShapeStyle(LinearGradient(colors: [Palette.butterSoft, Palette.butter], startPoint: .top, endPoint: .bottom)) : AnyShapeStyle(Color.white.opacity(0.75)))
+                        .fill(lit ? Palette.butter : unlitFill)
                     if lit {
                         Image(systemName: "star.fill")
-                            .font(.system(size: 11, weight: .black))
-                            .foregroundStyle(Palette.butterDeep)
+                            .font(.system(size: 10.5, weight: .bold))
+                            .foregroundStyle(Palette.paper)
                     } else {
                         Text("\(index + 1)")
-                            .font(.display(12))
-                            .foregroundStyle(Ink.faint)
+                            .font(.dewy(11.5, .bold))
+                            .monospacedDigit()
+                            .foregroundStyle(unlitInk)
                     }
                 }
                 .frame(width: 26, height: 26)
-                .overlay(Circle().stroke(.white, lineWidth: 2))
-                .shadow(color: (lit ? Palette.butterDeep : Palette.shadow).opacity(0.3), radius: 4, x: 0, y: 2)
-                .scaleEffect(lit ? 1 : 0.9)
+                .overlay {
+                    Circle().stroke(
+                        lit ? Palette.butterDeep.opacity(0.55) : (isDark ? Ink.starlight.opacity(0.28) : Ink.hairlineStrong),
+                        lineWidth: 1.2
+                    )
+                }
+                .shadow(color: Palette.shadow.opacity(lit ? 0.22 : 0.08), radius: 3, x: 0, y: 1.5)
+                .scaleEffect(lit ? 1 : 0.92)
             }
-            Text(unlocked == 4 ? "Adventure complete!" : "\(unlocked) of 4 moments")
-                .font(.dewy(13.5, .heavy))
-                .foregroundStyle(Ink.primary.opacity(0.75))
+
+            Text(unlocked == 4 ? "Chapter complete" : "\(unlocked) of 4 moments")
+                .font(.dewy(13, .bold))
+                .foregroundStyle(labelInk)
                 .padding(.leading, 4)
-                .shadow(color: .white, radius: 6)
         }
-        .animation(.spring(response: 0.5, dampingFraction: 0.65), value: unlocked)
+        .animation(.spring(response: 0.48, dampingFraction: 0.72), value: unlocked)
     }
 }
 
@@ -409,62 +472,65 @@ private struct BeatRow: View {
     var tint: Color
 
     private var milestone: Int { (index + 1) * 25 }
+    private var inkAccent: Color { tint.blended(with: Ink.primary, by: 0.36) }
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
             VStack(spacing: 0) {
                 ZStack {
                     Circle()
-                        .fill(isUnlocked
-                              ? AnyShapeStyle(LinearGradient(colors: [tint.blended(with: .white, by: 0.25), tint], startPoint: .top, endPoint: .bottom))
-                              : AnyShapeStyle(theme.well))
+                        .fill(isUnlocked ? inkAccent : theme.well)
                     if isUnlocked {
                         Text("\(index + 1)")
-                            .font(.display(16, .bold))
-                            .foregroundStyle(.white)
-                            .shadow(color: tint.blended(with: .black, by: 0.3).opacity(0.4), radius: 0, x: 0, y: 1)
+                            .font(.display(15, .bold))
+                            .foregroundStyle(Palette.paper)
                     } else {
                         Image(systemName: "lock.fill")
-                            .font(.system(size: 12, weight: .heavy))
+                            .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Ink.faint)
                     }
                 }
-                .frame(width: 34, height: 34)
-                .overlay(Circle().stroke(.white, lineWidth: 2.5))
-                .shadow(color: (isUnlocked ? tint : Palette.shadow).opacity(0.3), radius: 5, x: 0, y: 3)
+                .frame(width: 32, height: 32)
+                .overlay {
+                    Circle().stroke(isUnlocked ? inkAccent.opacity(0.35) : Ink.hairline, lineWidth: 1.2)
+                }
+
                 if !isLast {
                     Capsule()
-                        .fill(isUnlocked ? tint.opacity(0.45) : theme.line)
-                        .frame(width: 4)
+                        .fill(isUnlocked ? inkAccent.opacity(0.35) : theme.line)
+                        .frame(width: 2.5)
                         .frame(maxHeight: .infinity)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 5)
                 }
             }
-            VStack(alignment: .leading, spacing: 6) {
+
+            VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
-                    CapsLabel(text: "At \(milestone)%", color: isUnlocked ? tint.blended(with: .black, by: 0.35) : Ink.faint, size: 10.5)
+                    CapsLabel(text: "At \(milestone)%", color: isUnlocked ? inkAccent : Ink.faint, size: 10.5)
                     Spacer(minLength: 0)
-                    HStack(spacing: 2) {
-                        ClayIcon(glyph: .drop, size: 14)
+                    HStack(spacing: 3) {
+                        ClayIcon(glyph: .drop, size: 13)
                         Text("+\(DropRules.perBeat)")
-                            .font(.display(13))
+                            .font(.dewy(12.5, .bold))
+                            .monospacedDigit()
                             .foregroundStyle(isUnlocked ? Palette.coralDeep : Ink.faint)
                     }
-                    .opacity(isUnlocked ? 1 : 0.6)
+                    .opacity(isUnlocked ? 1 : 0.65)
                 }
+
                 if isUnlocked {
                     Text(text)
-                        .font(.dewy(15.5, .semibold))
+                        .font(.editorialItalic(16))
+                        .lineSpacing(3)
                         .foregroundStyle(theme.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                        .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .topLeading)))
+                        .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .topLeading)))
                 } else {
-                    // A soft placeholder hints at the moment without spoiling it.
                     VStack(alignment: .leading, spacing: 6) {
-                        Capsule().fill(theme.well).frame(height: 10)
-                        Capsule().fill(theme.well).frame(width: 150, height: 10)
+                        Capsule().fill(theme.well).frame(height: 8)
+                        Capsule().fill(theme.well).frame(width: 148, height: 8)
                     }
-                    .padding(.top, 4)
+                    .padding(.top, 5)
                 }
             }
             .padding(.bottom, isLast ? 0 : 18)
@@ -488,57 +554,70 @@ private struct TrailStop: View {
 
     var body: some View {
         let isHere = state == .here
-        let size: CGFloat = isHere ? 96 : 76
+        let size: CGFloat = isHere ? 94 : 74
+        let isDark = chapter == .grove || chapter == .lake
+
         VStack(spacing: 8) {
             ZStack(alignment: .bottom) {
-                Image(chapter.imageName)
-                    .resizable()
-                    .interpolation(.high)
-                    .scaledToFill()
+                JourneySceneView(chapter: chapter, animated: false)
                     .frame(width: size, height: size)
                     .clipShape(Circle())
                     .saturation(state == .ahead ? 0.25 : 1)
-                    .opacity(state == .ahead ? 0.7 : 1)
-                    .overlay(Circle().stroke(.white, lineWidth: isHere ? 4 : 3))
-                    .shadow(color: (state == .ahead ? Palette.shadow : chapter.tint).opacity(0.45), radius: isHere ? 12 : 6, x: 0, y: isHere ? 8 : 4)
+                    .opacity(state == .ahead ? 0.72 : 1)
+                    .overlay(Circle().stroke(Palette.paper, lineWidth: isHere ? 3.5 : 2.5))
+                    .overlay(Circle().stroke(isHere ? Palette.aqua : Ink.hairlineStrong, lineWidth: isHere ? 1.5 : 1))
+                    .shadow(color: Palette.shadow.opacity(isHere ? 0.18 : 0.10), radius: isHere ? 10 : 5, x: 0, y: isHere ? 5 : 3)
+
                 if isHere {
-                    MascotView(progress: progress, mood: mood, size: 40, outfits: outfits, bands: bands, animated: false, showsShadow: false)
-                        .offset(y: 10)
+                    MascotView(
+                        progress: progress,
+                        mood: mood,
+                        size: 38,
+                        outfits: outfits,
+                        bands: bands,
+                        animated: false,
+                        showsShadow: false,
+                        isNight: isDark
+                    )
+                    .offset(y: 10)
                 }
+
                 if state == .visited {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 11, weight: .black))
-                        .foregroundStyle(.white)
-                        .frame(width: 24, height: 24)
+                        .font(.system(size: 10.5, weight: .bold))
+                        .foregroundStyle(Palette.paper)
+                        .frame(width: 22, height: 22)
                         .background(Circle().fill(Palette.mint))
-                        .overlay(Circle().stroke(.white, lineWidth: 2))
+                        .overlay(Circle().stroke(Palette.paper, lineWidth: 2))
                         .offset(x: size * 0.34, y: -size * 0.68)
                 }
+
                 if state == .ahead {
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 14, weight: .heavy))
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.2), radius: 3)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Palette.paper)
+                        .shadow(color: Ink.primary.opacity(0.35), radius: 3)
                         .frame(maxHeight: .infinity)
                 }
             }
             .frame(width: size, height: size)
+
             VStack(spacing: 1) {
                 Text(chapter.title)
-                    .font(.display(isHere ? 14 : 12.5))
+                    .font(.display(isHere ? 14 : 12.5, .semibold))
                     .foregroundStyle(state == .ahead ? Ink.soft : Ink.primary)
                     .lineLimit(1)
                 Text(isHere ? "You are here" : "Stop \(number)")
-                    .font(.dewy(11, .heavy))
-                    .foregroundStyle(isHere ? chapter.tint.blended(with: .black, by: 0.35) : Ink.faint)
+                    .font(.dewy(10.5, .bold))
+                    .foregroundStyle(isHere ? Palette.aquaDeep : Ink.faint)
             }
             .frame(width: 100)
         }
-        .frame(height: 150, alignment: .bottom)
+        .frame(height: 148, alignment: .bottom)
     }
 }
 
-/// A dotted path between two trail stops.
+/// Dotted botanical ink stepping path between trail medallions.
 private struct TrailDots: View {
     var done: Bool
 
@@ -546,13 +625,13 @@ private struct TrailDots: View {
         HStack(spacing: 5) {
             ForEach(0..<3, id: \.self) { _ in
                 Circle()
-                    .fill(done ? Palette.aqua.opacity(0.65) : Color(hex: 0xE9DCD0))
-                    .frame(width: 7, height: 7)
+                    .fill(done ? Palette.aqua.opacity(0.7) : Color(hex: 0xDFD3C3))
+                    .frame(width: 5.5, height: 5.5)
             }
         }
         .frame(width: 22)
-        .padding(.bottom, 60)
-        .frame(height: 150, alignment: .center)
+        .padding(.bottom, 58)
+        .frame(height: 148, alignment: .center)
     }
 }
 
@@ -564,42 +643,48 @@ private struct ArchiveCard: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            Image(stop.chapter.imageName)
-                .resizable()
-                .interpolation(.high)
-                .scaledToFill()
+            JourneySceneView(chapter: stop.chapter, animated: false)
                 .frame(width: 128, height: 164)
-                .clipped()
-                .blur(radius: locked ? 6 : 0)
-                .saturation(locked ? 0.6 : 1)
-            LinearGradient(colors: [.clear, .black.opacity(0.35)], startPoint: .center, endPoint: .bottom)
-            VStack(alignment: .leading, spacing: 1) {
+                .blur(radius: locked ? 5 : 0)
+                .saturation(locked ? 0.55 : 1)
+
+            LinearGradient(
+                colors: [.clear, Color(hex: 0x1E1826).opacity(0.58)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(stop.chapter.title)
-                    .font(.display(15))
+                    .font(.display(15, .semibold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Text(stop.date.formatted(.dateTime.month(.abbreviated).day()))
-                    .font(.dewy(12, .bold))
-                    .opacity(0.9)
+                    .font(.dewy(11.5, .bold))
+                    .opacity(0.88)
             }
-            .foregroundStyle(.white)
-            .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 1)
+            .foregroundStyle(Ink.starlight)
             .padding(12)
+
             if locked {
                 VStack(spacing: 6) {
-                    ClayIcon(glyph: .crown, size: 34)
+                    ClayIcon(glyph: .crown, size: 32)
                     PlusBadge()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(width: 128, height: 164)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(.white, lineWidth: 3)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Palette.paper, lineWidth: 3)
         }
-        .shadow(color: stop.chapter.tint.opacity(0.45), radius: 10, x: 0, y: 6)
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Ink.hairlineStrong, lineWidth: 1)
+        }
+        .shadow(color: Palette.shadow.opacity(0.14), radius: 10, x: 0, y: 5)
     }
 }
 
@@ -630,59 +715,70 @@ private struct ChallengeCard: View {
         }
     }
 
+    private var accentColor: Color {
+        challenge.tint.blended(with: Ink.primary, by: 0.14)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 14) {
-                IconTile(systemImage: challenge.symbol, color: challenge.tint, size: 50)
-                VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .top, spacing: 12) {
+                IconTile(systemImage: challenge.symbol, color: accentColor, size: 46, filled: false)
+
+                VStack(alignment: .leading, spacing: 3) {
                     Text(challenge.title)
-                        .font(.display(19))
+                        .font(.display(19, .semibold))
                         .foregroundStyle(theme.ink)
                     Text(stateLine)
-                        .font(.dewy(13.5, .semibold))
+                        .font(.dewy(13, .semibold))
                         .foregroundStyle(theme.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: 0)
-                // The prize: a wardrobe item plus drops.
-                VStack(spacing: 2) {
-                    ArtImage(name: challenge.reward.imageName, fallback: "tshirt.fill", tint: challenge.reward.tint, size: 50)
-                        .background {
-                            Circle().fill(challenge.reward.tint.opacity(0.22)).frame(width: 58, height: 58)
-                        }
-                    HStack(spacing: 2) {
+
+                Spacer(minLength: 4)
+
+                // Live vector wardrobe reward preview plus Dew Drops bonus.
+                VStack(spacing: 4) {
+                    ZStack {
+                        Circle()
+                            .fill(challenge.reward.tint.opacity(0.18))
+                            .overlay(Circle().stroke(Ink.hairline, lineWidth: 1))
+                            .frame(width: 58, height: 58)
+                        OutfitArtView(outfit: challenge.reward, size: 54)
+                    }
+                    HStack(spacing: 3) {
                         ClayIcon(glyph: .drop, size: 13)
                         Text("+\(DropRules.challenge)")
-                            .font(.display(12))
+                            .font(.dewy(11.5, .bold))
+                            .monospacedDigit()
                             .foregroundStyle(Palette.coralDeep)
                     }
                 }
             }
+
             HStack(spacing: 12) {
-                ChallengeDays(progress: progress, tint: challenge.tint)
+                ChallengeDays(progress: progress, tint: accentColor)
                 Spacer(minLength: 0)
                 Button(action: action) {
                     Text(buttonTitle)
-                        .font(.display(15))
-                        .foregroundStyle(buttonIsQuiet ? theme.ink : .white)
+                        .font(.dewy(14, .bold))
+                        .foregroundStyle(buttonIsQuiet ? theme.ink : Palette.paper)
                         .padding(.horizontal, 18)
-                        .frame(height: 38)
+                        .frame(height: 36)
                 }
-                .buttonStyle(CandyButtonStyle(
-                    fill: buttonIsQuiet ? .white : challenge.tint,
-                    lip: buttonIsQuiet ? Color(hex: 0xEEDFD3) : challenge.tint.blended(with: .black, by: 0.2),
-                    depth: 3
-                ))
+                .buttonStyle(
+                    StampButtonStyle(
+                        fill: buttonIsQuiet ? Palette.paper : accentColor,
+                        lip: buttonIsQuiet ? Color(hex: 0xDDD0BF) : accentColor.blended(with: Ink.primary, by: 0.25),
+                        depth: 3
+                    )
+                )
             }
         }
         .dewyCard(padding: 16, glow: progress.state == .notStarted ? nil : challenge.tint)
         .overlay(alignment: .topLeading) {
             if progress.state == .completed {
-                CapsLabel(text: "Done", color: .white, size: 10)
-                    .padding(.horizontal, 10)
-                    .frame(height: 22)
-                    .background(Palette.mint, in: Capsule())
-                    .offset(x: 14, y: -10)
+                StoryBadge(text: "Done", systemImage: "checkmark", tint: Palette.leafDeep, soft: Palette.mintSoft)
+                    .offset(x: 14, y: -11)
             }
         }
     }
@@ -690,7 +786,7 @@ private struct ChallengeCard: View {
     private var buttonIsQuiet: Bool { progress.state == .active }
 }
 
-/// One pebble per day of the challenge, filled as days pass.
+/// Matte hand-inked gouache progress beads, one per day of the challenge.
 private struct ChallengeDays: View {
     var progress: ChallengeProgress
     var tint: Color
@@ -700,15 +796,14 @@ private struct ChallengeDays: View {
             ForEach(0..<progress.total, id: \.self) { day in
                 let done = day < progress.daysDone
                 Capsule()
-                    .fill(done
-                          ? AnyShapeStyle(LinearGradient(colors: [tint.blended(with: .white, by: 0.25), tint], startPoint: .top, endPoint: .bottom))
-                          : AnyShapeStyle(Color(hex: 0xF4EAE0)))
-                    .frame(width: 18, height: 12)
-                    .overlay(alignment: .top) {
-                        if done {
-                            Capsule().fill(.white.opacity(0.45)).frame(height: 3).padding(.horizontal, 4).padding(.top, 2)
-                        }
+                    .fill(done ? tint : Palette.creamDeep)
+                    .overlay {
+                        Capsule().stroke(
+                            done ? tint.blended(with: Ink.primary, by: 0.28).opacity(0.45) : Ink.hairline,
+                            lineWidth: 1
+                        )
                     }
+                    .frame(width: 18, height: 10)
             }
         }
         .opacity(progress.state == .failed ? 0.5 : 1)
@@ -724,21 +819,22 @@ private struct BadgeTile: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            ArtImage(name: "badge-\(badge.rawValue)", fallback: badge.symbol, tint: badge.tint, size: 74)
+            ArtImage(name: "badge-\(badge.rawValue)", fallback: badge.symbol, tint: badge.tint, size: 70)
                 .saturation(unlocked ? 1 : 0)
-                .opacity(unlocked ? 1 : 0.38)
+                .opacity(unlocked ? 1 : 0.36)
                 .overlay(alignment: .bottomTrailing) {
                     if !unlocked {
                         Image(systemName: "lock.fill")
-                            .font(.system(size: 10, weight: .heavy))
-                            .foregroundStyle(.white)
-                            .frame(width: 22, height: 22)
-                            .background(Circle().fill(Ink.faint))
-                            .overlay(Circle().stroke(.white, lineWidth: 2))
+                            .font(.system(size: 9.5, weight: .bold))
+                            .foregroundStyle(Palette.paper)
+                            .frame(width: 21, height: 21)
+                            .background(Circle().fill(Ink.soft))
+                            .overlay(Circle().stroke(Palette.paper, lineWidth: 1.5))
                     }
                 }
+
             Text(badge.title)
-                .font(.display(13))
+                .font(.display(13, .semibold))
                 .foregroundStyle(unlocked ? theme.ink : theme.inkSoft)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
@@ -747,11 +843,11 @@ private struct BadgeTile: View {
         .padding(.vertical, 14)
         .padding(.horizontal, 6)
         .background {
-            ClaySurface(
-                shape: RoundedRectangle(cornerRadius: 24, style: .continuous),
-                fill: unlocked ? .white : Color(hex: 0xFBF5EF),
-                glow: unlocked ? badge.tint : Palette.shadow,
-                elevation: unlocked ? 0.8 : 0.35
+            PaperSurface(
+                shape: RoundedRectangle(cornerRadius: 22, style: .continuous),
+                fill: unlocked ? Palette.paper : Palette.parchment,
+                tint: unlocked ? badge.tint : Palette.shadow,
+                elevation: unlocked ? 0.75 : 0.3
             )
         }
     }
@@ -765,47 +861,58 @@ private struct BadgeDetailSheet: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Capsule().fill(Ink.faint.opacity(0.5)).frame(width: 40, height: 5).padding(.top, 10)
+            Capsule().fill(Ink.faint.opacity(0.5)).frame(width: 38, height: 4.5).padding(.top, 10)
             ZStack {
                 Circle()
-                    .fill(RadialGradient(colors: [badge.tint.opacity(unlocked ? 0.35 : 0.12), .clear], center: .center, startRadius: 10, endRadius: 110))
-                    .frame(width: 220, height: 220)
-                ArtImage(name: "badge-\(badge.rawValue)", fallback: badge.symbol, tint: badge.tint, size: 150)
+                    .fill(
+                        RadialGradient(
+                            colors: [badge.tint.opacity(unlocked ? 0.28 : 0.10), .clear],
+                            center: .center,
+                            startRadius: 10,
+                            endRadius: 105
+                        )
+                    )
+                    .frame(width: 210, height: 210)
+                ArtImage(name: "badge-\(badge.rawValue)", fallback: badge.symbol, tint: badge.tint, size: 146)
                     .saturation(unlocked ? 1 : 0)
-                    .opacity(unlocked ? 1 : 0.45)
-                    .scaleEffect(pop ? 1 : 0.6)
-                    .rotationEffect(.degrees(pop ? 0 : -12))
+                    .opacity(unlocked ? 1 : 0.42)
+                    .scaleEffect(pop ? 1 : 0.65)
+                    .rotationEffect(.degrees(pop ? 0 : -10))
             }
-            .frame(height: 170)
+            .frame(height: 168)
+
             VStack(spacing: 6) {
                 Text(badge.title)
                     .font(.display(26, .bold))
                     .foregroundStyle(Ink.primary)
                 Text(badge.detail)
-                    .font(.dewy(16, .semibold))
+                    .font(.editorialItalic(16))
                     .foregroundStyle(Ink.soft)
                     .multilineTextAlignment(.center)
                 HStack(spacing: 4) {
-                    ClayIcon(glyph: .drop, size: 16)
+                    ClayIcon(glyph: .drop, size: 15)
                     Text(unlocked ? "Earned \(DropRules.badge) drops" : "Worth \(DropRules.badge) drops")
-                        .font(.display(14))
+                        .font(.dewy(13.5, .bold))
                         .foregroundStyle(Palette.coralDeep)
                 }
                 .padding(.horizontal, 12)
-                .frame(height: 30)
+                .frame(height: 28)
                 .background(Palette.coralSoft, in: Capsule())
+                .overlay(Capsule().stroke(Palette.coral.opacity(0.25), lineWidth: 1))
                 .padding(.top, 6)
             }
             .padding(.horizontal, 28)
+
             Spacer(minLength: 0)
-            PrimaryButton(title: unlocked ? "Yay!" : "Keep going", style: unlocked ? .accent : .light, height: 54) {
+
+            PrimaryButton(title: unlocked ? "Wonderful!" : "Keep going", style: unlocked ? .accent : .light, height: 54) {
                 dismiss()
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 14)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.55)) { pop = true }
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.62)) { pop = true }
             if unlocked { Haptics.success() }
         }
     }

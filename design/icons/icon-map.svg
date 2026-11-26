@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="120" height="120" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="31" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.05 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="parch" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#FCF6E8"/>
+    <stop offset="100%" stop-color="#E6D8BE"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <polygon points="15,31 44,21 44,91 15,101" fill="#ECE4CE" stroke="#342638" stroke-opacity="0.86" stroke-width="3.5" stroke-linejoin="round"/>
+  <polygon points="44,21 76,31 76,101 44,91" fill="url(#parch)" stroke="#342638" stroke-opacity="0.86" stroke-width="3.5" stroke-linejoin="round"/>
+  <polygon points="76,31 105,21 105,91 76,101" fill="#DAECD9" stroke="#342638" stroke-opacity="0.86" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M24 76 Q46 58 60 66 Q78 76 94 46" fill="none" stroke="#42A6C9" stroke-width="4.2" stroke-linecap="round"/>
+  <path d="M26 52 Q56 44 86 58" fill="none" stroke="#C85343" stroke-width="2.8" stroke-dasharray="5 5" stroke-linecap="round"/>
+  <circle cx="90" cy="44" r="6" fill="#DE604A" stroke="#342638" stroke-opacity="0.86" stroke-width="2.4"/>
+</g>
+</svg>

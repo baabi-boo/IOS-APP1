@@ -1,50 +1,266 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<defs>
-  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1FA2FF"/><stop offset=".62" stop-color="#5CC8FF"/><stop offset="1" stop-color="#A9E6FF"/></linearGradient>
-  <radialGradient id="glow" cx="760" cy="230" r="520" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFF6C9" stop-opacity=".9"/><stop offset=".25" stop-color="#FFF6C9" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
-  <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3FD0E8"/><stop offset="1" stop-color="#14A9D6"/></linearGradient>
-</defs>
-<rect width="1024" height="1024" fill="url(#bg)"/>
-<rect width="1024" height="1024" fill="url(#glow)"/>
-<path d="M0,800 Q256,786 512,800 T1024,800 V1024 H0 Z" fill="url(#sea)"/>
-<path d="M0,800 Q256,786 512,800 T1024,800 V814 Q768,800 512,814 T0,814 Z" fill="#9BEBF6"/>
-<ellipse cx="512" cy="846" rx="250" ry="34" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="9"/>
-<g fill="#fff" opacity=".95"><path d="M180,230 l12,34 34,12 -34,12 -12,34 -12,-34 -34,-12 34,-12z"/><path d="M850,560 l8,22 22,8 -22,8 -8,22 -8,-22 -22,-8 22,-8z"/></g>
-<g transform="translate(152 46) scale(3.6)">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
-    <clipPath id="clipi"><path d="M92,30 C96,18 106,10 120,10 C114,16 110,24 114,36 C124,58 154,72 168,100 C182,124 182,162 168,184 C152,208 128,216 100,216 C72,216 48,208 32,184 C18,162 18,122 32,98 C48,68 84,52 92,30 Z"/></clipPath>
-    <radialGradient id="shadei" cx="38%" cy="38%" r="70%">
-      <stop offset="55%" stop-color="#1D2A6B" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#1D2A6B" stop-opacity=".22"/>
-    </radialGradient>
-    <linearGradient id="glassi" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#EAF6FF"/>
+    <!-- Delicate archival cotton-paper tooth across the unified painting -->
+    <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.52" numOctaves="3" seed="47" result="noise"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.18  0 0 0 0 0.24  0 0 0 0.048 0" in="noise" result="grain"/>
+      <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+    </filter>
+
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="blushBlur" x="-45%" y="-45%" width="190%" height="190%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <filter id="padShadowBlur" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="mistBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+
+    <!-- Sunlit turquoise-to-ivory morning gouache sky -->
+    <linearGradient id="skyGrad" x1="0.1" y1="0" x2="0.15" y2="1">
+      <stop offset="0%" stop-color="#3E9EC0"/>
+      <stop offset="42%" stop-color="#7BCBE0"/>
+      <stop offset="76%" stop-color="#CCEBE9"/>
+      <stop offset="100%" stop-color="#FCF0D4"/>
     </linearGradient>
+
+    <!-- Warm golden morning sun halo framing Dewy's silhouette -->
+    <radialGradient id="sunHalo" cx="50%" cy="46%" r="46%">
+      <stop offset="0%" stop-color="#FFFBE8" stop-opacity="0.96"/>
+      <stop offset="46%" stop-color="#FDECC6" stop-opacity="0.52"/>
+      <stop offset="100%" stop-color="#FDECC6" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Layered coastal pond water -->
+    <linearGradient id="pondGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#60C2DB"/>
+      <stop offset="36%" stop-color="#2D90B5"/>
+      <stop offset="100%" stop-color="#144F73"/>
+    </linearGradient>
+
+    <!-- Painterly cloud wash -->
+    <linearGradient id="cloudGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFDF7"/>
+      <stop offset="72%" stop-color="#F4F2EC"/>
+      <stop offset="100%" stop-color="#C8DFE8"/>
+    </linearGradient>
+
+    <!-- Botanical emerald lily pad -->
+    <radialGradient id="padGrad" cx="34%" cy="32%" r="72%">
+      <stop offset="0%" stop-color="#A5DC90"/>
+      <stop offset="52%" stop-color="#58A469"/>
+      <stop offset="100%" stop-color="#2B6547"/>
+    </radialGradient>
+
+    <!-- Luminous translucent porcelain-glass Dewy vessel -->
+    <radialGradient id="dewyPorcelain" cx="36%" cy="32%" r="70%">
+      <stop offset="0%" stop-color="#FAFFFE"/>
+      <stop offset="50%" stop-color="#CAF2F1"/>
+      <stop offset="86%" stop-color="#85D5E2"/>
+      <stop offset="100%" stop-color="#54B2CC"/>
+    </radialGradient>
+
+    <!-- Aquamarine-to-deep-cerulean spring water inside Dewy -->
+    <linearGradient id="springUpper" x1="0" y1="0" x2="0.1" y2="1">
+      <stop offset="0%" stop-color="#88E4EC"/>
+      <stop offset="48%" stop-color="#40B4D8"/>
+      <stop offset="100%" stop-color="#1E7BA6"/>
+    </linearGradient>
+    <linearGradient id="springDeep" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2D95BE"/>
+      <stop offset="100%" stop-color="#155D86"/>
+    </linearGradient>
+    <linearGradient id="sunriseRim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFE6C2" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#FFD0AE" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#FFF3D6" stop-opacity="0.88"/>
+    </linearGradient>
+
+    <!-- Iconic sculptural Dewy droplet silhouette (~66% of frame, clean zero-clutter contour) -->
+    <clipPath id="dewyClip">
+      <path id="dewySilhouette"
+        d="M466 238
+           C478 166 530 120 588 128
+           C566 158 548 196 558 240
+           C614 318 716 384 748 486
+           C790 590 782 706 720 774
+           C666 832 594 854 512 854
+           C430 854 358 832 304 774
+           C242 706 234 590 276 486
+           C308 384 410 318 466 238 Z"/>
+    </clipPath>
   </defs>
-  <!-- ground shadow -->
-  <ellipse cx="100" cy="228" rx="58" ry="8" fill="#0B3B7A" opacity=".16"/>
-  <!-- feet -->
-  <ellipse cx="78" cy="214" rx="17" ry="9" fill="#D3E9FA"/>
-  <ellipse cx="122" cy="214" rx="17" ry="9" fill="#D3E9FA"/>
-  <!-- arms -->
-  <ellipse cx="26" cy="150" rx="11" ry="15" transform="rotate(28 26 150)" fill="#F6FBFF"/>
-  <ellipse cx="174" cy="150" rx="11" ry="15" transform="rotate(-28 174 150)" fill="#F6FBFF"/>
-  <!-- body glass -->
-  <path d="M92,30 C96,18 106,10 120,10 C114,16 110,24 114,36 C124,58 154,72 168,100 C182,124 182,162 168,184 C152,208 128,216 100,216 C72,216 48,208 32,184 C18,162 18,122 32,98 C48,68 84,52 92,30 Z" fill="url(#glassi)"/>
-  <g clip-path="url(#clipi)"><path d="M0,230 L0,74.79999999999998 L0,77.84 L4,77.28 L8,76.67 L12,76.00 L16,75.31 L20,74.60 L24,73.90 L28,73.22 L32,72.58 L36,72.00 L40,71.48 L44,71.05 L48,70.70 L52,70.46 L56,70.33 L60,70.30 L64,70.39 L68,70.59 L72,70.88 L76,71.28 L80,71.76 L84,72.32 L88,72.93 L92,73.60 L96,74.29 L100,75.00 L104,75.70 L108,76.38 L112,77.02 L116,77.60 L120,78.12 L124,78.55 L128,78.90 L132,79.14 L136,79.27 L140,79.30 L144,79.21 L148,79.01 L152,78.72 L156,78.32 L160,77.84 L164,77.28 L168,76.67 L172,76.00 L176,75.31 L180,74.60 L184,73.90 L188,73.22 L192,72.58 L196,72.00 L200,71.48 L200,230 Z" fill="#4DB4FF" opacity=".45"/><path d="M0,230 L0,74.79999999999998 L0,76.75 L4,77.44 L8,78.07 L12,78.63 L16,79.08 L20,79.43 L24,79.67 L28,79.79 L32,79.78 L36,79.65 L40,79.41 L44,79.04 L48,78.58 L52,78.02 L56,77.38 L60,76.68 L64,75.93 L68,75.16 L72,74.37 L76,73.60 L80,72.85 L84,72.16 L88,71.53 L92,70.97 L96,70.52 L100,70.17 L104,69.93 L108,69.81 L112,69.82 L116,69.95 L120,70.19 L124,70.56 L128,71.02 L132,71.58 L136,72.22 L140,72.92 L144,73.67 L148,74.44 L152,75.23 L156,76.00 L160,76.75 L164,77.44 L168,78.07 L172,78.63 L176,79.08 L180,79.43 L184,79.67 L188,79.79 L192,79.78 L196,79.65 L200,79.41 L200,230 Z" fill="#4DB4FF"/><path d="M0,230 L0,74.79999999999998 L0,76.75 L4,77.44 L8,78.07 L12,78.63 L16,79.08 L20,79.43 L24,79.67 L28,79.79 L32,79.78 L36,79.65 L40,79.41 L44,79.04 L48,78.58 L52,78.02 L56,77.38 L60,76.68 L64,75.93 L68,75.16 L72,74.37 L76,73.60 L80,72.85 L84,72.16 L88,71.53 L92,70.97 L96,70.52 L100,70.17 L104,69.93 L108,69.81 L112,69.82 L116,69.95 L120,70.19 L124,70.56 L128,71.02 L132,71.58 L136,72.22 L140,72.92 L144,73.67 L148,74.44 L152,75.23 L156,76.00 L160,76.75 L164,77.44 L168,78.07 L172,78.63 L176,79.08 L180,79.43 L184,79.67 L188,79.79 L192,79.78 L196,79.65 L200,79.41 L200,230 Z" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="2.4"/><path d="M0,230 L0,101.19999999999999 L0,99.85 L4,99.60 L8,99.38 L12,99.21 L16,99.09 L20,99.02 L24,99.00 L28,99.04 L32,99.13 L36,99.27 L40,99.46 L44,99.69 L48,99.96 L52,100.26 L56,100.58 L60,100.92 L64,101.27 L68,101.61 L72,101.94 L76,102.26 L80,102.55 L84,102.80 L88,103.02 L92,103.19 L96,103.31 L100,103.38 L104,103.40 L108,103.36 L112,103.27 L116,103.13 L120,102.94 L124,102.71 L128,102.44 L132,102.14 L136,101.82 L140,101.48 L144,101.13 L148,100.79 L152,100.46 L156,100.14 L160,99.85 L164,99.60 L168,99.38 L172,99.21 L176,99.09 L180,99.02 L184,99.00 L188,99.04 L192,99.13 L196,99.27 L200,99.46 L200,230 Z" fill="#FFAE3D"/><path d="M0,230 L0,101.19999999999999 L0,99.85 L4,99.60 L8,99.38 L12,99.21 L16,99.09 L20,99.02 L24,99.00 L28,99.04 L32,99.13 L36,99.27 L40,99.46 L44,99.69 L48,99.96 L52,100.26 L56,100.58 L60,100.92 L64,101.27 L68,101.61 L72,101.94 L76,102.26 L80,102.55 L84,102.80 L88,103.02 L92,103.19 L96,103.31 L100,103.38 L104,103.40 L108,103.36 L112,103.27 L116,103.13 L120,102.94 L124,102.71 L128,102.44 L132,102.14 L136,101.82 L140,101.48 L144,101.13 L148,100.79 L152,100.46 L156,100.14 L160,99.85 L164,99.60 L168,99.38 L172,99.21 L176,99.09 L180,99.02 L184,99.00 L188,99.04 L192,99.13 L196,99.27 L200,99.46 L200,230 Z" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="2.4"/><path d="M0,230 L0,127.60000000000001 L0,129.68 L4,129.54 L8,129.36 L12,129.13 L16,128.87 L20,128.57 L24,128.25 L28,127.91 L32,127.57 L36,127.22 L40,126.89 L44,126.57 L48,126.28 L52,126.02 L56,125.80 L60,125.62 L64,125.50 L68,125.42 L72,125.40 L76,125.43 L80,125.52 L84,125.66 L88,125.84 L92,126.07 L96,126.33 L100,126.63 L104,126.95 L108,127.29 L112,127.63 L116,127.98 L120,128.31 L124,128.63 L128,128.92 L132,129.18 L136,129.40 L140,129.58 L144,129.70 L148,129.78 L152,129.80 L156,129.77 L160,129.68 L164,129.54 L168,129.36 L172,129.13 L176,128.87 L180,128.57 L184,128.25 L188,127.91 L192,127.57 L196,127.22 L200,126.89 L200,230 Z" fill="#8CCF63"/><path d="M0,230 L0,127.60000000000001 L0,129.68 L4,129.54 L8,129.36 L12,129.13 L16,128.87 L20,128.57 L24,128.25 L28,127.91 L32,127.57 L36,127.22 L40,126.89 L44,126.57 L48,126.28 L52,126.02 L56,125.80 L60,125.62 L64,125.50 L68,125.42 L72,125.40 L76,125.43 L80,125.52 L84,125.66 L88,125.84 L92,126.07 L96,126.33 L100,126.63 L104,126.95 L108,127.29 L112,127.63 L116,127.98 L120,128.31 L124,128.63 L128,128.92 L132,129.18 L136,129.40 L140,129.58 L144,129.70 L148,129.78 L152,129.80 L156,129.77 L160,129.68 L164,129.54 L168,129.36 L172,129.13 L176,128.87 L180,128.57 L184,128.25 L188,127.91 L192,127.57 L196,127.22 L200,126.89 L200,230 Z" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="2.4"/><path d="M0,230 L0,154 L0,154.00 L4,154.34 L8,154.68 L12,155.00 L16,155.29 L20,155.56 L24,155.78 L28,155.96 L32,156.09 L36,156.17 L40,156.20 L44,156.17 L48,156.09 L52,155.96 L56,155.78 L60,155.56 L64,155.29 L68,155.00 L72,154.68 L76,154.34 L80,154.00 L84,153.66 L88,153.32 L92,153.00 L96,152.71 L100,152.44 L104,152.22 L108,152.04 L112,151.91 L116,151.83 L120,151.80 L124,151.83 L128,151.91 L132,152.04 L136,152.22 L140,152.44 L144,152.71 L148,153.00 L152,153.32 L156,153.66 L160,154.00 L164,154.34 L168,154.68 L172,155.00 L176,155.29 L180,155.56 L184,155.78 L188,155.96 L192,156.09 L196,156.17 L200,156.20 L200,230 Z" fill="#4DB4FF"/><path d="M0,230 L0,154 L0,154.00 L4,154.34 L8,154.68 L12,155.00 L16,155.29 L20,155.56 L24,155.78 L28,155.96 L32,156.09 L36,156.17 L40,156.20 L44,156.17 L48,156.09 L52,155.96 L56,155.78 L60,155.56 L64,155.29 L68,155.00 L72,154.68 L76,154.34 L80,154.00 L84,153.66 L88,153.32 L92,153.00 L96,152.71 L100,152.44 L104,152.22 L108,152.04 L112,151.91 L116,151.83 L120,151.80 L124,151.83 L128,151.91 L132,152.04 L136,152.22 L140,152.44 L144,152.71 L148,153.00 L152,153.32 L156,153.66 L160,154.00 L164,154.34 L168,154.68 L172,155.00 L176,155.29 L180,155.56 L184,155.78 L188,155.96 L192,156.09 L196,156.17 L200,156.20 L200,230 Z" fill="none" stroke="#fff" stroke-opacity="0.35" stroke-width="2.4"/>
-    <path d="M92,30 C96,18 106,10 120,10 C114,16 110,24 114,36 C124,58 154,72 168,100 C182,124 182,162 168,184 C152,208 128,216 100,216 C72,216 48,208 32,184 C18,162 18,122 32,98 C48,68 84,52 92,30 Z" fill="url(#shadei)"/>
-    <!-- rim light on the right -->
-    <path d="M150,86 C172,112 176,156 156,186" stroke="#fff" stroke-opacity=".55" stroke-width="5" fill="none" stroke-linecap="round"/>
+
+  <g filter="url(#paperGrain)">
+    <!-- 1. Layered Sunlit Gouache Lagoon Sky -->
+    <rect x="0" y="0" width="1024" height="632" fill="url(#skyGrad)"/>
+
+    <!-- Radiant sunlit morning halo behind Dewy -->
+    <circle cx="512" cy="472" r="440" fill="url(#sunHalo)"/>
+
+    <!-- Soft painterly gouache cloud banks (organic, layered, tinted undersides) -->
+    <g opacity="0.88">
+      <path d="M-30 256 C-12 204 42 182 88 196 C112 152 178 148 214 186 C252 176 292 204 282 240 C306 248 300 272 266 274 L-30 274 Z" fill="url(#cloudGrad)"/>
+      <path d="M742 238 C754 198 800 176 842 192 C868 152 938 148 972 184 C1012 176 1050 202 1054 248 L742 248 Z" fill="url(#cloudGrad)"/>
+      <ellipse cx="144" cy="272" rx="140" ry="20" fill="#B5D8E5" opacity="0.34" filter="url(#mistBlur)"/>
+      <ellipse cx="902" cy="248" rx="140" ry="18" fill="#B5D8E5" opacity="0.32" filter="url(#mistBlur)"/>
+    </g>
+
+    <!-- Atmospheric sea-glass distant coastal hills (3 paper-cut depth tiers) -->
+    <path d="M-24 600 C96 472 244 454 398 524 C520 580 658 498 806 476 C904 462 982 496 1048 548 L1048 632 L-24 632 Z" fill="#9AC9BE" opacity="0.62"/>
+    <path d="M-24 606 C116 516 254 514 392 566 C532 618 708 512 874 520 C948 524 1004 548 1048 576 L1048 632 L-24 632 Z" fill="#6AA898" opacity="0.72"/>
+    <path d="M-24 614 C108 566 216 574 334 606 C496 648 730 562 908 570 C972 574 1018 590 1048 604 L1048 636 L-24 636 Z" fill="#4B8B7F" opacity="0.65"/>
+
+    <!-- Warm horizon mist veil blending hills into pond -->
+    <rect x="0" y="572" width="1024" height="58" fill="#FFF4D8" opacity="0.28" filter="url(#mistBlur)"/>
+
+    <!-- 2. Tranquil Sunlit Lagoon Pond -->
+    <rect x="0" y="600" width="1024" height="424" fill="url(#pondGrad)"/>
+
+    <!-- Soft painted sunlit shimmer reflecting across pond surface -->
+    <ellipse cx="512" cy="616" rx="460" ry="34" fill="#E6F8FA" opacity="0.34" filter="url(#mistBlur)"/>
+
+    <!-- Graceful organic concentric water ripple arcs radiating around lily pad -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M126 802 C176 728 326 686 512 686 C698 686 848 728 898 802" stroke="#D8F5FA" stroke-width="4.5" opacity="0.32"/>
+      <path d="M96 868 C142 948 312 992 512 992 C712 992 882 948 928 868" stroke="#A6E4F2" stroke-width="5.5" opacity="0.34"/>
+      <path d="M148 874 C214 934 352 968 512 968 C672 968 810 934 876 874" stroke="#FFFDF6" stroke-width="4.2" opacity="0.44"/>
+      <!-- Soft drifting sunlit reflection curls in foreground water -->
+      <path d="M104 714 Q168 706 232 714" stroke="#E4F7FA" stroke-width="5" opacity="0.36"/>
+      <path d="M790 704 Q858 696 926 706" stroke="#E4F7FA" stroke-width="5" opacity="0.36"/>
+      <path d="M72 936 Q134 944 196 934" stroke="#9EE0EE" stroke-width="4.5" opacity="0.32"/>
+      <path d="M824 944 Q888 952 952 942" stroke="#9EE0EE" stroke-width="4.5" opacity="0.32"/>
+    </g>
+
+    <!-- 3. Veined Botanical Emerald Lily Pad & Sculpted Multi-Petal Lotus -->
+    <ellipse cx="512" cy="864" rx="348" ry="104" fill="#0E3D58" opacity="0.38" filter="url(#padShadowBlur)"/>
+
+    <!-- Lily pad silhouette with delicate tinted forest-ink edge (NO thick black marker!) -->
+    <path d="M512 736
+             C676 736 812 770 848 820
+             L722 835
+             L852 854
+             C822 912 680 948 512 948
+             C318 948 164 900 164 842
+             C164 784 318 736 512 736 Z"
+          fill="url(#padGrad)" stroke="#1E523D" stroke-opacity="0.58" stroke-width="5" stroke-linejoin="round"/>
+
+    <!-- Sunlit gouache highlight rim along left lily pad lip -->
+    <path d="M180 832 C192 786 312 748 486 744" fill="none" stroke="#D2F0BA" stroke-width="7" stroke-linecap="round" opacity="0.55"/>
+
+    <!-- Organic curving botanical veins branching softly across pad -->
+    <g fill="none" stroke="#C5ECAC" stroke-width="4.5" stroke-linecap="round" opacity="0.54">
+      <path d="M506 838 C422 812 320 796 226 814"/>
+      <path d="M358 808 C326 792 298 784 274 784"/>
+      <path d="M506 838 C406 846 314 862 246 888"/>
+      <path d="M506 838 C446 878 398 906 364 928"/>
+      <path d="M516 838 C568 880 618 908 656 926"/>
+      <path d="M518 838 C606 804 686 784 762 778"/>
+    </g>
+
+    <!-- Sculpted multi-petal storybook pink-and-cream lotus blossom by the notch -->
+    <g transform="translate(766 786)">
+      <!-- Soft cast shadow onto pad -->
+      <ellipse cx="0" cy="22" rx="54" ry="14" fill="#1E523D" opacity="0.28"/>
+      <!-- Outer wide rose lotus petals -->
+      <path d="M-54 14 C-56 -8 -32 -24 -8 -10 C-12 6 -28 20 -54 14 Z" fill="#E88AA8" stroke="#6E334E" stroke-opacity="0.48" stroke-width="3.2" stroke-linejoin="round"/>
+      <path d="M54 14 C56 -8 32 -24 8 -10 C12 6 28 20 54 14 Z" fill="#E07C9C" stroke="#6E334E" stroke-opacity="0.48" stroke-width="3.2" stroke-linejoin="round"/>
+      <!-- Mid layered blush-pink cupped petals -->
+      <path d="M-38 20 C-46 -12 -24 -36 -4 -22 C-2 -4 -14 18 -38 20 Z" fill="#F8B4CA" stroke="#6E334E" stroke-opacity="0.45" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M38 20 C46 -12 24 -36 4 -22 C2 -4 14 18 38 20 Z" fill="#F4A4BE" stroke="#6E334E" stroke-opacity="0.45" stroke-width="3" stroke-linejoin="round"/>
+      <!-- Inner upright creamy-blush crown petals -->
+      <path d="M-20 22 C-26 -14 -12 -44 0 -48 C12 -44 26 -14 20 22 Q0 28 -20 22 Z" fill="#FFF6F8" stroke="#6E334E" stroke-opacity="0.45" stroke-width="3" stroke-linejoin="round"/>
+      <!-- Front cradling soft pink petal & sunlit pollen heart -->
+      <path d="M-30 22 C-20 4 20 4 30 22 Q0 32 -30 22 Z" fill="#FBD1DF" stroke="#6E334E" stroke-opacity="0.42" stroke-width="2.6" stroke-linejoin="round"/>
+      <ellipse cx="0" cy="4" rx="10" ry="7" fill="#F5C24C"/>
+      <circle cx="-4" cy="2" r="2.6" fill="#FFF4BD"/>
+      <circle cx="4" cy="2" r="2.6" fill="#FFF4BD"/>
+    </g>
+
+    <!-- Soft grounded contact shadow beneath Dewy -->
+    <ellipse cx="512" cy="848" rx="196" ry="38" fill="#184739" opacity="0.34" filter="url(#padShadowBlur)"/>
+
+    <!-- Tucked little translucent porcelain feet resting warmly on the pad -->
+    <g stroke="#1E5266" stroke-opacity="0.52" stroke-width="4.5">
+      <ellipse cx="442" cy="836" rx="48" ry="24" fill="#98DDE8"/>
+      <ellipse cx="582" cy="836" rx="48" ry="24" fill="#8CD4E2"/>
+    </g>
+
+    <!-- 4. HERO SCULPTURAL DEWY — Painterly Gouache & Porcelain Glass (ZERO cartoon outlines!) -->
+    <use href="#dewySilhouette" fill="url(#dewyPorcelain)"/>
+
+    <!-- Clipped Watercolor Spring-Water Layers Inside Dewy -->
+    <g clip-path="url(#dewyClip)">
+      <!-- Pale aquamarine back meniscus wave -->
+      <path d="M210 598 Q362 566 512 598 T814 598 L814 880 L210 880 Z" fill="#B2F1F5" opacity="0.72"/>
+
+      <!-- Main luminous aquamarine-to-cerulean spring water layer -->
+      <path d="M210 612 Q362 644 512 612 T814 612 L814 880 L210 880 Z" fill="url(#springUpper)"/>
+
+      <!-- Whisper of warm sunlit coral-apricot sunrise shimmer along the liquid crest -->
+      <path d="M210 612 Q362 644 512 612 T814 612" fill="none" stroke="url(#sunriseRim)" stroke-width="18" stroke-linecap="round"/>
+      <path d="M210 607 Q362 639 512 607 T814 607" fill="none" stroke="#FFFDF8" stroke-width="7" stroke-linecap="round" opacity="0.92"/>
+
+      <!-- Deep coastal cerulean foundation layer -->
+      <path d="M210 726 Q362 752 512 726 T814 726 L814 880 L210 880 Z" fill="url(#springDeep)"/>
+      <path d="M210 726 Q362 752 512 726 T814 726" fill="none" stroke="#BCEFF7" stroke-width="9" stroke-linecap="round" opacity="0.68"/>
+
+      <!-- Internal optical caustic light ribbons -->
+      <path d="M352 776 Q468 748 584 776" fill="none" stroke="#FFFDF8" stroke-width="9" stroke-linecap="round" opacity="0.38"/>
+      <path d="M460 814 Q558 834 654 808" fill="none" stroke="#FFFDF8" stroke-width="7.5" stroke-linecap="round" opacity="0.32"/>
+
+      <!-- Delicate translucent pearl bubbles drifting up -->
+      <g fill="#FFFDF8" fill-opacity="0.34" stroke="#FFFDF8" stroke-width="4.5">
+        <circle cx="384" cy="722" r="15"/>
+        <circle cx="634" cy="698" r="12"/>
+        <circle cx="576" cy="778" r="9.5"/>
+        <circle cx="448" cy="784" r="8.5"/>
+      </g>
+
+      <!-- Warm golden-ivory under-belly bounce light -->
+      <ellipse cx="512" cy="838" rx="188" ry="56" fill="#FFF4DA" opacity="0.48" filter="url(#softGlow)"/>
+
+      <!-- Painterly inner watercolor shadow pooling along right & lower vessel wall -->
+      <use href="#dewySilhouette" fill="none" stroke="#1C6C8C" stroke-width="42" opacity="0.34" filter="url(#softGlow)"/>
+    </g>
+
+    <!-- Painterly Gouache Porcelain Highlights & Rim Caustics -->
+    <path d="M332 528 C338 438 386 358 456 306" fill="none" stroke="#FFFDF8" stroke-width="28" stroke-linecap="round" opacity="0.92"/>
+    <circle cx="318" cy="580" r="14" fill="#FFFDF8" opacity="0.9"/>
+    <path d="M506 202 Q526 158 564 146" fill="none" stroke="#FFFDF8" stroke-width="13" stroke-linecap="round" opacity="0.88"/>
+    <path d="M708 468 C754 554 752 672 704 740" fill="none" stroke="#FFFDF8" stroke-width="12" stroke-linecap="round" opacity="0.56"/>
+
+    <!-- Whisper-fine tinted cerulean-plum painterly contour (replaces heavy 15px cartoon marker!) -->
+    <use href="#dewySilhouette" fill="none" stroke="#1D4B63" stroke-opacity="0.62" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- 5. Soulful Storybook Face (Crisp from 29pt Spotlight to 1024px App Store) -->
+    <!-- Soft chalky gouache coral-peach cheek washes -->
+    <g filter="url(#blushBlur)">
+      <ellipse cx="364" cy="614" rx="52" ry="30" fill="#F08096" opacity="0.58"/>
+      <ellipse cx="660" cy="614" rx="52" ry="30" fill="#F08096" opacity="0.58"/>
+    </g>
+
+    <!-- Delicate storybook eyebrows -->
+    <path d="M396 480 Q430 462 464 476" fill="none" stroke="#251E2B" stroke-width="8.5" stroke-linecap="round" opacity="0.66"/>
+    <path d="M628 480 Q594 462 560 476" fill="none" stroke="#251E2B" stroke-width="8.5" stroke-linecap="round" opacity="0.66"/>
+
+    <!-- Warm botanical plum-ink storybook eyes with single quiet organic catchlight -->
+    <g>
+      <ellipse cx="430" cy="544" rx="35" ry="42" fill="#251E2B"/>
+      <ellipse cx="432" cy="571" rx="22" ry="11" fill="#5A4B72" opacity="0.48"/>
+      <ellipse cx="418" cy="527" rx="11.5" ry="10.5" fill="#FFFDF8" opacity="0.96"/>
+
+      <ellipse cx="594" cy="544" rx="35" ry="42" fill="#251E2B"/>
+      <ellipse cx="596" cy="571" rx="22" ry="11" fill="#5A4B72" opacity="0.48"/>
+      <ellipse cx="582" cy="527" rx="11.5" ry="10.5" fill="#FFFDF8" opacity="0.96"/>
+    </g>
+
+    <!-- Warm joyful open storybook smile -->
+    <path d="M477 600 Q512 594 547 600 Q545 650 512 650 Q479 650 477 600 Z" fill="#5E2740" stroke="#251E2B" stroke-opacity="0.86" stroke-width="5.5" stroke-linejoin="round"/>
+    <ellipse cx="512" cy="637" rx="23" ry="10" fill="#F2889E"/>
   </g>
-  <!-- gloss -->
-  <path d="M58,92 C66,76 80,62 92,52" stroke="#fff" stroke-opacity=".9" stroke-width="9" fill="none" stroke-linecap="round"/>
-  <circle cx="48" cy="112" r="4.5" fill="#fff" opacity=".9"/>
-  <ellipse cx="75" cy="136" rx="11.5" ry="14.5" fill="#2A2350"/><ellipse cx="125" cy="136" rx="11.5" ry="14.5" fill="#2A2350"/>
-         <circle cx="71" cy="130" r="5" fill="#fff"/><circle cx="121" cy="130" r="5" fill="#fff"/>
-         <circle cx="79" cy="142" r="2.2" fill="#fff"/><circle cx="129" cy="142" r="2.2" fill="#fff"/><ellipse cx="56" cy="154" rx="12" ry="7.5" fill="#FF7FA6" opacity=".6"/>
-      <ellipse cx="144" cy="154" rx="12" ry="7.5" fill="#FF7FA6" opacity=".6"/>
-      <path d="M93,150 Q100,149 107,150 Q106,162 100,162 Q94,162 93,150 Z" fill="#5A1F45"/>
-      <ellipse cx="100" cy="159" rx="4.4" ry="2.8" fill="#FF7E9D"/>
-  
-</g>
 </svg>

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="11" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="waterFill" x1="0" y1="0" x2="0.15" y2="1">
+    <stop offset="0%" stop-color="#A6E3F5"/>
+    <stop offset="55%" stop-color="#56BBE2"/>
+    <stop offset="100%" stop-color="#288BB8"/>
+  </linearGradient>
+  <linearGradient id="glassTint" x1="0" y1="0" x2="1" y2="0.3">
+    <stop offset="0%" stop-color="#FFFDF8" stop-opacity="0.72"/>
+    <stop offset="55%" stop-color="#E4F5FA" stop-opacity="0.45"/>
+    <stop offset="100%" stop-color="#BEE6F2" stop-opacity="0.62"/>
+  </linearGradient>
+  <linearGradient id="leafGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#9BD489"/>
+    <stop offset="100%" stop-color="#4A8F5D"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="120" cy="212" rx="58" ry="11" fill="#3B2B23" opacity="0.14"/>
+  <!-- Lemon leaf tucked on back right rim -->
+  <path d="M158 58 C170 34 196 28 208 38 C198 56 182 66 160 66 Z" fill="url(#leafGrad)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.59" stroke-linejoin="round"/>
+  <path d="M162 62 Q182 46 200 40" fill="none" stroke="#E4F5D0" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Back lemon wheel peeking on rim -->
+  <circle cx="166" cy="68" r="24" fill="#FBE178" stroke="#342638" stroke-opacity="0.78" stroke-width="2.59"/>
+  <circle cx="166" cy="68" r="18" fill="#FFF7D4"/>
+  <g fill="#F4C74C" opacity="0.88">
+    <path d="M166 68 L154 56 A16 16 0 0 1 166 52 Z"/>
+    <path d="M166 68 L178 56 A16 16 0 0 1 182 68 Z"/>
+    <path d="M166 68 L178 80 A16 16 0 0 1 166 84 Z"/>
+    <path d="M166 68 L154 80 A16 16 0 0 1 150 68 Z"/>
+  </g>
+  <!-- Tumbler outer glass back -->
+  <path d="M62 64 L74 198 C76 208 164 208 166 198 L178 64 Z" fill="url(#glassTint)"/>
+  <!-- Spring water volume -->
+  <path d="M67 96 Q120 112 173 96 L164 194 C162 203 78 203 76 194 Z" fill="url(#waterFill)"/>
+  <!-- Painterly rounded translucent ice cushions bobbing gently -->
+  <g transform="rotate(-14 101 115)">
+    <rect x="86" y="100" width="30" height="28" rx="10" fill="#F0FBFE" fill-opacity="0.78" stroke="#5AAEC6" stroke-opacity="0.62" stroke-width="1.5"/>
+    <path d="M93 107 Q101 104 109 107" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" opacity="0.9"/>
+  </g>
+  <g transform="rotate(16 135 129)">
+    <rect x="121" y="115" width="28" height="26" rx="9.5" fill="#E6F8FD" fill-opacity="0.72" stroke="#4D9EB8" stroke-opacity="0.58" stroke-width="1.5"/>
+    <path d="M127 122 Q135 119 142 122" fill="none" stroke="#FFFFFF" stroke-width="2.16" stroke-linecap="round" opacity="0.88"/>
+  </g>
+  <!-- Meniscus ellipse -->
+  <ellipse cx="120" cy="96" rx="53" ry="12" fill="#D5F3FB" fill-opacity="0.82" stroke="#FFFDF8" stroke-width="1.87"/>
+  <!-- Rising pearl bubbles -->
+  <circle cx="96" cy="164" r="4.5" fill="#FFFDF8" opacity="0.72"/>
+  <circle cx="138" cy="172" r="3.5" fill="#FFFDF8" opacity="0.65"/>
+  <circle cx="116" cy="148" r="3" fill="#FFFDF8" opacity="0.7"/>
+  <!-- Fluted vertical ribs -->
+  <g stroke="#342638" stroke-opacity="0.78" stroke-opacity="0.22" stroke-width="1.73" stroke-linecap="round">
+    <line x1="87" y1="114" x2="92" y2="195"/>
+    <line x1="108" y1="118" x2="110" y2="198"/>
+    <line x1="132" y1="118" x2="130" y2="198"/>
+    <line x1="153" y1="114" x2="148" y2="195"/>
+  </g>
+  <!-- Thick glass base refraction -->
+  <path d="M76 190 Q120 202 164 190 L165 198 C163 208 77 208 75 198 Z" fill="#FFFDF8" opacity="0.6"/>
+  <!-- Gouache specular highlight stroke -->
+  <path d="M75 78 L83 182" stroke="#FFFDF8" stroke-width="4.68" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="84" cy="191" r="3.4" fill="#FFFDF8" opacity="0.88"/>
+  <!-- Tumbler hand-inked outline + rim -->
+  <path d="M62 64 L74 198 C76 208 164 208 166 198 L178 64" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="120" cy="64" rx="58" ry="13.5" fill="#EBF8FC" fill-opacity="0.34" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02"/>
+  <path d="M74 66 Q120 75 166 66" fill="none" stroke="#FFFDF8" stroke-width="1.73" stroke-linecap="round" opacity="0.85"/>
+</g>
+</svg>

@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The Friends tab: Dewy's dressing room. Spend Dew Drops on friends who hang out by the pond,
-/// outfits to wear, worlds to live in and decorations for the shore.
+/// The Friends tab: Dewy's storybook dressing pavilion. Spend earned Dew Drops on live animated
+/// pond companions, handcrafted outfits, illustrated worlds and shore decorations.
 struct FriendsView: View {
     @Environment(HydrationStore.self) private var store
     @Environment(PurchaseManager.self) private var purchases
@@ -36,14 +36,13 @@ struct FriendsView: View {
     @State private var confetti = 0
     @State private var detail: ShopItem?
 
-    private let headerHeight: CGFloat = 96
+    private let headerHeight: CGFloat = 88
     private let stageHeight: CGFloat = 236
-    private let mascotSize: CGFloat = 150
-    private let padWidth: CGFloat = 128
+    private let mascotSize: CGFloat = 152
+    private let padWidth: CGFloat = 132
     private var mascotHeight: CGFloat { mascotSize * DewyGeometry.canvas.height / DewyGeometry.canvas.width }
     private var padTop: CGFloat { mascotHeight * 0.925 - padWidth * 0.232 }
-    private var sceneHeight: CGFloat { headerHeight + stageHeight + 80 }
-    private var horizonY: CGFloat { headerHeight + 96 }
+    private var horizonY: CGFloat { headerHeight + 100 }
     private var phase: SkyPhase { theme.phase() }
 
     var body: some View {
@@ -68,8 +67,9 @@ struct FriendsView: View {
                     confetti += 1
                 }
             }
+            .preferredColorScheme(.light)
             .presentationDetents([.height(item.isOutfit ? 560 : 520)])
-            .presentationCornerRadius(38)
+            .presentationCornerRadius(34)
             .presentationBackground(theme.canvas)
         }
         .onAppear { appeared = true }
@@ -87,27 +87,38 @@ struct FriendsView: View {
                 .frame(height: stageHeight, alignment: .top)
                 .floatIn(appeared, index: 1)
         }
-        .padding(.top, 6)
-        .padding(.bottom, 26)
+        .padding(.top, 4)
+        .padding(.bottom, 24)
         .background(alignment: .top) {
-            VStack(spacing: 0) {
-                phase.sky[0].frame(height: 800)
-                ClayWorld(horizon: horizonY, decor: store.placedDecor, interactive: true, showsLandmark: true)
-                    .frame(height: sceneHeight)
+            GeometryReader { proxy in
+                let bgHeight = proxy.size.height + 68
+                VStack(spacing: 0) {
+                    theme.sky[0]
+                        .frame(height: 600)
+                    ClayWorld(
+                        horizon: horizonY,
+                        decor: store.placedDecor,
+                        interactive: true,
+                        showsLandmark: true,
+                        headerSafeTop: 148
+                    )
+                    .frame(width: proxy.size.width, height: bgHeight)
+                }
+                .frame(width: proxy.size.width, height: bgHeight, alignment: .bottom)
             }
-            .frame(height: sceneHeight, alignment: .bottom)
         }
     }
 
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
-                CapsLabel(text: "Dressing room", color: phase.onSkySoft, size: 11.5)
+                CapsLabel(text: "Dressing pavilion", color: theme.onHeroSoft, size: 11)
                 Text("Dewy & Friends")
-                    .font(.display(30))
-                    .foregroundStyle(phase.onSky)
+                    .font(.display(30, .semibold))
+                    .tracking(-0.4)
+                    .foregroundStyle(theme.onHero)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(0.72)
             }
             Spacer(minLength: 8)
             CountPill(glyph: .drop, value: store.dropBalance, tint: Palette.coral)
@@ -121,9 +132,14 @@ struct FriendsView: View {
                 .offset(y: padTop)
 
             ForEach(Array(store.companions.prefix(2).enumerated()), id: \.element) { index, friend in
-                StageFriend(friend: friend, index: index)
-                    .offset(x: index == 0 ? -118 : 118, y: padTop - 22)
-                    .transition(.scale(scale: 0.4).combined(with: .opacity))
+                StageFriendPad(
+                    friend: friend,
+                    index: index,
+                    cheerTrigger: bounce,
+                    isNight: phase.isNight
+                )
+                .offset(x: index == 0 ? -116 : 116, y: padTop - 22)
+                .transition(.scale(scale: 0.45).combined(with: .opacity))
             }
 
             MascotView(
@@ -133,8 +149,10 @@ struct FriendsView: View {
                 bounceTrigger: bounce,
                 outfits: store.outfits,
                 sparkles: true,
-                bands: store.todayBands
+                bands: store.todayBands,
+                isNight: phase.isNight
             )
+            .liveMeniscusGlow(strength: 0.13)
             .contentShape(Rectangle())
             .onTapGesture {
                 bounce += 1
@@ -143,15 +161,15 @@ struct FriendsView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: store.companions)
-        .animation(.spring(response: 0.45, dampingFraction: 0.6), value: store.outfits)
+        .animation(.spring(response: 0.5, dampingFraction: 0.72), value: store.companions)
+        .animation(.spring(response: 0.45, dampingFraction: 0.65), value: store.outfits)
     }
 
     // MARK: Sheet
 
     private var sheet: some View {
         VStack(alignment: .leading, spacing: 20) {
-            ClaySegmented(items: Shelf.allCases, selection: $shelf, title: \.title)
+            StorySegmented(items: Shelf.allCases, selection: $shelf, title: \.title)
                 .padding(.horizontal, 20)
 
             Group {
@@ -162,25 +180,23 @@ struct FriendsView: View {
                 case .decor: decorShelf
                 }
             }
-            .transition(.opacity.combined(with: .offset(y: 12)))
+            .transition(.opacity.combined(with: .offset(y: 10)))
             .id(shelf)
 
             earnNote
                 .padding(.horizontal, 20)
         }
         .padding(.top, 24)
-        .padding(.bottom, 130)
+        .padding(.bottom, 128)
         .frame(maxWidth: .infinity)
         .canvasSheet()
-        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: shelf)
+        .animation(.spring(response: 0.38, dampingFraction: 0.85), value: shelf)
     }
-
-    private var shelfNoteColor: Color { theme.inkSoft }
 
     private func shelfNote(_ text: String) -> some View {
         Text(text)
-            .font(.dewy(14, .semibold))
-            .foregroundStyle(shelfNoteColor)
+            .font(.editorialItalic(14.5))
+            .foregroundStyle(theme.inkSoft)
             .padding(.horizontal, 24)
     }
 
@@ -188,7 +204,7 @@ struct FriendsView: View {
 
     private var friendsShelf: some View {
         VStack(alignment: .leading, spacing: 12) {
-            shelfNote("Pick up to two friends to hang out with Dewy.")
+            shelfNote("Invite up to two pond companions to keep Dewy company.")
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
                 ForEach(Friend.allCases) { friend in
                     let owned = store.owns(friend)
@@ -203,7 +219,7 @@ struct FriendsView: View {
                             affordable: store.canAfford(friend.price)
                         )
                     }
-                    .buttonStyle(SquishyButtonStyle(scale: 0.95))
+                    .buttonStyle(SquishyButtonStyle(scale: 0.96))
                 }
             }
             .padding(.horizontal, 20)
@@ -214,10 +230,10 @@ struct FriendsView: View {
 
     private var wardrobeShelf: some View {
         VStack(alignment: .leading, spacing: 18) {
-            shelfNote("Tap to wear. Finish challenges to win the rarest pieces.")
+            shelfNote("Tap to dress Dewy. Complete challenges to win heirloom pieces.")
             ForEach(OutfitSlot.allCases) { slot in
                 VStack(alignment: .leading, spacing: 10) {
-                    CapsLabel(text: slot.title, color: theme.inkSoft, size: 11.5)
+                    CapsLabel(text: slot.title, color: theme.inkSoft, size: 11)
                         .padding(.horizontal, 24)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
                         ForEach(Outfit.allCases.filter { $0.slot == slot }) { outfit in
@@ -225,8 +241,7 @@ struct FriendsView: View {
                             Button {
                                 tap(.outfit(outfit))
                             } label: {
-                                ItemCard(
-                                    imageName: outfit.imageName,
+                                AtelierItemCard(
                                     title: outfit.name,
                                     tint: outfit.tint,
                                     price: outfit.price,
@@ -235,11 +250,12 @@ struct FriendsView: View {
                                     activeLabel: "Wearing",
                                     idleLabel: "Wear",
                                     locked: outfit.isPremium && !purchases.isPremium && !owned,
-                                    affordable: store.canAfford(outfit.price),
-                                    reward: ChallengeKind.allCases.first { $0.reward == outfit }.map { _ in "Challenge prize" }
-                                )
+                                    affordable: store.canAfford(outfit.price)
+                                ) {
+                                    OutfitArtView(outfit: outfit, size: 68)
+                                }
                             }
-                            .buttonStyle(SquishyButtonStyle(scale: 0.94))
+                            .buttonStyle(SquishyButtonStyle(scale: 0.95))
                         }
                     }
                     .padding(.horizontal, 20)
@@ -252,15 +268,14 @@ struct FriendsView: View {
 
     private var decorShelf: some View {
         VStack(alignment: .leading, spacing: 12) {
-            shelfNote("Place up to three things around the pond.")
+            shelfNote("Arrange up to three keepsakes along Dewy's pond shore.")
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
                 ForEach(Decor.allCases) { decor in
                     let owned = store.owns(decor)
                     Button {
                         tap(.decor(decor))
                     } label: {
-                        ItemCard(
-                            imageName: decor.imageName,
+                        AtelierItemCard(
                             title: decor.name,
                             tint: decor.tint,
                             price: decor.price,
@@ -269,11 +284,12 @@ struct FriendsView: View {
                             activeLabel: "Placed",
                             idleLabel: "Place",
                             locked: decor.isPremium && !purchases.isPremium && !owned,
-                            affordable: store.canAfford(decor.price),
-                            reward: nil
-                        )
+                            affordable: store.canAfford(decor.price)
+                        ) {
+                            ArtImage(name: decor.imageName, fallback: "sparkles", tint: decor.tint, size: 66)
+                        }
                     }
-                    .buttonStyle(SquishyButtonStyle(scale: 0.94))
+                    .buttonStyle(SquishyButtonStyle(scale: 0.95))
                 }
             }
             .padding(.horizontal, 20)
@@ -284,7 +300,7 @@ struct FriendsView: View {
 
     private var placesShelf: some View {
         VStack(alignment: .leading, spacing: 12) {
-            shelfNote("Where Dewy lives. The sky follows your time of day.")
+            shelfNote("Choose Dewy's sanctuary. Each world shifts through dawn, day, dusk and starlight.")
             VStack(spacing: 14) {
                 ForEach(AppTheme.allCases) { option in
                     let locked = option.isPremium && !purchases.isPremium
@@ -312,19 +328,19 @@ struct FriendsView: View {
     private var earnNote: some View {
         let breakdown = store.dropBreakdown
         return HStack(alignment: .top, spacing: 14) {
-            ClayIcon(glyph: .drop, size: 46)
+            ClayIcon(glyph: .drop, size: 42)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Drops are earned, never sold")
-                    .font(.display(17))
+                    .font(.display(17, .semibold))
                     .foregroundStyle(theme.ink)
                 Text("+\(DropRules.perSip) a sip, +\(DropRules.perBeat) a story moment, +\(store.goalReward) for your goal and a streak bonus. You've earned \(breakdown.total) so far.")
-                    .font(.dewy(13.5, .semibold))
+                    .font(.dewy(13, .semibold))
                     .foregroundStyle(theme.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
-        .dewyCard(padding: 16, fill: Palette.coralSoft.blended(with: .white, by: 0.4), glow: Palette.coral)
+        .dewyCard(padding: 16, fill: Palette.coralSoft.blended(with: Palette.paper, by: 0.42), glow: Palette.coral)
     }
 
     // MARK: Actions
@@ -333,6 +349,7 @@ struct FriendsView: View {
         switch item {
         case .friend(let friend) where store.owns(friend):
             Haptics.select()
+            bounce += 1
             withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) { store.toggleCompanion(friend) }
         case .outfit(let outfit) where store.owns(outfit):
             Haptics.select()
@@ -355,7 +372,7 @@ struct FriendsView: View {
 
 // MARK: - Shop item
 
-/// Anything that can be bought with Dew Drops.
+/// Anything that can be unlocked with earned Dew Drops.
 enum ShopItem: Identifiable, Hashable {
     case friend(Friend)
     case outfit(Outfit)
@@ -366,14 +383,6 @@ enum ShopItem: Identifiable, Hashable {
         case .friend(let f): "friend-\(f.rawValue)"
         case .outfit(let o): "outfit-\(o.rawValue)"
         case .decor(let d): "decor-\(d.rawValue)"
-        }
-    }
-
-    var imageName: String {
-        switch self {
-        case .friend(let f): f.imageName
-        case .outfit(let o): o.imageName
-        case .decor(let d): d.imageName
         }
     }
 
@@ -389,15 +398,15 @@ enum ShopItem: Identifiable, Hashable {
         switch self {
         case .friend(let f): f.species
         case .outfit(let o): o.slot == .head ? "Hat" : (o.slot == .face ? "Glasses" : "Neckwear")
-        case .decor(let d): d.floats ? "Floats on the pond" : (d.flies ? "Drifts in the sky" : "Sits on the shore")
+        case .decor(let d): d.floats ? "Floats on the pond" : (d.flies ? "Drifts in the sky" : "Rests along the shore")
         }
     }
 
     var blurb: String {
         switch self {
         case .friend(let f): f.bio
-        case .outfit: "Dewy wears it on the Today screen, in widgets and on your share cards."
-        case .decor: "Shows up around Dewy's pond on the Today screen."
+        case .outfit: "Dewy wears it on the Today screen, in widgets and on your share postcards."
+        case .decor: "Appears around Dewy's sanctuary on the Today screen."
         }
     }
 
@@ -441,79 +450,97 @@ private struct FriendCard: View {
     var locked: Bool
     var affordable: Bool
 
+    private var deepTint: Color {
+        friend.tint.blended(with: Ink.primary, by: 0.34)
+    }
+
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
         VStack(spacing: 10) {
             ZStack {
                 Circle()
-                    .fill(RadialGradient(colors: [friend.tint.opacity(0.5), friend.tint.opacity(0.12)], center: .center, startRadius: 4, endRadius: 64))
-                    .frame(width: 112, height: 112)
-                ArtImage(name: friend.imageName, fallback: "pawprint.fill", tint: friend.tint, size: 118)
-                    .saturation(owned || !locked ? 1 : 0.4)
+                    .fill(
+                        RadialGradient(
+                            colors: [friend.tint.opacity(0.32), friend.tint.opacity(0.08)],
+                            center: .center,
+                            startRadius: 6,
+                            endRadius: 54
+                        )
+                    )
+                    .overlay(Circle().stroke(Ink.hairline, lineWidth: 1))
+                    .frame(width: 98, height: 98)
+
+                FriendView(friend: friend, size: 88, animated: true)
+                    .saturation(owned || !locked ? 1 : 0.35)
                     .opacity(owned ? 1 : 0.92)
             }
-            .frame(height: 118)
+            .frame(height: 104)
             .overlay(alignment: .topTrailing) {
-                if friend.isPremium { PlusBadge().offset(x: 6, y: -4) }
+                if friend.isPremium { PlusBadge().offset(x: 8, y: -4) }
             }
-            VStack(spacing: 1) {
+
+            VStack(spacing: 2) {
                 Text(friend.name)
-                    .font(.display(19))
+                    .font(.display(19, .semibold))
                     .foregroundStyle(theme.ink)
                 Text(friend.species)
-                    .font(.dewy(12.5, .bold))
+                    .font(.dewy(11.5, .bold))
                     .foregroundStyle(theme.inkSoft)
             }
+
             status
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 14)
-        .padding(.bottom, 14)
+        .padding(.vertical, 14)
+        .padding(.horizontal, 10)
         .background {
-            ClaySurface(
-                shape: RoundedRectangle(cornerRadius: 30, style: .continuous),
-                fill: isCompanion ? friend.tint.blended(with: .white, by: 0.78) : .white,
-                glow: owned ? friend.tint : Palette.shadow,
-                elevation: isCompanion ? 1.1 : 0.8
+            PaperSurface(
+                shape: shape,
+                fill: isCompanion ? friend.tint.blended(with: Palette.paper, by: 0.84) : Palette.paper,
+                tint: owned ? friend.tint : Palette.shadow,
+                elevation: isCompanion ? 0.95 : 0.65
             )
         }
         .overlay {
             if isCompanion {
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .stroke(friend.tint, lineWidth: 2.5)
+                shape.stroke(deepTint.opacity(0.65), lineWidth: 2)
             }
         }
     }
 
-    @ViewBuilder private var status: some View {
+    @ViewBuilder
+    private var status: some View {
         if owned {
             HStack(spacing: 4) {
                 Image(systemName: isCompanion ? "heart.fill" : "plus")
-                    .font(.system(size: 11, weight: .black))
+                    .font(.system(size: 10, weight: .bold))
                 Text(isCompanion ? "With Dewy" : "Invite")
-                    .font(.display(13.5))
+                    .font(.dewy(12.5, .bold))
             }
-            .foregroundStyle(isCompanion ? .white : friend.tint.blended(with: .black, by: 0.35))
+            .foregroundStyle(isCompanion ? Palette.paper : deepTint)
             .padding(.horizontal, 12)
             .frame(height: 28)
-            .background(isCompanion ? friend.tint.blended(with: .black, by: 0.08) : friend.tint.opacity(0.2), in: Capsule())
+            .background(isCompanion ? deepTint : friend.tint.opacity(0.18), in: Capsule())
+            .overlay(Capsule().stroke(deepTint.opacity(isCompanion ? 0 : 0.25), lineWidth: 1))
         } else if locked {
             HStack(spacing: 4) {
-                Image(systemName: "lock.fill").font(.system(size: 10, weight: .heavy))
-                Text("Dewy+").font(.display(13.5))
+                Image(systemName: "lock.fill").font(.system(size: 9.5, weight: .bold))
+                Text("Dewy+").font(.dewy(12.5, .bold))
             }
             .foregroundStyle(Palette.butterDeep)
             .padding(.horizontal, 12)
             .frame(height: 28)
             .background(Palette.butterSoft, in: Capsule())
+            .overlay(Capsule().stroke(Palette.butterDeep.opacity(0.24), lineWidth: 1))
         } else {
             PriceTag(price: friend.price, affordable: affordable)
         }
     }
 }
 
-private struct ItemCard: View {
+/// Cotton-paper atelier card shared cleanly by live OutfitArtView pieces and handcrafted Decor art.
+private struct AtelierItemCard<Artwork: View>: View {
     @Environment(\.dewyTheme) private var theme
-    var imageName: String
     var title: String
     var tint: Color
     var price: Int
@@ -523,75 +550,85 @@ private struct ItemCard: View {
     var idleLabel: String
     var locked: Bool
     var affordable: Bool
-    var reward: String?
+    @ViewBuilder var artwork: () -> Artwork
+
+    private var deepTint: Color {
+        tint.blended(with: Ink.primary, by: 0.36)
+    }
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
         VStack(spacing: 6) {
             ZStack {
                 Circle()
-                    .fill(tint.opacity(active ? 0.42 : 0.2))
-                    .frame(width: 70, height: 70)
-                ArtImage(name: imageName, fallback: "sparkles", tint: tint, size: 72)
+                    .fill(tint.opacity(active ? 0.26 : 0.14))
+                    .overlay(Circle().stroke(Ink.hairline, lineWidth: 1))
+                    .frame(width: 68, height: 68)
+                artwork()
             }
-            .frame(height: 76)
+            .frame(height: 74)
+
             Text(title)
-                .font(.display(13))
+                .font(.display(13, .semibold))
                 .foregroundStyle(theme.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.72)
+
             status
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .padding(.horizontal, 6)
         .background {
-            ClaySurface(
-                shape: RoundedRectangle(cornerRadius: 24, style: .continuous),
-                fill: active ? tint.blended(with: .white, by: 0.8) : .white,
-                glow: active ? tint : Palette.shadow,
-                elevation: active ? 1 : 0.6
+            PaperSurface(
+                shape: shape,
+                fill: active ? tint.blended(with: Palette.paper, by: 0.84) : Palette.paper,
+                tint: active ? tint : Palette.shadow,
+                elevation: active ? 0.9 : 0.55
             )
         }
         .overlay {
             if active {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(tint, lineWidth: 2.5)
+                shape.stroke(deepTint.opacity(0.65), lineWidth: 2)
             }
         }
         .overlay(alignment: .topTrailing) {
             if active {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 10, weight: .black))
-                    .foregroundStyle(.white)
-                    .frame(width: 22, height: 22)
-                    .background(Circle().fill(tint.blended(with: .black, by: 0.1)))
-                    .overlay(Circle().stroke(.white, lineWidth: 2))
+                    .font(.system(size: 9.5, weight: .bold))
+                    .foregroundStyle(Palette.paper)
+                    .frame(width: 21, height: 21)
+                    .background(Circle().fill(deepTint))
+                    .overlay(Circle().stroke(Palette.paper, lineWidth: 1.5))
                     .offset(x: 4, y: -4)
             }
         }
     }
 
-    @ViewBuilder private var status: some View {
+    @ViewBuilder
+    private var status: some View {
         if owned {
             Text(active ? activeLabel : idleLabel)
-                .font(.display(12.5))
-                .foregroundStyle(active ? tint.blended(with: .black, by: 0.4) : theme.inkSoft)
+                .font(.dewy(12, .bold))
+                .foregroundStyle(active ? deepTint : theme.inkSoft)
                 .frame(height: 26)
         } else if locked {
             HStack(spacing: 3) {
-                Image(systemName: "lock.fill").font(.system(size: 9, weight: .heavy))
-                Text("Dewy+").font(.display(12.5))
+                Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold))
+                Text("Dewy+").font(.dewy(11.5, .bold))
             }
             .foregroundStyle(Palette.butterDeep)
             .padding(.horizontal, 9)
             .frame(height: 26)
             .background(Palette.butterSoft, in: Capsule())
+            .overlay(Capsule().stroke(Palette.butterDeep.opacity(0.24), lineWidth: 1))
         } else {
             PriceTag(price: price, affordable: affordable)
         }
     }
 }
 
+/// Rich multi-layer miniature world preview card showcasing each sanctuary's distinct atmosphere.
 private struct WorldCard: View {
     @Environment(\.dewyTheme) private var theme
     var world: AppTheme
@@ -599,120 +636,107 @@ private struct WorldCard: View {
     var locked: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            // A cleanly framed preview of the world in its own sky.
-            GeometryReader { proxy in
-                let w = proxy.size.width
-                let h = proxy.size.height
-                let previewPhase = world.phase()
-                ZStack(alignment: .bottom) {
-                    previewPhase.gradient
-                    RadialGradient(
-                        colors: [previewPhase.sunGlow.opacity(previewPhase.isNight ? 0.45 : 0.85), .clear],
-                        center: UnitPoint(x: 0.84, y: 0.18),
-                        startRadius: 0, endRadius: 90
-                    )
-                    // Pond strip along the bottom third.
-                    LinearGradient(colors: previewPhase.pond, startPoint: .top, endPoint: .bottom)
-                        .frame(height: h * 0.34)
-                        .overlay(alignment: .top) {
-                            previewPhase.glint.opacity(0.8).frame(height: 2.5)
-                        }
-                    if Art.exists("prop-cloud-2") {
-                        Image("prop-cloud-2")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 68)
-                            .opacity(previewPhase.isNight ? 0.55 : 0.9)
-                            .position(x: w * 0.78, y: h * 0.32)
-                    }
-                    HStack(alignment: .bottom, spacing: 6) {
-                        ForEach(world.landmarks, id: \.self) { landmark in
-                            ArtImage(name: landmark, size: world == .matcha ? 96 : 74)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: world == .lavender ? .trailing : .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, h * 0.24)
+        let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
+        let isNight = world.phase().isNight
 
-                    MascotView(progress: 0.7, mood: .happy, size: 46, animated: false, showsShadow: false)
-                        .padding(.bottom, 8)
+        VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
+                ClayWorld(horizon: 76, animated: false, showsLandmark: true)
+                    .environment(\.dewyTheme, world)
+
+                ZStack(alignment: .bottom) {
+                    LilyPad(width: 52, animated: false)
+                        .environment(\.dewyTheme, world)
+                        .offset(y: 7)
+                    MascotView(
+                        progress: 0.72,
+                        mood: .happy,
+                        size: 46,
+                        animated: false,
+                        showsShadow: false,
+                        isNight: isNight
+                    )
+                    .environment(\.dewyTheme, world)
                 }
+                .padding(.bottom, 10)
             }
-            .frame(height: 124)
+            .frame(height: 126)
             .clipped()
+
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Text(world.displayName)
-                            .font(.display(19))
+                            .font(.display(19, .semibold))
                             .foregroundStyle(theme.ink)
                         if world.isPremium { PlusBadge() }
                     }
                     Text(world.tagline)
-                        .font(.dewy(13, .semibold))
+                        .font(.dewy(12.5, .semibold))
                         .foregroundStyle(theme.inkSoft)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
+
                 Spacer(minLength: 0)
+
                 if selected {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 14, weight: .black))
-                        .foregroundStyle(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Circle().fill(LinearGradient(colors: [Palette.aquaLight, Palette.aqua], startPoint: .top, endPoint: .bottom)))
-                        .overlay(Circle().stroke(.white, lineWidth: 2))
-                        .shadow(color: Palette.aqua.opacity(0.4), radius: 6, x: 0, y: 3)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Palette.paper)
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(Palette.aqua))
+                        .overlay(Circle().stroke(Palette.aquaDeep.opacity(0.35), lineWidth: 1))
                 } else if locked {
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 14, weight: .heavy))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(Palette.butterDeep)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 30, height: 30)
                         .background(Circle().fill(Palette.butterSoft))
+                        .overlay(Circle().stroke(Palette.butterDeep.opacity(0.25), lineWidth: 1))
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(.white)
+            .background(Palette.paper)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .clipShape(shape)
         .background {
-            ClaySurface(shape: RoundedRectangle(cornerRadius: 28, style: .continuous), fill: .white, glow: selected ? world.tint : Palette.shadow, elevation: selected ? 1.1 : 0.7)
+            PaperSurface(
+                shape: shape,
+                fill: Palette.paper,
+                tint: selected ? world.tint : Palette.shadow,
+                elevation: selected ? 1.0 : 0.65
+            )
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(selected ? Palette.aqua : .white, lineWidth: selected ? 3 : 2)
+            shape.stroke(selected ? Palette.aqua : Ink.hairline, lineWidth: selected ? 2.2 : 1)
         }
     }
 }
 
-/// A friend bobbing on a little lily pad beside Dewy.
-private struct StageFriend: View {
+/// Live animated companion perched on a miniature botanical lily pad beside Dewy on stage.
+private struct StageFriendPad: View {
     var friend: Friend
     var index: Int
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var cheerTrigger: Int
+    var isNight: Bool
 
     var body: some View {
-        let live = !reduceMotion && !LaunchOptions.freezesMotion
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !live)) { timeline in
-            let t = live ? timeline.date.timeIntervalSinceReferenceDate : 0
-            let bob = CGFloat(sin(t * 1.6 + Double(index) * 1.7)) * 3
-            VStack(spacing: -16) {
-                ArtImage(name: friend.imageName, fallback: "pawprint.fill", tint: friend.tint, size: 70)
-                    .scaleEffect(x: index == 0 ? 1 : -1, y: 1)
-                    .offset(y: bob)
-                    .zIndex(1)
-                if Art.exists("prop-lilypad") {
-                    Image("prop-lilypad")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 80)
-                }
-            }
+        ZStack(alignment: .bottom) {
+            LilyPad(width: 76, rippleTrigger: cheerTrigger)
+                .offset(y: 12)
+            FriendView(
+                friend: friend,
+                size: 72,
+                animated: true,
+                celebrateTrigger: cheerTrigger,
+                isNight: isNight
+            )
+            .scaleEffect(x: index == 0 ? 1 : -1, y: 1)
+            .offset(y: -4)
         }
-        .frame(width: 92)
+        .frame(width: 92, height: 82, alignment: .bottom)
         .accessibilityHidden(true)
     }
 }
@@ -727,63 +751,114 @@ private struct ShopItemSheet: View {
 
     @State private var pop = false
     @State private var shake = 0
+    @State private var previewHop = 0
 
     var body: some View {
         let balance = store.dropBalance
         let affordable = balance >= item.price
+
         VStack(spacing: 14) {
-            Capsule().fill(Ink.faint.opacity(0.5)).frame(width: 40, height: 5).padding(.top, 10)
+            Capsule().fill(Ink.faint.opacity(0.5)).frame(width: 38, height: 4.5).padding(.top, 10)
+
             preview
-                .frame(height: item.isOutfit ? 210 : 180)
-                .scaleEffect(pop ? 1 : 0.7)
+                .frame(height: item.isOutfit ? 210 : 186)
+                .scaleEffect(pop ? 1 : 0.74)
                 .modifier(ShakeEffect(shakes: CGFloat(shake)))
-            VStack(spacing: 4) {
-                CapsLabel(text: item.subtitle, color: item.tint.blended(with: .black, by: 0.35), size: 11)
+
+            VStack(spacing: 5) {
+                CapsLabel(text: item.subtitle, color: item.tint.blended(with: Ink.primary, by: 0.36), size: 10.5)
                 Text(item.title)
                     .font(.display(28, .bold))
                     .foregroundStyle(theme.ink)
                 Text(item.blurb)
-                    .font(.dewy(15.5, .semibold))
+                    .font(.editorialItalic(16))
                     .foregroundStyle(theme.inkSoft)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 2)
             }
             .padding(.horizontal, 28)
+
             Spacer(minLength: 0)
+
             VStack(spacing: 10) {
-                PrimaryButton(title: item.price == 0 ? "Adopt for free" : "Get for \(item.price) drops", style: affordable ? .reward : .light, height: 58) {
+                PrimaryButton(
+                    title: item.price == 0 ? "Adopt for free" : "Get for \(item.price) drops",
+                    style: affordable ? .reward : .light,
+                    height: 56
+                ) {
                     buy()
                 }
                 Text(affordable ? "You have \(balance) drops" : "\(item.price - balance) more drops to go. Keep sipping!")
-                    .font(.dewy(13.5, .bold))
+                    .font(.dewy(13, .bold))
                     .foregroundStyle(theme.inkSoft)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 12)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.6)) { pop = true }
+            withAnimation(.spring(response: 0.52, dampingFraction: 0.66)) { pop = true }
         }
     }
 
-    @ViewBuilder private var preview: some View {
+    @ViewBuilder
+    private var preview: some View {
         switch item {
+        case .friend(let friend):
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [friend.tint.opacity(0.32), .clear],
+                            center: .center,
+                            startRadius: 10,
+                            endRadius: 112
+                        )
+                    )
+                    .frame(width: 224, height: 224)
+                FriendView(friend: friend, size: 156, animated: true, celebrateTrigger: previewHop)
+                    .onTapGesture {
+                        previewHop += 1
+                        Haptics.tap()
+                    }
+            }
         case .outfit(let outfit):
-            // Try it on before buying.
             let worn = store.outfits.filter { $0.slot != outfit.slot } + [outfit]
             ZStack {
                 Circle()
-                    .fill(RadialGradient(colors: [outfit.tint.opacity(0.4), .clear], center: .center, startRadius: 10, endRadius: 120))
-                    .frame(width: 240, height: 240)
-                MascotView(progress: store.todayProgress, mood: .happy, size: 170, outfits: worn, sparkles: true, bands: store.todayBands, showsShadow: false)
+                    .fill(
+                        RadialGradient(
+                            colors: [outfit.tint.opacity(0.32), .clear],
+                            center: .center,
+                            startRadius: 10,
+                            endRadius: 115
+                        )
+                    )
+                    .frame(width: 230, height: 230)
+                MascotView(
+                    progress: store.todayProgress,
+                    mood: .happy,
+                    size: 168,
+                    outfits: worn,
+                    sparkles: true,
+                    bands: store.todayBands,
+                    showsShadow: false
+                )
+                .liveMeniscusGlow(strength: 0.14)
             }
-        default:
+        case .decor(let decor):
             ZStack {
                 Circle()
-                    .fill(RadialGradient(colors: [item.tint.opacity(0.45), .clear], center: .center, startRadius: 10, endRadius: 120))
-                    .frame(width: 240, height: 240)
-                ArtImage(name: item.imageName, fallback: "sparkles", tint: item.tint, size: 170)
+                    .fill(
+                        RadialGradient(
+                            colors: [decor.tint.opacity(0.34), .clear],
+                            center: .center,
+                            startRadius: 10,
+                            endRadius: 112
+                        )
+                    )
+                    .frame(width: 224, height: 224)
+                ArtImage(name: decor.imageName, fallback: "sparkles", tint: decor.tint, size: 146)
             }
         }
     }
@@ -806,7 +881,7 @@ private struct ShopItemSheet: View {
     }
 }
 
-/// A quick side-to-side wobble for "not enough drops".
+/// Subtle horizontal shake when balance is too low to unlock an item.
 private struct ShakeEffect: GeometryEffect {
     var shakes: CGFloat
     var animatableData: CGFloat {

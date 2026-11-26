@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="120" height="120" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="31" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.05 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <radialGradient id="pearlDrop" cx="38%" cy="38%" r="66%">
+    <stop offset="0%" stop-color="#FFEAD6"/>
+    <stop offset="34%" stop-color="#FFB89A"/>
+    <stop offset="72%" stop-color="#F27E63"/>
+    <stop offset="100%" stop-color="#D45842"/>
+  </radialGradient>
+  <radialGradient id="bellyBounce" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#FFF5DE" stop-opacity="0.72"/>
+    <stop offset="100%" stop-color="#FFF5DE" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <path d="M60 12 C77 35 94 54 94 74 C94 94 79 107 60 107 C41 107 26 94 26 74 C26 54 43 35 60 12 Z" fill="url(#pearlDrop)" stroke="#5E2D24" stroke-opacity="0.76" stroke-width="3.4" stroke-linejoin="round"/>
+  <!-- Warm translucent inner bounce light along lower pearl belly -->
+  <ellipse cx="60" cy="91" rx="22" ry="9.5" fill="url(#bellyBounce)"/>
+  <!-- Luminous pearlescent gouache catchlight -->
+  <path d="M43 53 C38 63 38 74 42 82" fill="none" stroke="#FFFDF8" stroke-width="5.2" stroke-linecap="round" opacity="0.92"/>
+  <circle cx="48" cy="89" r="3" fill="#FFFDF8" opacity="0.9"/>
+  <path d="M77 56 C83 66 84 78 78 88" fill="none" stroke="#FFEAD6" stroke-width="2.6" stroke-linecap="round" opacity="0.52"/>
+</g>
+</svg>

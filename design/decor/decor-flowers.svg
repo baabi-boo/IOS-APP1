@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.76" numOctaves="3" seed="17" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.055 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="turfG" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#9BD289"/>
+    <stop offset="100%" stop-color="#4D8958"/>
+  </linearGradient>
+  <linearGradient id="tulipRose" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#FCC8D8"/>
+    <stop offset="100%" stop-color="#D96588"/>
+  </linearGradient>
+  <linearGradient id="tulipGold" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#FDEB9E"/>
+    <stop offset="100%" stop-color="#E5A235"/>
+  </linearGradient>
+  <linearGradient id="tulipCoral" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#FBC0AA"/>
+    <stop offset="100%" stop-color="#DC6852"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="120" cy="204" rx="82" ry="12" fill="#3B2B23" opacity="0.14"/>
+  <!-- Organic arching botanical foliage blades of varied heights -->
+  <path d="M98 188 C62 162 42 124 44 92 C68 106 90 138 108 184 Z" fill="#63A86C" stroke="#342638" stroke-opacity="0.78" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M138 188 C176 164 198 134 198 108 C172 118 150 144 130 184 Z" fill="#4E8F5B" stroke="#342638" stroke-opacity="0.78" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M112 188 C94 148 92 112 104 88 C114 114 120 148 122 186 Z" fill="#7EC07B" stroke="#342638" stroke-opacity="0.78" stroke-width="2.4" stroke-linejoin="round"/>
+  <!-- Asymmetrical gracefully bending stems -->
+  <path d="M108 186 C94 146 84 122 68 96" fill="none" stroke="#3D784B" stroke-width="4.4" stroke-linecap="round"/>
+  <path d="M118 186 C118 136 122 96 126 60" fill="none" stroke="#3D784B" stroke-width="4.6" stroke-linecap="round"/>
+  <path d="M130 186 C144 152 158 132 174 114" fill="none" stroke="#3D784B" stroke-width="4.2" stroke-linecap="round"/>
+  <path d="M96 184 C74 158 62 146 54 134" fill="none" stroke="#4D8A5A" stroke-width="3.2" stroke-linecap="round"/>
+  <!-- Small lavender bluebell sprig bending left -->
+  <g fill="#B4A0E8" stroke="#4A3B74" stroke-opacity="0.65" stroke-width="2">
+    <circle cx="52" cy="130" r="6"/>
+    <circle cx="62" cy="142" r="5.5"/>
+    <circle cx="48" cy="144" r="5"/>
+  </g>
+  <!-- Leaning butter-gold tulip (mid-left) -->
+  <g transform="rotate(-22 68 90)">
+    <path d="M54 90 C52 70 61 58 68 68 C75 58 84 70 82 90 C80 103 56 103 54 90 Z" fill="url(#tulipGold)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.8" stroke-linejoin="round"/>
+    <path d="M63 86 C63 72 68 62 73 86" fill="none" stroke="#FFF8DC" stroke-width="2.4" stroke-linecap="round" opacity="0.72"/>
+  </g>
+  <!-- Tall graceful rose tulip (slightly right-of-center) -->
+  <g transform="rotate(4 126 60)">
+    <path d="M106 66 C104 40 116 26 126 40 C136 26 148 40 146 66 C144 84 108 84 106 66 Z" fill="url(#tulipRose)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.8" stroke-linejoin="round"/>
+    <path d="M118 66 C118 46 126 32 134 66" fill="none" stroke="#FFF0F4" stroke-width="2.8" stroke-linecap="round" opacity="0.74"/>
+  </g>
+  <!-- Lower nodding terracotta tulip bud (right) -->
+  <g transform="rotate(24 174 110)">
+    <path d="M161 112 C160 94 168 84 174 92 C180 84 188 94 187 112 C185 123 163 123 161 112 Z" fill="url(#tulipCoral)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.8" stroke-linejoin="round"/>
+    <path d="M169 109 C169 96 174 88 179 109" fill="none" stroke="#FFEDE6" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>
+  </g>
+  <!-- Soft mossy cushion base -->
+  <path d="M44 196 C58 174 88 168 120 170 C154 168 182 174 196 196 C168 206 72 206 44 196 Z" fill="url(#turfG)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.8" stroke-linejoin="round"/>
+  <path d="M68 188 Q106 180 146 188" fill="none" stroke="#C5ECAC" stroke-width="3" stroke-linecap="round" opacity="0.62"/>
+  <!-- Asymmetrical foreground meadow daisies -->
+  <g transform="translate(88 168)">
+    <circle cx="-7" cy="-4.5" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.8"/>
+    <circle cx="7" cy="-4.5" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.8"/>
+    <circle cx="0" cy="-9" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.8"/>
+    <circle cx="-5.5" cy="4.5" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.8"/>
+    <circle cx="5.5" cy="4.5" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.8"/>
+    <circle cx="0" cy="0" r="5.2" fill="#F2BE44" stroke="#7A5618" stroke-opacity="0.6" stroke-width="1.6"/>
+  </g>
+  <g transform="translate(150 178) scale(0.84)">
+    <circle cx="-7" cy="-4.5" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.9"/>
+    <circle cx="7" cy="-4.5" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.9"/>
+    <circle cx="0" cy="-9" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.9"/>
+    <circle cx="-5.5" cy="4.5" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.9"/>
+    <circle cx="5.5" cy="4.5" r="6.2" fill="#FFFDF8" stroke="#5A4D62" stroke-opacity="0.58" stroke-width="1.9"/>
+    <circle cx="0" cy="0" r="5.2" fill="#F2BE44" stroke="#7A5618" stroke-opacity="0.6" stroke-width="1.7"/>
+  </g>
+</g>
+</svg>
