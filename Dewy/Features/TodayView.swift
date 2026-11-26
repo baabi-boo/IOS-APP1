@@ -1,32 +1,64 @@
 import SwiftUI
 
+/// Frames measured for the pour-in animation. A plain reference so scrolling never re-renders the screen.
+private final class PourGeometry {
+    var tiles: [DrinkKind: CGRect] = [:]
+    var dewy: CGRect = .zero
+    var screen: CGRect = .zero
+}
+
+/// A drink flying from its tile into Dewy.
+private struct Flight: Identifiable, Equatable {
+    let id = UUID()
+    var kind: DrinkKind
+    var amount: Double
+    var from: CGPoint
+    var to: CGPoint
+}
+
+/// A little "+N drops" that floats up after a sip lands.
+private struct DropPop: Identifiable, Equatable {
+    let id = UUID()
+    var value: Int
+}
+
 struct TodayView: View {
     @Environment(HydrationStore.self) private var store
     @Environment(PurchaseManager.self) private var purchases
     @Environment(AppRouter.self) private var router
     @Environment(\.dewyTheme) private var theme
 
-    @State private var showPaywall = false
     @State private var showShare = false
     @State private var bounce = 0
     @State private var ripple = 0
+    @State private var splash = 0
     @State private var celebrate = 0
+    @State private var showCelebration = false
+    @State private var celebrationReward = 0
     @State private var toast: DrinkEntry?
     @State private var toastTask: Task<Void, Never>?
     @State private var appeared = false
-    @State private var showGoalBanner = false
+    @State private var flights: [Flight] = []
+    @State private var pops: [DropPop] = []
+    @State private var geometry = PourGeometry()
 
     private let quickKinds: [DrinkKind] = [.water, .tea, .coffee, .juice, .sparkling, .matcha, .lemonade, .smoothie]
 
-    // Fixed hero metrics keep Dewy's lily pad lined up with the horizon of the scene.
-    private let headerHeight: CGFloat = 72
-    private let stageHeight: CGFloat = 250
-    private let amountHeight: CGFloat = 132
-    private let mascotSize: CGFloat = 200
-    /// The scene runs 60 points under the sheet so its rounded corners show sky, not canvas.
-    private var sceneHeight: CGFloat { headerHeight + stageHeight + amountHeight + 94 }
-    /// The sea starts behind Dewy's lower half, so the lily pad floats on it.
-    private var horizonY: CGFloat { headerHeight + 154 }
+    // Fixed hero metrics keep Dewy's lily pad lined up with the pond.
+    private let headerHeight: CGFloat = 112
+    private let stageHeight: CGFloat = 262
+    private let amountHeight: CGFloat = 124
+    private let mascotSize: CGFloat = 196
+    private let padWidth: CGFloat = 164
+    private var mascotHeight: CGFloat { mascotSize * DewyGeometry.canvas.height / DewyGeometry.canvas.width }
+    /// Top of the lily pad canvas inside the stage, so Dewy's feet land on the pad's top surface.
+    private var padTop: CGFloat { mascotHeight * 0.925 - padWidth * 0.232 }
+    /// The scene runs under the sheet so its rounded corners show pond, not canvas.
+    private var sceneHeight: CGFloat { headerHeight + stageHeight + amountHeight + 96 }
+    /// The pond starts behind Dewy's lower half.
+    private var horizonY: CGFloat { headerHeight + 118 }
+
+    private var phase: SkyPhase { theme.phase() }
 
     var body: some View {
         ZStack {
@@ -39,27 +71,46 @@ struct TodayView: View {
             }
             .scrollIndicators(.hidden)
 
-            ConfettiView(trigger: celebrate)
+            // Drinks in flight, above the scroll view.
+            ForEach(flights) { flight in
+                FlyingDrink(flight: flight) {
+                    land(flight)
+                }
+            }
+            .allowsHitTesting(false)
+
+            ConfettiView(trigger: celebrate, origin: UnitPoint(x: 0.5, y: 0.3))
                 .ignoresSafeArea()
 
-            if showGoalBanner {
-                GoalBanner(goal: store.format(store.goal), streak: store.currentStreak, bands: store.todayBands, progress: store.todayProgress)
-                    .padding(.horizontal, 24)
-                    .transition(.scale(scale: 0.6).combined(with: .opacity))
-                    .zIndex(2)
+            if showCelebration {
+                CelebrationOverlay(
+                    reward: celebrationReward,
+                    streak: store.currentStreak,
+                    goal: store.format(store.goal),
+                    outfits: store.outfits,
+                    bands: store.todayBands
+                ) {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) { showCelebration = false }
+                }
+                .transition(.opacity.combined(with: .scale(scale: 1.06)))
+                .zIndex(3)
+            }
+        }
+        .coordinateSpace(name: "today")
+        .background {
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { geometry.screen = proxy.frame(in: .named("today")) }
             }
         }
         .overlay(alignment: .top) {
             if let toast {
-                ToastView(entry: toast, label: store.format(toast.amount)) {
+                UndoToast(entry: toast, label: store.format(toast.amount)) {
                     undo(toast)
                 }
                 .padding(.top, 6)
                 .transition(.move(edge: .top).combined(with: .opacity).combined(with: .scale(scale: 0.9)))
             }
-        }
-        .sheet(isPresented: $showPaywall) {
-            PaywallView()
         }
         .sheet(isPresented: $showShare) {
             ShareDaySheet()
@@ -67,149 +118,181 @@ struct TodayView: View {
         .task(id: router.queuedDrink) {
             guard let queued = router.queuedDrink else { return }
             // Give the drink sheet a moment to slide away so the pour is visible.
-            try? await Task.sleep(for: .seconds(0.45))
+            try? await Task.sleep(for: .seconds(0.4))
             router.queuedDrink = nil
-            add(queued.kind, amount: queued.amount)
+            let start = CGPoint(x: geometry.screen.midX, y: geometry.screen.maxY - 40)
+            pour(queued.kind, amount: queued.amount, from: start)
         }
         .onAppear {
             appeared = true
-            if LaunchOptions.screenshot == "share" {
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(0.8))
-                    showShare = true
-                }
-            }
-            if LaunchOptions.screenshot == "paywall" {
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(0.8))
-                    showPaywall = true
-                }
-            }
-            if LaunchOptions.screenshot == "celebrate" {
-                // Demo recording: two drinks, the second one reaches the goal.
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(2.5))
-                    add(.sparkling, amount: 500)
-                    try? await Task.sleep(for: .seconds(3))
-                    add(.water, amount: 500)
-                }
-            }
+            runDemoHooks()
         }
     }
 
     // MARK: Hero
 
     private var greeting: String {
-        let hour = LaunchOptions.isDemo ? 14 : Calendar.current.component(.hour, from: .now)
         let name = store.profile.name.isEmpty ? "" : ", \(store.profile.name)"
-        switch hour {
-        case 5..<12: return "Morning\(name)"
-        case 12..<17: return "Hi\(name)"
-        case 17..<22: return "Evening\(name)"
-        default: return "Hey night owl"
-        }
+        return phase.greeting + name
     }
 
     private var hero: some View {
         VStack(spacing: 0) {
             header
-                .frame(height: headerHeight)
-                .padding(.horizontal, 22)
+                .frame(height: headerHeight, alignment: .top)
+                .padding(.horizontal, 20)
                 .floatIn(appeared, index: 0)
             stage
-                .frame(height: stageHeight)
+                .frame(height: stageHeight, alignment: .top)
                 .floatIn(appeared, index: 1)
             amount
                 .frame(height: amountHeight, alignment: .top)
                 .floatIn(appeared, index: 2)
         }
-        .padding(.top, 4)
-        .padding(.bottom, 30)
+        .padding(.top, 6)
+        .padding(.bottom, 18)
         .background(alignment: .top) {
-            // The sea starts behind Dewy's lower half, so the lily pad floats on it.
-            SkyHeaderBackground(height: sceneHeight, horizon: horizonY, sunY: 150, sunX: 0.16, drawsHorizonClouds: true)
+            VStack(spacing: 0) {
+                phase.sky[0].frame(height: 800)
+                ClayWorld(horizon: horizonY, decor: store.placedDecor, interactive: true)
+                    .frame(height: sceneHeight)
+            }
+            .frame(height: sceneHeight, alignment: .bottom)
         }
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                CapsLabel(text: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()), color: theme.onHeroSoft, size: 12)
-                Text(greeting)
-                    .font(.display(31))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    CapsLabel(text: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()), color: phase.onSkySoft, size: 11.5)
+                    Text(greeting)
+                        .font(.display(30))
+                        .foregroundStyle(phase.onSky)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                Spacer(minLength: 8)
+                avatarButton
             }
-            Spacer(minLength: 8)
-            CircleIconButton(systemImage: "square.and.arrow.up", size: 42, onHero: true) {
-                Haptics.tap()
-                showShare = true
+            HStack(spacing: 8) {
+                Button {
+                    Haptics.tap()
+                    router.tab = .friends
+                } label: {
+                    CountPill(glyph: .drop, value: store.dropBalance, tint: Palette.coral)
+                }
+                .buttonStyle(SquishyButtonStyle())
+                .accessibilityLabel("\(store.dropBalance) Dew Drops")
+                CountPill(glyph: .flame, value: store.currentStreak, tint: Palette.butter)
+                    .accessibilityLabel("\(store.currentStreak) day streak")
+                Spacer(minLength: 0)
+                CircleIconButton(systemImage: "square.and.arrow.up", size: 38, onHero: true) {
+                    Haptics.tap()
+                    showShare = true
+                }
+                .accessibilityLabel("Share your day")
             }
-            .accessibilityLabel("Share your day")
-            StreakPill(days: store.currentStreak)
         }
+    }
+
+    private var avatarButton: some View {
+        Button {
+            Haptics.tap()
+            router.showMe = true
+        } label: {
+            MascotView(progress: store.todayProgress, mood: .happy, size: 40, outfits: store.outfits, bands: store.todayBands, backdrop: .light, animated: false, showsShadow: false)
+                .offset(y: 2)
+                .frame(width: 52, height: 52)
+                .clipShape(Circle())
+                .background {
+                    ClaySurface(shape: Circle(), fill: .white, glow: Palette.aqua, elevation: 0.6)
+                }
+        }
+        .buttonStyle(SquishyButtonStyle())
+        .accessibilityLabel("Me and settings")
     }
 
     private var stage: some View {
         ZStack(alignment: .top) {
-            // Dewy's feet rest at 93% of the figure's height, right on the pad.
-            let mascotHeight = mascotSize * DewyGeometry.canvas.height / DewyGeometry.canvas.width
-            LilyPad(width: 150, rippleTrigger: ripple)
-                .offset(y: mascotHeight * 0.935 - 31.5)
+            LilyPad(width: padWidth, rippleTrigger: ripple)
+                .offset(y: padTop)
+
+            companions
+
             MascotView(
                 progress: store.todayProgress,
                 mood: store.mood,
                 size: mascotSize,
                 bounceTrigger: bounce,
+                outfits: store.outfits,
                 bands: store.todayBands
             )
+            .background {
+                GeometryReader { proxy in
+                    let frame = proxy.frame(in: .named("today"))
+                    Color.clear
+                        .onAppear { geometry.dewy = frame }
+                        .onChange(of: frame) { _, new in geometry.dewy = new }
+                }
+            }
             .contentShape(Rectangle())
             .onTapGesture {
                 bounce += 1
                 Haptics.tap()
                 SoundFX.play(.pop, volume: 0.3)
             }
+
+            SplashBurst(trigger: splash)
+                .frame(width: 260, height: 200)
+                .offset(y: mascotHeight * 0.1)
+
+            ForEach(pops) { pop in
+                DropPopView(value: pop.value)
+                    .offset(x: 70, y: 30)
+            }
         }
         .frame(maxWidth: .infinity)
         .overlay(alignment: .topTrailing) {
             SpeechBubble(text: store.mood.line())
-                .padding(.trailing, 18)
-                .padding(.top, 4)
+                .padding(.trailing, 16)
+                .padding(.top, 2)
+        }
+    }
+
+    /// Friends hang out on their own little pads beside Dewy.
+    private var companions: some View {
+        let friends = store.companions
+        return ZStack(alignment: .top) {
+            ForEach(Array(friends.prefix(2).enumerated()), id: \.element) { index, friend in
+                CompanionView(friend: friend, index: index)
+                    .offset(x: index == 0 ? -128 : 128, y: padTop - 28)
+            }
         }
     }
 
     private var amount: some View {
-        VStack(spacing: 8) {
+        let ink: Color = phase.isNight ? .white : theme.ink
+        return VStack(spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 5) {
                 Text(store.format(store.todayTotal, withUnit: false))
-                    .font(.display(68))
-                    .foregroundStyle(.white)
+                    .font(.display(64, .bold))
+                    .foregroundStyle(ink)
                     .contentTransition(.numericText(value: store.displayValue(store.todayTotal)))
                 Text(store.profile.unit.label)
                     .font(.display(24))
-                    .foregroundStyle(theme.onHeroSoft)
+                    .foregroundStyle(ink.opacity(0.6))
             }
-            .shadow(color: theme.sea[1].opacity(0.45), radius: 0, x: 0, y: 3)
+            .shadow(color: .white.opacity(phase.isNight ? 0 : 0.6), radius: 0, x: 0, y: 2)
             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: store.todayTotal)
 
-            HStack(spacing: 8) {
-                Text("\(Int((store.todayProgress * 100).rounded()))%")
-                    .font(.display(16))
-                    .foregroundStyle(theme.isDark ? Palette.ink : theme.accent)
-                    .contentTransition(.numericText())
-                    .padding(.horizontal, 10)
-                    .frame(height: 28)
-                    .background(Color.white, in: Capsule())
-                Text("of your \(store.format(store.goal)) goal")
-                    .font(.display(17, .medium))
-                    .foregroundStyle(.white)
-            }
-            .animation(.spring, value: store.todayTotal)
+            Text("of your \(store.format(store.goal)) goal")
+                .font(.display(17, .medium))
+                .foregroundStyle(ink.opacity(0.65))
 
-            DrinkStripe(bands: store.todayBands)
-                .frame(width: 236, height: 12)
-                .padding(.top, 6)
+            ClayProgressBar(progress: store.todayProgress)
+                .frame(width: 272, height: 30)
+                .padding(.top, 8)
         }
     }
 
@@ -218,18 +301,19 @@ struct TodayView: View {
     private var sheet: some View {
         VStack(spacing: 26) {
             quickAdd
+            adventureCard
             summary
             logSection
             tipCard
         }
         .padding(.top, 24)
-        .padding(.bottom, 30)
+        .padding(.bottom, 120)
         .frame(maxWidth: .infinity)
         .canvasSheet()
     }
 
     private var quickAdd: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             SectionHeader(title: "Quick sips", trailing: "All drinks") {
                 Haptics.tap()
                 router.showAddDrink = true
@@ -237,48 +321,115 @@ struct TodayView: View {
             .padding(.horizontal, 20)
 
             ScrollView(.horizontal) {
-                HStack(spacing: 10) {
+                HStack(spacing: 12) {
                     ForEach(quickKinds) { kind in
                         let locked = kind.isPremium && !purchases.isPremium
-                        QuickDrinkTile(kind: kind, amount: store.format(kind.defaultAmount), isLocked: locked) {
+                        QuickSipTile(kind: kind, amount: store.format(kind.defaultAmount), isLocked: locked) {
                             if locked {
                                 Haptics.warning()
-                                showPaywall = true
+                                router.showPaywall = true
                             } else {
-                                add(kind, amount: kind.defaultAmount)
+                                let frame = geometry.tiles[kind] ?? .zero
+                                pour(kind, amount: kind.defaultAmount, from: CGPoint(x: frame.midX, y: frame.midY - 10))
+                            }
+                        }
+                        .background {
+                            GeometryReader { proxy in
+                                let frame = proxy.frame(in: .named("today"))
+                                Color.clear
+                                    .onAppear { geometry.tiles[kind] = frame }
+                                    .onChange(of: frame) { _, new in geometry.tiles[kind] = new }
                             }
                         }
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 6)
+                .padding(.top, 4)
+                .padding(.bottom, 14)
             }
             .scrollIndicators(.hidden)
             .scrollClipDisabled()
         }
     }
 
+    private var adventureCard: some View {
+        let chapter = store.todayChapter
+        let unlocked = store.beatsUnlocked
+        let line = unlocked == 0 ? "Take your first sip to set off." : chapter.beats[min(unlocked, 4) - 1]
+        return Button {
+            Haptics.tap()
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.76)) { router.tab = .journey }
+        } label: {
+            HStack(spacing: 14) {
+                Image(chapter.imageName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 92, height: 104)
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .stroke(.white, lineWidth: 3)
+                    }
+                    .overlay(alignment: .bottom) {
+                        MascotView(progress: store.todayProgress, mood: store.mood, size: 34, outfits: store.outfits, bands: store.todayBands, animated: false, showsShadow: false)
+                            .offset(y: -8)
+                    }
+                    .shadow(color: chapter.tint.opacity(0.45), radius: 10, x: 0, y: 6)
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        ClayIcon(glyph: .map, size: 18)
+                        CapsLabel(text: "Today's adventure", color: theme.inkSoft, size: 10.5)
+                    }
+                    Text(chapter.title)
+                        .font(.display(20))
+                        .foregroundStyle(theme.ink)
+                    Text(line)
+                        .font(.dewy(13.5, .medium))
+                        .foregroundStyle(theme.inkSoft)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 5) {
+                        ForEach(0..<4, id: \.self) { index in
+                            Capsule()
+                                .fill(index < unlocked ? AnyShapeStyle(LinearGradient(colors: [Palette.aquaLight, Palette.aqua], startPoint: .top, endPoint: .bottom)) : AnyShapeStyle(theme.well))
+                                .frame(height: 8)
+                        }
+                        Text("\(unlocked)/4")
+                            .font(.display(13))
+                            .foregroundStyle(theme.inkSoft)
+                            .padding(.leading, 2)
+                    }
+                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: unlocked)
+                }
+                Spacer(minLength: 0)
+            }
+            .dewyCard(padding: 12, glow: chapter.tint)
+        }
+        .buttonStyle(SquishyButtonStyle(scale: 0.97))
+        .padding(.horizontal, 20)
+    }
+
     private var summary: some View {
         HStack(spacing: 10) {
-            SummaryTile(
-                symbol: "drop.fill",
-                tint: theme.water,
+            StatTile(
+                glyph: .drop,
+                tint: Palette.aqua,
                 value: store.todayRemaining > 0 ? store.format(store.todayRemaining) : "Done!",
-                label: store.todayRemaining > 0 ? "to go" : "goal met"
+                label: store.todayRemaining > 0 ? "to go" : "goal met",
+                usesWaterIcon: true
             )
-            SummaryTile(
-                symbol: "bolt.fill",
-                tint: Color(hex: 0xB07CF0),
+            StatTile(
+                glyph: .cup,
+                tint: Palette.lilac,
                 value: "\(Int(store.todayCaffeine.rounded())) mg",
                 label: "caffeine",
                 progress: store.todayCaffeine / max(store.profile.caffeineLimit, 1)
             )
-            SummaryTile(
-                symbol: "cube.fill",
-                tint: Color(hex: 0xFF8FB1),
-                value: "\(Int(store.todaySugar.rounded())) g",
-                label: "sugar",
-                progress: store.todaySugar / 50
+            StatTile(
+                glyph: .drop,
+                tint: Palette.coral,
+                value: "+\(store.todayDrops)",
+                label: "drops today"
             )
         }
         .padding(.horizontal, 20)
@@ -306,7 +457,7 @@ struct TodayView: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
-                        EntryRow(entry: entry, amount: store.format(entry.amount), effective: store.format(entry.effective))
+                        SipRow(entry: entry, amount: store.format(entry.amount), effective: store.format(entry.effective))
                             .contextMenu {
                                 Button(role: .destructive) {
                                     withAnimation(.spring) { store.delete(entry) }
@@ -319,10 +470,10 @@ struct TodayView: View {
                                 removal: .opacity.combined(with: .scale(scale: 0.9))
                             ))
                         if index < entries.count - 1 {
-                            Rectangle()
+                            Capsule()
                                 .fill(theme.line)
                                 .frame(height: 1.5)
-                                .padding(.leading, 62)
+                                .padding(.leading, 64)
                         }
                     }
                 }
@@ -334,62 +485,74 @@ struct TodayView: View {
 
     private var tipCard: some View {
         HStack(alignment: .top, spacing: 14) {
-            Image(systemName: "lightbulb.max.fill")
-                .font(.system(size: 20, weight: .heavy))
-                .foregroundStyle(Palette.sunshine)
-                .frame(width: 46, height: 46)
-                .background(Palette.ink, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            ClayIcon(glyph: .star, size: 44)
+                .frame(width: 52, height: 52)
+                .background(.white.opacity(0.6), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             VStack(alignment: .leading, spacing: 4) {
-                CapsLabel(text: "Daily dew tip", color: Palette.ink.opacity(0.55), size: 11)
+                CapsLabel(text: "Daily dew tip", color: Color(hex: 0x9A6B12).opacity(0.75), size: 11)
                 Text(HydrationTips.tip())
                     .font(.display(17, .medium))
-                    .foregroundStyle(Palette.ink)
+                    .foregroundStyle(theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
-        .padding(18)
-        .background {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color(hex: 0xFFD45C))
-                .overlay(alignment: .bottomTrailing) {
-                    DewyShape()
-                        .fill(Color.white.opacity(0.3))
-                        .frame(width: 70, height: 88)
-                        .rotationEffect(.degrees(-14))
-                        .offset(x: 14, y: 26)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .background {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(hex: 0xF2B52E))
-                        .offset(y: 5)
-                }
-        }
+        .dewyCard(padding: 16, fill: Palette.butterSoft, glow: Palette.butter)
         .padding(.horizontal, 20)
     }
 
     // MARK: Actions
 
+    /// Sends the drink flying into Dewy; it's logged when it lands.
+    private func pour(_ kind: DrinkKind, amount: Double, from start: CGPoint) {
+        Haptics.tap()
+        let dewy = geometry.dewy
+        let target = CGPoint(x: dewy.midX, y: dewy.minY + dewy.height * 0.4)
+        guard start != .zero, dewy != .zero, !LaunchOptions.freezesMotion else {
+            add(kind, amount: amount)
+            return
+        }
+        flights.append(Flight(kind: kind, amount: amount, from: start, to: target))
+    }
+
+    private func land(_ flight: Flight) {
+        flights.removeAll { $0.id == flight.id }
+        add(flight.kind, amount: flight.amount)
+    }
+
     private func add(_ kind: DrinkKind, amount: Double) {
         let wasBelowGoal = store.todayProgress < 1
+        let dropsBefore = store.todayDrops
         var entry: DrinkEntry?
         withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
             entry = store.add(kind, amount: amount)
         }
         bounce += 1
         ripple += 1
+        splash += 1
         Haptics.splash()
         SoundFX.play(.pour)
-        if wasBelowGoal && store.todayProgress >= 1 {
-            celebrate += 1
-            Haptics.success()
-            SoundFX.play(.goal, volume: 0.6)
+        let gained = store.todayDrops - dropsBefore
+        if gained > 0 {
+            let pop = DropPop(value: gained)
+            pops.append(pop)
             Task { @MainActor in
-                try? await Task.sleep(for: .seconds(0.5))
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) { showGoalBanner = true }
-                try? await Task.sleep(for: .seconds(3.2))
-                withAnimation(.easeInOut(duration: 0.35)) { showGoalBanner = false }
+                try? await Task.sleep(for: .seconds(1.4))
+                pops.removeAll { $0.id == pop.id }
+            }
+        }
+        if wasBelowGoal && store.todayProgress >= 1 {
+            celebrationReward = store.goalReward + min(store.currentStreak, DropRules.streakCap)
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.6))
+                celebrate += 1
+                Haptics.success()
+                SoundFX.play(.goal, volume: 0.6)
+                withAnimation(.spring(response: 0.55, dampingFraction: 0.8)) { showCelebration = true }
+                if LaunchOptions.isDemo {
+                    try? await Task.sleep(for: .seconds(5.5))
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) { showCelebration = false }
+                }
             }
         }
         guard let entry else { return }
@@ -412,57 +575,328 @@ struct TodayView: View {
             toast = nil
         }
     }
+
+    private func runDemoHooks() {
+        switch LaunchOptions.screenshot {
+        case "share":
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.8))
+                showShare = true
+            }
+        case "celebrate":
+            // Demo recording: two visible drinks fly in, the second one reaches the goal.
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(2.5))
+                let first = geometry.tiles[.tea] ?? geometry.tiles[.water] ?? .zero
+                pour(.tea, amount: 500, from: CGPoint(x: first.midX, y: first.midY))
+                try? await Task.sleep(for: .seconds(3))
+                let second = geometry.tiles[.water] ?? .zero
+                pour(.water, amount: 550, from: CGPoint(x: second.midX, y: second.midY))
+            }
+        default:
+            break
+        }
+    }
+}
+
+// MARK: - Pour
+
+/// The drink art arcs from its tile into Dewy, shrinking and tipping as it pours, with a few
+/// droplets trailing behind it.
+private struct FlyingDrink: View {
+    var flight: Flight
+    var onLand: () -> Void
+
+    @State private var start = Date.now
+    private let duration: Double = 0.62
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            let raw = min(max(timeline.date.timeIntervalSince(start) / duration, 0), 1)
+            let p = easeInOut(raw)
+            ZStack {
+                ForEach(1..<4, id: \.self) { index in
+                    let q = max(p - Double(index) * 0.07, 0)
+                    Image(systemName: "drop.fill")
+                        .font(.system(size: CGFloat(12 - index * 2), weight: .black))
+                        .foregroundStyle(flight.kind.color.opacity(0.8 - Double(index) * 0.18))
+                        .position(point(q))
+                        .opacity(q > 0.02 ? 1 : 0)
+                }
+                DrinkIcon(kind: flight.kind, size: 64)
+                    .scaleEffect(1 - 0.5 * p)
+                    .rotationEffect(.degrees(-30 * p))
+                    .opacity(raw > 0.92 ? (1 - raw) / 0.08 : 1)
+                    .shadow(color: flight.kind.color.opacity(0.4), radius: 10, x: 0, y: 6)
+                    .position(point(p))
+            }
+        }
+        .task {
+            try? await Task.sleep(for: .seconds(duration))
+            onLand()
+        }
+    }
+
+    private func easeInOut(_ t: Double) -> Double { t < 0.5 ? 2 * t * t : 1 - pow(-2 * t + 2, 2) / 2 }
+
+    private func point(_ t: Double) -> CGPoint {
+        let a = flight.from
+        let b = flight.to
+        let control = CGPoint(x: (a.x + b.x) / 2 + (a.x < b.x ? -30 : 30), y: min(a.y, b.y) - 170)
+        let u = 1 - t
+        let x = u * u * a.x + 2 * u * t * control.x + t * t * b.x
+        let y = u * u * a.y + 2 * u * t * control.y + t * t * b.y
+        return CGPoint(x: x, y: y)
+    }
+}
+
+/// Droplets spraying up and out of Dewy when a drink lands.
+private struct SplashBurst: View {
+    var trigger: Int
+    @State private var start: Date?
+
+    var body: some View {
+        TimelineView(.animation(paused: start == nil)) { timeline in
+            Canvas { context, size in
+                guard let start else { return }
+                draw(in: &context, size: size, time: timeline.date.timeIntervalSince(start))
+            }
+        }
+        .allowsHitTesting(false)
+        .onChange(of: trigger) {
+            start = .now
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                start = nil
+            }
+        }
+    }
+
+    private func draw(in context: inout GraphicsContext, size: CGSize, time t: Double) {
+        guard t >= 0, t < 0.9 else { return }
+        let origin = CGPoint(x: size.width / 2, y: size.height * 0.28)
+        context.opacity = max(0, 1 - t / 0.9)
+        for index in 0..<12 {
+            let spread = Double(index) / 11.0 - 0.5
+            let angle = -Double.pi / 2.0 + spread * 2.2
+            let speed = 150.0 + Double(index % 3) * 50.0
+            let dx = CGFloat(cos(angle) * speed * t)
+            let dy = CGFloat(sin(angle) * speed * t + 420.0 * t * t)
+            let x = origin.x + dx
+            let y = origin.y + dy
+            let r = CGFloat(4.0 + Double(index % 3) * 1.5)
+            let dropRect = CGRect(x: x - r, y: y - r * 1.3, width: r * 2, height: r * 2.6)
+            let glintRect = CGRect(x: x - r * 0.45, y: y - r * 0.2, width: r * 0.6, height: r * 0.6)
+            context.fill(DewyShape().path(in: dropRect), with: .color(Palette.aquaLight))
+            context.fill(Path(ellipseIn: glintRect), with: .color(.white.opacity(0.9)))
+        }
+    }
+}
+
+private struct DropPopView: View {
+    var value: Int
+    @State private var risen = false
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ClayIcon(glyph: .drop, size: 20)
+            Text("+\(value)")
+                .font(.display(17))
+                .foregroundStyle(Palette.coralDeep)
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 32)
+        .background {
+            ClaySurface(shape: Capsule(), fill: .white, glow: Palette.coral, elevation: 0.5)
+        }
+        .offset(y: risen ? -46 : 0)
+        .opacity(risen ? 0 : 1)
+        .scaleEffect(risen ? 1 : 0.6)
+        .onAppear {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { risen = false }
+            withAnimation(.easeOut(duration: 1.2).delay(0.2)) { risen = true }
+        }
+    }
+}
+
+// MARK: - Celebration
+
+/// The moment the goal is reached: a full-screen party with Dewy jumping and spinning,
+/// clay confetti and bubbles, and the Dew Drops reward rolling up.
+private struct CelebrationOverlay: View {
+    @Environment(\.dewyTheme) private var theme
+    var reward: Int
+    var streak: Int
+    var goal: String
+    var outfits: [Outfit]
+    var bands: [LiquidBand]
+    var onDone: () -> Void
+
+    @State private var jump = 0
+    @State private var shown = false
+
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(Palette.cream.opacity(0.72))
+                .ignoresSafeArea()
+                .onTapGesture(perform: onDone)
+
+            BubbleField(count: 16)
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(RadialGradient(colors: [Palette.butter.opacity(0.55), Palette.butter.opacity(0)], center: .center, startRadius: 10, endRadius: 170))
+                        .frame(width: 340, height: 340)
+                        .scaleEffect(shown ? 1 : 0.4)
+                    MascotView(progress: 1.05, mood: .ecstatic, size: 200, bounceTrigger: jump, outfits: outfits, sparkles: true, bands: bands, showsShadow: false)
+                        .keyframeAnimator(initialValue: CelebrationJump(), trigger: jump) { view, value in
+                            view
+                                .rotation3DEffect(.degrees(value.spin), axis: (x: 0, y: 1, z: 0))
+                                .offset(y: value.lift)
+                        } keyframes: { _ in
+                            KeyframeTrack(\.lift) {
+                                CubicKeyframe(14, duration: 0.14)
+                                SpringKeyframe(-90, duration: 0.36)
+                                SpringKeyframe(0, duration: 0.6, spring: .bouncy)
+                            }
+                            KeyframeTrack(\.spin) {
+                                LinearKeyframe(0, duration: 0.16)
+                                CubicKeyframe(360, duration: 0.6)
+                                LinearKeyframe(360, duration: 0.3)
+                            }
+                        }
+                }
+                .frame(height: 260)
+
+                Text("Goal reached!")
+                    .font(.display(38, .bold))
+                    .foregroundStyle(theme.ink)
+                Text("You drank your \(goal) today.\nDewy is overflowing with joy.")
+                    .font(.dewy(16, .semibold))
+                    .foregroundStyle(theme.inkSoft)
+                    .multilineTextAlignment(.center)
+
+                HStack(spacing: 10) {
+                    HStack(spacing: 6) {
+                        ClayIcon(glyph: .drop, size: 34)
+                        RollingNumber(value: reward, font: .display(30, .bold), color: Palette.coralDeep, delay: 0.7)
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(height: 58)
+                    .background { ClaySurface(shape: Capsule(), fill: .white, glow: Palette.coral) }
+
+                    HStack(spacing: 6) {
+                        ClayIcon(glyph: .flame, size: 30)
+                        Text("\(streak)")
+                            .font(.display(26, .bold))
+                            .foregroundStyle(Color(hex: 0xB9781A))
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(height: 58)
+                    .background { ClaySurface(shape: Capsule(), fill: .white, glow: Palette.butter) }
+                }
+                .padding(.top, 6)
+
+                PrimaryButton(title: "Yay, Dewy!", style: .reward, action: onDone)
+                    .padding(.horizontal, 40)
+                    .padding(.top, 14)
+            }
+            .padding(.horizontal, 24)
+            .scaleEffect(shown ? 1 : 0.85)
+            .opacity(shown ? 1 : 0)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { shown = true }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.35))
+                jump += 1
+                try? await Task.sleep(for: .seconds(1.6))
+                jump += 1
+            }
+        }
+    }
+}
+
+private struct CelebrationJump {
+    var lift: CGFloat = 0
+    var spin: Double = 0
 }
 
 // MARK: - Pieces
 
-/// The moment you reach your goal: Dewy celebrates and a new flower is planted.
-struct GoalBanner: View {
-    @Environment(\.dewyTheme) private var theme
-    var goal: String
-    var streak: Int
-    var bands: [LiquidBand]
-    var progress: Double
+/// A friend hanging out beside Dewy on a little lily pad, bobbing gently.
+private struct CompanionView: View {
+    var friend: Friend
+    var index: Int
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(spacing: 6) {
-            MascotView(progress: progress, mood: .ecstatic, size: 120, accessory: .sparkles, bands: bands, animated: false, showsShadow: false)
-            Text("Goal smashed!")
-                .font(.display(32))
-                .foregroundStyle(theme.ink)
-            Text("You drank your \(goal) today.")
-                .font(.dewy(15, .bold))
-                .foregroundStyle(theme.inkSoft)
-            HStack(spacing: 8) {
-                bannerPill(symbol: "camera.macro", text: "+1 flower", tint: Palette.berry)
-                bannerPill(symbol: "flame.fill", text: "\(streak) day streak", tint: Color(hex: 0xFF7A3D))
+        let live = !reduceMotion && !LaunchOptions.freezesMotion
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !live)) { timeline in
+            let t = live ? timeline.date.timeIntervalSinceReferenceDate : 0
+            let bob = CGFloat(sin(t * 1.6 + Double(index) * 1.7)) * 3
+            VStack(spacing: -18) {
+                ArtImage(name: friend.imageName, fallback: "pawprint.fill", tint: friend.tint, size: 74)
+                    .scaleEffect(x: index == 0 ? 1 : -1, y: 1)
+                    .offset(y: bob)
+                    .zIndex(1)
+                if Art.exists("prop-lilypad") {
+                    Image("prop-lilypad")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 84)
+                }
             }
-            .padding(.top, 6)
         }
-        .padding(.vertical, 22)
-        .padding(.horizontal, 26)
-        .background {
-            RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .fill(theme.card)
-                .shadow(color: Color.black.opacity(0.22), radius: 30, x: 0, y: 16)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private func bannerPill(symbol: String, text: String, tint: Color) -> some View {
-        HStack(spacing: 5) {
-            Image(systemName: symbol).font(.system(size: 12, weight: .heavy))
-            Text(text).font(.display(15))
-        }
-        .foregroundStyle(tint)
-        .padding(.horizontal, 12)
-        .frame(height: 32)
-        .background(tint.opacity(0.13), in: Capsule())
+        .frame(width: 96)
+        .accessibilityHidden(true)
     }
 }
 
-/// A drink tile in the quick-add row: one tap logs the drink's usual serving.
-struct QuickDrinkTile: View {
+/// A clay progress capsule with a glossy aqua fill and the percentage riding on it.
+struct ClayProgressBar: View {
+    var progress: Double
+
+    var body: some View {
+        GeometryReader { proxy in
+            let height = proxy.size.height
+            let width = max(height, proxy.size.width * min(max(progress, 0), 1))
+            ZStack(alignment: .leading) {
+                ClaySurface(shape: Capsule(), fill: .white.opacity(0.92), glow: Palette.aqua, elevation: 0.5)
+                Capsule()
+                    .fill(LinearGradient(colors: [Palette.aquaLight, Palette.aqua], startPoint: .top, endPoint: .bottom))
+                    .overlay(alignment: .top) {
+                        Capsule()
+                            .fill(.white.opacity(0.45))
+                            .frame(height: height * 0.28)
+                            .padding(.horizontal, height * 0.35)
+                            .padding(.top, height * 0.12)
+                    }
+                    .frame(width: width)
+                    .padding(4)
+                Text("\(Int((progress * 100).rounded()))%")
+                    .font(.display(15))
+                    .foregroundStyle(progress > 0.18 ? .white : Ink.primary)
+                    .shadow(color: Palette.aquaDeep.opacity(progress > 0.18 ? 0.4 : 0), radius: 0, x: 0, y: 1)
+                    .contentTransition(.numericText())
+                    .frame(width: max(width - 8, 50), alignment: progress > 0.18 ? .trailing : .center)
+                    .padding(.trailing, progress > 0.18 ? 10 : 0)
+                    .padding(.leading, 4)
+            }
+        }
+        .animation(.spring(response: 0.8, dampingFraction: 0.72), value: progress)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(Int((progress * 100).rounded())) percent of today's goal")
+    }
+}
+
+/// A drink tile in the quick-sip row: a white clay tile with a glow in the drink's color.
+private struct QuickSipTile: View {
     @Environment(\.dewyTheme) private var theme
     var kind: DrinkKind
     var amount: String
@@ -472,44 +906,70 @@ struct QuickDrinkTile: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 2) {
-                DrinkIcon(kind: kind, size: 58)
+                DrinkIcon(kind: kind, size: 62)
+                    .padding(.top, 4)
                 Text(kind.name)
                     .font(.display(14))
-                    .foregroundStyle(Palette.ink)
+                    .foregroundStyle(theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 Text(amount)
                     .font(.dewy(12, .bold))
-                    .foregroundStyle(Palette.ink.opacity(0.5))
+                    .foregroundStyle(theme.inkSoft)
             }
-            .frame(width: 84, height: 108)
+            .frame(width: 86, height: 116)
+            .background {
+                ClaySurface(shape: RoundedRectangle(cornerRadius: 26, style: .continuous), fill: .white, glow: kind.color)
+            }
+            .background {
+                // A colored clay base peeking out under the tile, like the mockups.
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(kind.light)
+                    .offset(x: 3, y: 5)
+            }
             .overlay(alignment: .topTrailing) {
-                Image(systemName: isLocked ? "lock.fill" : "plus")
-                    .font(.system(size: isLocked ? 9 : 11, weight: .black))
-                    .foregroundStyle(.white)
-                    .frame(width: 21, height: 21)
-                    .background(isLocked ? Palette.ink.opacity(0.75) : kind.color, in: Circle())
-                    .padding(7)
+                Group {
+                    if isLocked {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 9, weight: .black))
+                            .foregroundStyle(.white)
+                            .frame(width: 22, height: 22)
+                            .background(Palette.gold, in: Circle())
+                    } else {
+                        Image(systemName: "plus")
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundStyle(.white)
+                            .frame(width: 22, height: 22)
+                            .background(LinearGradient(colors: [kind.color.blended(with: .white, by: 0.15), kind.deep], startPoint: .top, endPoint: .bottom), in: Circle())
+                    }
+                }
+                .padding(7)
             }
-            .opacity(isLocked ? 0.82 : 1)
         }
-        .buttonStyle(CandyButtonStyle(fill: kind.light, lip: kind.color.opacity(0.32), shape: AnyShape(RoundedRectangle(cornerRadius: 24, style: .continuous)), depth: 4))
+        .buttonStyle(SquishyButtonStyle(scale: 0.9))
         .accessibilityLabel(isLocked ? "\(kind.name), Dewy+ only" : "Add \(amount) of \(kind.name)")
     }
 }
 
 /// A small stat card in the summary row.
-struct SummaryTile: View {
+private struct StatTile: View {
     @Environment(\.dewyTheme) private var theme
-    var symbol: String
+    var glyph: ClayGlyph
     var tint: Color
     var value: String
     var label: String
     var progress: Double?
+    var usesWaterIcon = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            IconTile(systemImage: symbol, color: tint, size: 30)
+            Group {
+                if usesWaterIcon {
+                    DrinkIcon(kind: .water, size: 30)
+                } else {
+                    ClayIcon(glyph: glyph, size: 30)
+                }
+            }
             VStack(alignment: .leading, spacing: 0) {
                 Text(value)
                     .font(.display(18))
@@ -521,114 +981,47 @@ struct SummaryTile: View {
                     .font(.dewy(12, .bold))
                     .foregroundStyle(theme.inkSoft)
             }
-            if let progress {
-                ProgressCapsule(progress: progress, tint: tint)
-                    .frame(height: 6)
-            } else {
-                Spacer().frame(height: 6)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .dewyCard(padding: 14, radius: 22)
-    }
-}
-
-/// A slim capsule striped with today's drink colors.
-struct DrinkStripe: View {
-    var bands: [LiquidBand]
-    var track: Color = Color.white.opacity(0.3)
-
-    var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            let total = max(bands.last?.upTo ?? 0, 1)
-            ZStack(alignment: .leading) {
-                Capsule().fill(track)
-                HStack(spacing: 2) {
-                    ForEach(Array(bands.enumerated()), id: \.offset) { index, band in
-                        let previous = index == 0 ? 0 : bands[index - 1].upTo
-                        Rectangle()
-                            .fill(band.color)
-                            .frame(width: max(2, width * CGFloat((band.upTo - previous) / total) - 2))
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(theme.well)
+                    if let progress {
+                        Capsule()
+                            .fill(tint)
+                            .frame(width: max(proxy.size.height, proxy.size.width * min(max(progress, 0), 1)))
                     }
                 }
-                .clipShape(Capsule())
             }
+            .frame(height: 6)
+            .opacity(progress == nil ? 0 : 1)
         }
-        .animation(.spring(response: 0.7, dampingFraction: 0.75), value: bands.count)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dewyCard(padding: 14, radius: 24, glow: tint)
     }
 }
 
-/// The streak counter: a little flame on a white pill.
-struct StreakPill: View {
-    var days: Int
-
-    var body: some View {
-        HStack(spacing: 5) {
-            FlameGlyph()
-                .frame(width: 20, height: 24)
-            Text("\(days)")
-                .font(.display(20))
-                .foregroundStyle(Palette.ink)
-                .contentTransition(.numericText(value: Double(days)))
-        }
-        .padding(.leading, 11)
-        .padding(.trailing, 14)
-        .frame(height: 42)
-        .background(Color.white, in: Capsule())
-        .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(days) day streak")
-    }
-}
-
-/// Dewy's illustrated flame, used for streaks.
-struct FlameGlyph: View {
-    var body: some View {
-        Canvas { context, size in
-            let w = size.width, h = size.height
-            func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x / 22 * w, y: y / 24 * h) }
-            var outer = Path()
-            outer.move(to: p(11, 1))
-            outer.addCurve(to: p(20, 15.5), control1: p(14, 6), control2: p(20, 9))
-            outer.addCurve(to: p(2, 15.5), control1: p(20, 26), control2: p(2, 26))
-            outer.addCurve(to: p(6.5, 6), control1: p(2, 11), control2: p(5, 9))
-            outer.addCurve(to: p(10, 9), control1: p(8, 8.5), control2: p(9, 9))
-            outer.addCurve(to: p(11, 1), control1: p(10, 6), control2: p(10, 3.5))
-            outer.closeSubpath()
-            context.fill(outer, with: .linearGradient(Gradient(colors: [Color(hex: 0xFF9F43), Color(hex: 0xFF5A3D)]), startPoint: p(11, 1), endPoint: p(11, 24)))
-            var inner = Path()
-            inner.move(to: p(11, 10))
-            inner.addCurve(to: p(16, 17.5), control1: p(13, 13), control2: p(16, 14.5))
-            inner.addCurve(to: p(6, 17.5), control1: p(16, 23.5), control2: p(6, 23.5))
-            inner.addCurve(to: p(11, 10), control1: p(6, 15), control2: p(8, 13.5))
-            inner.closeSubpath()
-            context.fill(inner, with: .color(Color(hex: 0xFFD23F)))
-        }
-    }
-}
-
-struct SpeechBubble: View {
+private struct SpeechBubble: View {
     var text: String
 
     var body: some View {
         Text(text)
             .font(.display(15, .medium))
-            .foregroundStyle(Palette.ink)
+            .foregroundStyle(Ink.primary)
             .multilineTextAlignment(.center)
-            .frame(maxWidth: 116)
-            .padding(.horizontal, 13)
-            .padding(.vertical, 10)
+            .frame(maxWidth: 118)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
             .background {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.white)
-                    .overlay(alignment: .bottomLeading) {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 14, height: 14)
-                            .offset(x: 4, y: 9)
-                    }
-                    .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
+                ZStack(alignment: .bottomLeading) {
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 16, height: 16)
+                        .offset(x: 2, y: 10)
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 8, height: 8)
+                        .offset(x: -6, y: 22)
+                    ClaySurface(shape: RoundedRectangle(cornerRadius: 22, style: .continuous), fill: .white, glow: Palette.aqua, elevation: 0.6)
+                }
             }
             .rotationEffect(.degrees(4))
             .id(text)
@@ -636,43 +1029,26 @@ struct SpeechBubble: View {
     }
 }
 
-struct ProgressCapsule: View {
-    @Environment(\.dewyTheme) private var theme
-    var progress: Double
-    var tint: Color?
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(theme.well)
-                Capsule()
-                    .fill(tint ?? theme.accent)
-                    .frame(width: max(proxy.size.height, proxy.size.width * min(max(progress, 0), 1)))
-            }
-        }
-        .animation(.spring(response: 0.8, dampingFraction: 0.7), value: progress)
-    }
-}
-
-struct EntryRow: View {
+private struct SipRow: View {
     @Environment(\.dewyTheme) private var theme
     var entry: DrinkEntry
     var amount: String
     var effective: String
 
     private var detail: String {
+        let time = entry.date.formatted(date: .omitted, time: .shortened)
         if entry.caffeine >= 1 {
-            return "\(entry.date.formatted(date: .omitted, time: .shortened)) · \(Int(entry.caffeine.rounded())) mg caffeine"
+            return "\(time) · \(Int(entry.caffeine.rounded())) mg caffeine"
         }
         if entry.kind.hydration < 1 {
-            return "\(entry.date.formatted(date: .omitted, time: .shortened)) · counts \(effective)"
+            return "\(time) · counts \(effective)"
         }
-        return entry.date.formatted(date: .omitted, time: .shortened)
+        return time
     }
 
     var body: some View {
         HStack(spacing: 12) {
-            DrinkBadge(kind: entry.kind, size: 48)
+            DrinkBadge(kind: entry.kind, size: 50)
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.kind.name)
                     .font(.display(17))
@@ -685,14 +1061,14 @@ struct EntryRow: View {
             Spacer(minLength: 4)
             Text("+\(amount)")
                 .font(.display(17))
-                .foregroundStyle(theme.isDark ? entry.kind.color : entry.kind.deep)
+                .foregroundStyle(entry.kind.deep)
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
     }
 }
 
-struct ToastView: View {
+private struct UndoToast: View {
     @Environment(\.dewyTheme) private var theme
     var entry: DrinkEntry
     var label: String
@@ -700,24 +1076,25 @@ struct ToastView: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            DrinkIcon(kind: entry.kind, size: 30)
+            DrinkIcon(kind: entry.kind, size: 32)
             Text("Added \(label) \(entry.kind.name.lowercased())")
                 .font(.display(16, .medium))
-                .foregroundStyle(Palette.ink)
+                .foregroundStyle(theme.ink)
             Button(action: onUndo) {
                 Text("Undo")
                     .font(.display(15))
-                    .foregroundStyle(theme.isDark ? Color(hex: 0x5B4BE0) : theme.accent)
+                    .foregroundStyle(Palette.aquaDeep)
                     .padding(.horizontal, 12)
                     .frame(height: 30)
-                    .background(theme.isDark ? Color(hex: 0xEEE8FF) : theme.accentSoft, in: Capsule())
+                    .background(Palette.aquaSoft, in: Capsule())
             }
             .buttonStyle(SquishyButtonStyle())
         }
         .padding(.leading, 12)
         .padding(.trailing, 8)
-        .frame(height: 50)
-        .background(Color.white, in: Capsule())
-        .shadow(color: Color.black.opacity(0.18), radius: 16, x: 0, y: 8)
+        .frame(height: 52)
+        .background {
+            ClaySurface(shape: Capsule(), fill: .white, glow: entry.kind.color)
+        }
     }
 }

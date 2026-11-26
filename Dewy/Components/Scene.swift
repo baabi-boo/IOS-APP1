@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 private func fract(_ value: Double) -> Double { value - floor(value) }
 
@@ -7,378 +8,283 @@ private func noise(_ seed: Double, _ salt: Double) -> Double {
     fract(sin(seed * 12.9898 + salt * 78.233) * 43758.5453)
 }
 
-// MARK: - Time of day
+// MARK: - Clay world
 
-/// The sky follows the real time of day: a warm dawn, bright day, rosy dusk and a starry night.
-enum SkyPhase {
-    case dawn, day, dusk, night
-
-    static func at(_ date: Date) -> SkyPhase {
-        if LaunchOptions.isDemo { return .day }
-        switch Calendar.current.component(.hour, from: date) {
-        case 5..<8: return .dawn
-        case 8..<17: return .day
-        case 17..<20: return .dusk
-        default: return .night
-        }
-    }
-
-    /// A wash laid over the whole scene.
-    var wash: LinearGradient? {
-        switch self {
-        case .day:
-            return nil
-        case .dawn:
-            return LinearGradient(colors: [Color(hex: 0xFFB8C8).opacity(0.12), Color(hex: 0xFFC9A0).opacity(0.42)], startPoint: .top, endPoint: .bottom)
-        case .dusk:
-            return LinearGradient(colors: [Color(hex: 0x5B4BD6).opacity(0.38), Color(hex: 0xFF7E86).opacity(0.42), Color(hex: 0xFFB27A).opacity(0.3)], startPoint: .top, endPoint: .bottom)
-        case .night:
-            return LinearGradient(colors: [Color(hex: 0x070B33).opacity(0.78), Color(hex: 0x1B2370).opacity(0.62)], startPoint: .top, endPoint: .bottom)
-        }
-    }
-}
-
-// MARK: - World scene
-
-/// The living backdrop of every screen: the world's sky, its sun or moon, drifting clouds,
-/// and the water at the horizon, with a few details that are unique to each world.
-struct WorldScene: View {
-    /// Distance of the horizon from the top of the view, in points. Pass a value larger
-    /// than the view to show only sky.
+/// The living backdrop: a pastel sky that follows the time of day, clay clouds drifting at
+/// two depths (parallax), the sun or moon, the world's landmark at the horizon and a pond
+/// that ripples where you tap it.
+struct ClayWorld: View {
+    /// Distance of the pond's far shore from the top. Pass a value larger than the view to show only sky.
     var horizon: CGFloat
-    /// Where the sun (or moon) sits, as a fraction of the width, measured from the top.
-    var sunPosition = CGPoint(x: 0.84, y: 120)
     var animated = true
-    /// Low clouds drifting along the horizon (only where nothing important sits there).
-    var drawsHorizonClouds = false
+    /// Decorations bought in the Friends tab.
+    var decor: [Decor] = []
+    /// Lets the pond ripple where it's tapped.
+    var interactive = false
+    /// Hides the landmark (for compact headers where it would crowd the title).
+    var showsLandmark = true
 
     @Environment(\.dewyTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var taps: [(Date, CGPoint)] = []
 
     private var isLive: Bool { animated && !reduceMotion && !LaunchOptions.freezesMotion }
 
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            let phase = theme.isDark ? SkyPhase.day : SkyPhase.at(.now)
+            let phase = theme.phase()
+            let hasPond = horizon < size.height
             ZStack(alignment: .topLeading) {
-                theme.skyGradient
+                phase.gradient
 
-                // Sun glow
+                // Sun or moon glow.
                 RadialGradient(
-                    stops: [
-                        .init(color: theme.sunGlow.opacity(theme.isDark ? 0.5 : 0.95), location: 0),
-                        .init(color: theme.sunGlow.opacity(theme.isDark ? 0.18 : 0.45), location: 0.2),
-                        .init(color: theme.sunGlow.opacity(0), location: 1)
-                    ],
-                    center: UnitPoint(x: sunPosition.x, y: sunPosition.y / max(size.height, 1)),
-                    startRadius: 0,
-                    endRadius: 260
+                    colors: [phase.sunGlow.opacity(phase.isNight ? 0.45 : 0.9), phase.sunGlow.opacity(0)],
+                    center: UnitPoint(x: 0.82, y: min(0.12 * 800 / max(size.height, 1), 0.3)),
+                    startRadius: 0, endRadius: 220
                 )
 
-                // Clouds and glints drift slowly, so 20 fps looks smooth and saves battery.
-                TimelineView(.animation(minimumInterval: 1.0 / 20.0, paused: !isLive)) { timeline in
-                    let t = isLive ? timeline.date.timeIntervalSinceReferenceDate : 40
-                    Canvas { context, canvasSize in
-                        draw(in: &context, size: canvasSize, time: t)
+                if animated {
+                    TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !isLive)) { timeline in
+                        let t = isLive ? timeline.date.timeIntervalSinceReferenceDate : 120
+                        sceneLayer(size: size, phase: phase, hasPond: hasPond, time: t, now: timeline.date)
                     }
-                }
-
-                if let wash = phase.wash {
-                    wash
-                }
-                if phase == .night {
-                    // The worlds keep their own moon and stars after dark.
-                    TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: !isLive)) { timeline in
-                        let t = isLive ? timeline.date.timeIntervalSinceReferenceDate : 40
-                        Canvas { context, canvasSize in
-                            drawStars(in: &context, size: canvasSize, time: t)
-                            drawMoon(in: &context, center: CGPoint(x: canvasSize.width * sunPosition.x, y: sunPosition.y))
-                        }
-                    }
+                } else {
+                    sceneLayer(size: size, phase: phase, hasPond: hasPond, time: 120, now: .now)
                 }
             }
             .frame(width: size.width, height: size.height)
+            .contentShape(Rectangle())
+            .onTapGesture(coordinateSpace: .local) { location in
+                guard interactive, location.y > horizon else { return }
+                Haptics.tap()
+                SoundFX.play(.pop, volume: 0.2)
+                taps = taps.filter { Date.now.timeIntervalSince($0.0) < 2 } + [(Date.now, location)]
+            }
+            .allowsHitTesting(interactive)
         }
-        .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+
+    private func sceneLayer(size: CGSize, phase: SkyPhase, hasPond: Bool, time t: Double, now: Date) -> some View {
+        ZStack(alignment: .topLeading) {
+            if phase.isNight {
+                Canvas { context, canvasSize in
+                    drawStars(in: &context, size: canvasSize, limit: min(horizon, size.height) - 10, time: t)
+                }
+            }
+
+            celestial(phase: phase, size: size, time: t)
+
+            // Far clouds: small, slow, high.
+            cloud("prop-cloud-2", width: 110, y: min(horizon * 0.2, 90) + 30, speed: 3, offset: 0.15, size: size, time: t, phase: phase, opacity: 0.8)
+            cloud("prop-cloud-2", width: 80, y: min(horizon * 0.42, 190), speed: 2.2, offset: 0.62, size: size, time: t, phase: phase, opacity: 0.7)
+
+            if showsLandmark && hasPond {
+                landmarks(size: size, time: t)
+            }
+
+            if hasPond {
+                Canvas { context, canvasSize in
+                    drawPond(in: &context, size: canvasSize, phase: phase, time: t)
+                    drawTaps(in: &context, now: now)
+                }
+            }
+
+            decorLayer(size: size, time: t, hasPond: hasPond)
+
+            // Near cloud: bigger, faster, in front of the landmark.
+            cloud("prop-cloud-1", width: 132, y: min(horizon * 0.5, 230) + (hasPond ? 0 : 40), speed: 6, offset: 0.4, size: size, time: t, phase: phase, opacity: 0.95)
+        }
+    }
+
+    // MARK: Pieces
+
+    @ViewBuilder
+    private func celestial(phase: SkyPhase, size: CGSize, time t: Double) -> some View {
+        let isMoon = phase.isNight
+        let name = isMoon ? "prop-moon" : "prop-sun"
+        let width: CGFloat = isMoon ? 64 : 78
+        let lift: CGFloat = phase == .dawn || phase == .dusk ? 36 : 0
+        let y = min(max(horizon * 0.18, 70), 120) + lift
+        if Art.exists(name) {
+            Image(name)
+                .resizable()
+                .scaledToFit()
+                .frame(width: width)
+                .rotationEffect(.degrees(isMoon ? sin(t * 0.5) * 4 : t.truncatingRemainder(dividingBy: 360) * 3))
+                .shadow(color: phase.sunGlow.opacity(0.9), radius: 18)
+                .position(x: size.width * 0.76, y: y)
+        } else {
+            Circle()
+                .fill(LinearGradient(colors: [Color(hex: 0xFFF3B8), Palette.butter], startPoint: .top, endPoint: .bottom))
+                .frame(width: width * 0.7)
+                .position(x: size.width * 0.76, y: y)
+        }
+    }
+
+    @ViewBuilder
+    private func cloud(_ name: String, width: CGFloat, y: CGFloat, speed: Double, offset: Double, size: CGSize, time t: Double, phase: SkyPhase, opacity: Double) -> some View {
+        let span = Double(size.width + width * 2)
+        let x = CGFloat((offset * span + t * speed).truncatingRemainder(dividingBy: span)) - width
+        if Art.exists(name) {
+            Image(name)
+                .resizable()
+                .scaledToFit()
+                .frame(width: width)
+                .colorMultiply(phase.cloudTint?.blended(with: .white, by: phase.isNight ? 0.25 : 0.55) ?? .white)
+                .opacity(phase.isNight ? opacity * 0.6 : opacity)
+                .position(x: x + width / 2, y: y)
+        }
+    }
+
+    @ViewBuilder
+    private func landmarks(size: CGSize, time t: Double) -> some View {
+        let bob = CGFloat(sin(t * 1.1)) * 2.5
+        switch theme {
+        case .lagoon, .midnight:
+            art("prop-island", width: 118, at: CGPoint(x: size.width * 0.15, y: horizon + 4), anchorBottom: true)
+        case .peach:
+            art("prop-lighthouse", width: 52, at: CGPoint(x: size.width * 0.11, y: horizon + 8), anchorBottom: true)
+            art("prop-sailboat", width: 58, at: CGPoint(x: size.width * 0.86, y: horizon + 10 + bob), anchorBottom: true)
+        case .matcha:
+            art("prop-hills", width: size.width * 1.05, at: CGPoint(x: size.width * 0.5, y: horizon + 10), anchorBottom: true)
+        case .lavender:
+            art("prop-castle", width: 108, at: CGPoint(x: size.width * 0.84, y: horizon - 6 + bob * 1.6), anchorBottom: true)
+        }
+    }
+
+    @ViewBuilder
+    private func art(_ name: String, width: CGFloat, at point: CGPoint, anchorBottom: Bool) -> some View {
+        if let image = UIImage(named: name) {
+            let height = width * image.size.height / max(image.size.width, 1)
+            Image(uiImage: image)
+                .resizable()
+                .frame(width: width, height: height)
+                .position(x: point.x, y: anchorBottom ? point.y - height / 2 : point.y)
+        }
+    }
+
+    @ViewBuilder
+    private func decorLayer(size: CGSize, time t: Double, hasPond: Bool) -> some View {
+        let flying = decor.filter(\.flies)
+        let floating = decor.filter(\.floats)
+        let standing = decor.filter { !$0.flies && !$0.floats }
+        ForEach(Array(flying.enumerated()), id: \.element) { index, item in
+            let drift = CGFloat(sin(t * 0.6 + Double(index))) * 6
+            let xFactor: CGFloat = index == 0 ? 0.24 : 0.6
+            let yPos = min(horizon * 0.42, 200) + drift
+            let itemWidth: CGFloat = item == .rainbow ? 150 : 62
+            art(item.imageName, width: itemWidth, at: CGPoint(x: size.width * xFactor, y: yPos), anchorBottom: false)
+        }
+        if hasPond {
+            ForEach(Array(standing.enumerated()), id: \.element) { index, item in
+                let xFactor: CGFloat = index == 0 ? 0.1 : (index == 1 ? 0.9 : 0.3)
+                let yPos = horizon + 70 + CGFloat(index) * 6
+                let itemWidth: CGFloat = item == .blossom ? 92 : 58
+                art(item.imageName, width: itemWidth, at: CGPoint(x: size.width * xFactor, y: yPos), anchorBottom: true)
+            }
+            ForEach(Array(floating.enumerated()), id: \.element) { index, item in
+                let bob = CGFloat(sin(t * 1.4 + Double(index) * 2)) * 2.5
+                let sway = CGFloat(sin(t * 0.3 + Double(index))) * 10
+                let xFactor: CGFloat = index == 0 ? 0.88 : 0.12
+                let xPos = size.width * xFactor + sway
+                let yPos = horizon + 150 + bob
+                art(item.imageName, width: 48, at: CGPoint(x: xPos, y: yPos), anchorBottom: true)
+            }
+        }
     }
 
     // MARK: Drawing
 
-    private func draw(in context: inout GraphicsContext, size: CGSize, time t: Double) {
-        let w = size.width
-        let sun = CGPoint(x: w * sunPosition.x, y: sunPosition.y)
-
-        if theme.isDark {
-            drawStars(in: &context, size: size, time: t)
-            drawMoon(in: &context, center: sun)
-        } else {
-            drawRays(in: &context, center: sun, time: t)
-        }
-
-        if theme == .peach {
-            // A big, soft setting sun sinking into the sea.
-            let r: CGFloat = 70
-            let center = CGPoint(x: w * 0.68, y: horizon + 8)
-            context.fill(Path(ellipseIn: CGRect(x: center.x - r * 1.9, y: center.y - r * 1.9, width: r * 3.8, height: r * 3.8)),
-                         with: .radialGradient(Gradient(colors: [Color(hex: 0xFFE7A8).opacity(0.7), Color(hex: 0xFFE7A8).opacity(0)]), center: center, startRadius: r * 0.8, endRadius: r * 1.9))
-            context.fill(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)),
-                         with: .linearGradient(Gradient(colors: [Color(hex: 0xFFF3C4), Color(hex: 0xFFC37A)]), startPoint: CGPoint(x: center.x, y: center.y - r), endPoint: CGPoint(x: center.x, y: center.y + r)))
-        }
-
-        drawClouds(in: &context, size: size, time: t, far: true)
-
-        if theme == .matcha {
-            drawHills(in: &context, size: size)
-        }
-
-        guard horizon < size.height else {
-            drawClouds(in: &context, size: size, time: t, far: false)
-            drawSparkles(in: &context, size: size, time: t)
-            return
-        }
-
-        if theme == .lagoon {
-            drawIsland(in: &context, at: CGPoint(x: w * 0.12, y: horizon + 2))
-        }
-        if theme == .lavender {
-            drawCloudBank(in: &context, size: size)
-        }
-
-        drawSea(in: &context, size: size, time: t)
-        drawClouds(in: &context, size: size, time: t, far: false)
-        drawSparkles(in: &context, size: size, time: t)
-    }
-
-    private func drawRays(in context: inout GraphicsContext, center: CGPoint, time t: Double) {
-        let spin = t * 0.04
-        context.drawLayer { layer in
-            layer.opacity = 0.16
-            for index in 0..<10 {
-                let angle = Double(index) / 10 * .pi * 2 + spin
-                var ray = Path()
-                ray.move(to: center)
-                ray.addLine(to: CGPoint(x: center.x + CGFloat(cos(angle - 0.09)) * 420, y: center.y + CGFloat(sin(angle - 0.09)) * 420))
-                ray.addLine(to: CGPoint(x: center.x + CGFloat(cos(angle + 0.09)) * 420, y: center.y + CGFloat(sin(angle + 0.09)) * 420))
-                ray.closeSubpath()
-                layer.fill(ray, with: .radialGradient(Gradient(colors: [.white, .white.opacity(0)]), center: center, startRadius: 20, endRadius: 380))
-            }
-        }
-    }
-
-    private func drawMoon(in context: inout GraphicsContext, center: CGPoint) {
-        let r: CGFloat = 30
-        context.fill(Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)),
-                     with: .linearGradient(Gradient(colors: [Color(hex: 0xFFF6D8), Color(hex: 0xFFE08A)]), startPoint: CGPoint(x: center.x - r, y: center.y - r), endPoint: CGPoint(x: center.x + r, y: center.y + r)))
-        let craters: [(CGFloat, CGFloat, CGFloat)] = [(-9, -6, 6), (10, 8, 4.5), (6, -12, 3)]
-        for (dx, dy, cr) in craters {
-            context.fill(Path(ellipseIn: CGRect(x: center.x + dx - cr, y: center.y + dy - cr, width: cr * 2, height: cr * 2)), with: .color(Color(hex: 0xF2C96B).opacity(0.6)))
-        }
-    }
-
-    private func drawStars(in context: inout GraphicsContext, size: CGSize, time t: Double) {
-        let limit = min(horizon, size.height) - 20
-        for index in 0..<46 {
+    private func drawStars(in context: inout GraphicsContext, size: CGSize, limit: CGFloat, time t: Double) {
+        for index in 0..<40 {
             let seed = Double(index)
             let x = CGFloat(noise(seed, 1)) * size.width
             let y = CGFloat(noise(seed, 2)) * max(limit, 0)
-            let speed: Double = 1 + noise(seed, 3) * 2
-            let wave: Double = sin(t * speed + seed)
-            let twinkle: Double = 0.45 + 0.55 * (0.5 + 0.5 * wave)
-            let r = CGFloat(0.8 + noise(seed, 4) * 1.6)
+            let twinkle = 0.4 + 0.6 * (0.5 + 0.5 * sin(t * (1 + noise(seed, 3) * 2) + seed))
+            let s = CGFloat(3 + noise(seed, 4) * 6)
             context.opacity = twinkle
-            context.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)), with: .color(.white))
-        }
-        context.opacity = 1
-    }
-
-    // MARK: Clouds
-
-    private func cloudPath(in rect: CGRect) -> Path {
-        let w = rect.width, h = rect.height
-        var path = Path()
-        func circle(_ cx: CGFloat, _ cy: CGFloat, _ r: CGFloat) {
-            path.addEllipse(in: CGRect(x: rect.minX + cx * w - r * h, y: rect.minY + cy * h - r * h, width: r * 2 * h, height: r * 2 * h))
-        }
-        circle(0.26, 0.64, 0.36)
-        circle(0.5, 0.44, 0.44)
-        circle(0.74, 0.6, 0.34)
-        path.addRoundedRect(in: CGRect(x: rect.minX + 0.08 * w, y: rect.minY + 0.5 * h, width: 0.84 * w, height: 0.5 * h), cornerSize: CGSize(width: 0.25 * h, height: 0.25 * h))
-        return path
-    }
-
-    private func drawClouds(in context: inout GraphicsContext, size: CGSize, time t: Double, far: Bool) {
-        if far {
-            // Calm clouds keep to the sunny top-right corner, away from titles on the left.
-            let calm: [(CGFloat, CGFloat, CGFloat, Double)] = [(0.9, 70, 118, 0), (0.7, 128, 80, 2.1)]
-            for cloud in calm {
-                let width = cloud.2
-                let height = width * 0.42
-                let sway = CGFloat(sin(t * 0.12 + cloud.3)) * 12
-                let rect = CGRect(x: size.width * cloud.0 - width / 2 + sway, y: cloud.1 - height / 2, width: width, height: height)
-                fillCloud(in: &context, rect: rect, opacity: theme.isDark ? 0.16 : 0.62)
+            if index.isMultiple(of: 4) {
+                context.fill(SparkleShape().path(in: CGRect(x: x - s, y: y - s, width: s * 2, height: s * 2)), with: .color(Color(hex: 0xFFF3C4)))
+            } else {
+                let r = s * 0.22
+                context.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)), with: .color(.white))
             }
-            return
         }
-        // Low clouds drift along the horizon behind Dewy.
-        guard drawsHorizonClouds, horizon < size.height else { return }
-        let drifting: [(CGFloat, Double, Double, CGFloat)] = [(150, 4.2, 0.05, 36), (110, 3.1, 0.6, 58)]
-        let span = Double(size.width + 260)
-        for cloud in drifting {
-            let width = cloud.0
-            let height = width * 0.42
-            let travel = (t * cloud.1 + cloud.2 * span).truncatingRemainder(dividingBy: span)
-            let rect = CGRect(x: CGFloat(travel) - 160, y: horizon - height - cloud.3, width: width, height: height)
-            fillCloud(in: &context, rect: rect, opacity: theme.isDark ? 0.2 : 0.95)
-        }
-    }
-
-    private func fillCloud(in context: inout GraphicsContext, rect: CGRect, opacity: Double) {
-        context.opacity = opacity
-        context.fill(cloudPath(in: rect), with: .linearGradient(
-            Gradient(colors: [.white, theme.cloudShade]),
-            startPoint: CGPoint(x: rect.midX, y: rect.minY), endPoint: CGPoint(x: rect.midX, y: rect.maxY)
-        ))
         context.opacity = 1
     }
 
-    private func drawCloudBank(in context: inout GraphicsContext, size: CGSize) {
-        let y = horizon
-        let bank: [(CGFloat, CGFloat)] = [(-40, 170), (size.width * 0.32, 150), (size.width * 0.66, 190)]
-        for (x, width) in bank {
-            let rect = CGRect(x: x, y: y - width * 0.36, width: width, height: width * 0.42)
-            context.fill(cloudPath(in: rect), with: .color(Color(hex: 0xFFEFFA).opacity(0.85)))
-        }
-    }
-
-    // MARK: Land and sea
-
-    private func drawHills(in context: inout GraphicsContext, size: CGSize) {
-        let w = size.width
-        let base = min(horizon, size.height)
-        var back = Path()
-        back.move(to: CGPoint(x: 0, y: base + 4))
-        back.addCurve(to: CGPoint(x: w * 0.55, y: base - 40), control1: CGPoint(x: w * 0.15, y: base - 70), control2: CGPoint(x: w * 0.38, y: base - 70))
-        back.addCurve(to: CGPoint(x: w, y: base - 20), control1: CGPoint(x: w * 0.72, y: base - 14), control2: CGPoint(x: w * 0.86, y: base - 52))
-        back.addLine(to: CGPoint(x: w, y: base + 4))
-        back.closeSubpath()
-        context.fill(back, with: .color(Color(hex: 0x9BE3B0)))
-        var front = Path()
-        front.move(to: CGPoint(x: 0, y: base - 10))
-        front.addCurve(to: CGPoint(x: w, y: base - 4), control1: CGPoint(x: w * 0.3, y: base - 46), control2: CGPoint(x: w * 0.7, y: base + 18))
-        front.addLine(to: CGPoint(x: w, y: base + 4))
-        front.addLine(to: CGPoint(x: 0, y: base + 4))
-        front.closeSubpath()
-        context.fill(front, with: .color(Color(hex: 0x6FD08F)))
-        // Little round trees on the back hill.
-        let trees: [(CGFloat, CGFloat)] = [(0.2, 1), (0.27, 0.75), (0.82, 0.9)]
-        for (fx, scale) in trees {
-            let x = w * fx
-            let lift: CGFloat = fx < 0.5 ? 50 : 38
-            let y = base - lift
-            context.fill(Path(CGRect(x: x - 2, y: y, width: 4, height: 14 * scale)), with: .color(Color(hex: 0x8A6A4E)))
-            context.fill(Path(ellipseIn: CGRect(x: x - 11 * scale, y: y - 18 * scale, width: 22 * scale, height: 24 * scale)), with: .color(Color(hex: 0x3FB874)))
-        }
-    }
-
-    private func drawIsland(in context: inout GraphicsContext, at point: CGPoint) {
-        var island = Path()
-        island.move(to: CGPoint(x: point.x - 52, y: point.y))
-        island.addCurve(to: CGPoint(x: point.x + 56, y: point.y), control1: CGPoint(x: point.x - 30, y: point.y - 24), control2: CGPoint(x: point.x + 30, y: point.y - 26))
-        island.closeSubpath()
-        context.fill(island, with: .color(Color(hex: 0x6ED3B8)))
-        // Palm tree
-        var trunk = Path()
-        trunk.move(to: CGPoint(x: point.x + 6, y: point.y - 14))
-        trunk.addQuadCurve(to: CGPoint(x: point.x + 16, y: point.y - 50), control: CGPoint(x: point.x + 4, y: point.y - 34))
-        context.stroke(trunk, with: .color(Color(hex: 0x4FA88F)), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-        let top = CGPoint(x: point.x + 16, y: point.y - 50)
-        for angle in [-150.0, -110.0, -60.0, -20.0, 20.0] {
-            let rad = angle * .pi / 180
-            var leaf = Path()
-            leaf.move(to: top)
-            let tip = CGPoint(x: top.x + CGFloat(cos(rad)) * 22, y: top.y + CGFloat(sin(rad)) * 14 + 8)
-            leaf.addQuadCurve(to: tip, control: CGPoint(x: top.x + CGFloat(cos(rad)) * 12, y: top.y + CGFloat(sin(rad)) * 14 - 6))
-            context.stroke(leaf, with: .color(Color(hex: 0x4FA88F)), style: StrokeStyle(lineWidth: 5, lineCap: .round))
-        }
-    }
-
-    private func drawSea(in context: inout GraphicsContext, size: CGSize, time t: Double) {
+    private func drawPond(in context: inout GraphicsContext, size: CGSize, phase: SkyPhase, time t: Double) {
         let w = size.width
         let top = horizon
-        /// Height of the gentle swell along the horizon at `x`.
-        func swell(_ x: CGFloat) -> CGFloat {
-            let angle: Double = Double(x / w) * Double.pi * 3 + t * 0.6
-            return top + 2.5 * CGFloat(sin(angle))
+        func shore(_ x: CGFloat) -> CGFloat {
+            top + 2 * CGFloat(sin(Double(x / w) * .pi * 3 + t * 0.5))
         }
-        var sea = Path()
-        sea.move(to: CGPoint(x: 0, y: top))
+        var pond = Path()
+        pond.move(to: CGPoint(x: 0, y: shore(0)))
         var x: CGFloat = 0
         while x <= w + 8 {
-            sea.addLine(to: CGPoint(x: x, y: swell(x)))
+            pond.addLine(to: CGPoint(x: x, y: shore(x)))
             x += 8
         }
-        sea.addLine(to: CGPoint(x: w, y: size.height))
-        sea.addLine(to: CGPoint(x: 0, y: size.height))
-        sea.closeSubpath()
-        context.fill(sea, with: .linearGradient(Gradient(colors: theme.sea), startPoint: CGPoint(x: 0, y: top), endPoint: CGPoint(x: 0, y: size.height)))
+        pond.addLine(to: CGPoint(x: w, y: size.height))
+        pond.addLine(to: CGPoint(x: 0, y: size.height))
+        pond.closeSubpath()
+        context.fill(pond, with: .linearGradient(Gradient(colors: phase.pond), startPoint: CGPoint(x: 0, y: top), endPoint: CGPoint(x: 0, y: size.height)))
 
-        // Bright glint where water meets sky.
-        var glint = Path()
+        // Soft clay lip where water meets the sky.
+        var lip = Path()
+        lip.move(to: CGPoint(x: 0, y: shore(0)))
         x = 0
-        glint.move(to: CGPoint(x: 0, y: swell(0)))
         while x <= w + 8 {
-            glint.addLine(to: CGPoint(x: x, y: swell(x)))
+            lip.addLine(to: CGPoint(x: x, y: shore(x)))
             x += 8
         }
-        context.stroke(glint, with: .color(theme.seaGlint.opacity(0.9)), lineWidth: 5)
+        context.stroke(lip, with: .color(phase.glint.opacity(0.85)), lineWidth: 4)
 
         // Reflection of the sun or moon.
-        if theme == .peach || theme.isDark {
-            let cx = theme == .peach ? w * 0.68 : w * sunPosition.x
-            for row in 0..<6 {
-                let y = top + 14 + CGFloat(row) * 15
-                let shimmer: Double = 0.85 + 0.15 * sin(t * 1.4 + Double(row))
-                let half = CGFloat(46 - row * 6) * CGFloat(shimmer)
-                var stripe = Path()
-                stripe.move(to: CGPoint(x: cx - half, y: y))
-                stripe.addLine(to: CGPoint(x: cx + half, y: y))
-                context.stroke(stripe, with: .color(Color(hex: 0xFFF1C4).opacity(0.55 - Double(row) * 0.07)), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-            }
+        let cx = w * 0.76
+        for row in 0..<5 {
+            let y = top + 12 + CGFloat(row) * 13
+            let shimmer = 0.85 + 0.15 * sin(t * 1.4 + Double(row))
+            let half = CGFloat(34 - row * 5) * CGFloat(shimmer)
+            var stripe = Path()
+            stripe.move(to: CGPoint(x: cx - half, y: y))
+            stripe.addLine(to: CGPoint(x: cx + half, y: y))
+            context.stroke(stripe, with: .color(phase.sunGlow.opacity(0.5 - Double(row) * 0.08)), style: StrokeStyle(lineWidth: 4, lineCap: .round))
         }
 
         // Little dashes of light drifting on the water.
         let depth = size.height - top
-        for index in 0..<9 {
+        for index in 0..<10 {
             let seed = Double(index)
-            let fy = noise(seed, 7)
-            let y = top + 22 + CGFloat(fy) * max(depth - 40, 0)
-            let speed = 4 + noise(seed, 8) * 6
+            let y = top + 22 + CGFloat(noise(seed, 7)) * max(depth - 40, 0)
             let span = Double(w + 80)
-            let px = (noise(seed, 9) * span + t * speed).truncatingRemainder(dividingBy: span) - 40
-            let length = CGFloat(14 + noise(seed, 10) * 22)
+            let px = (noise(seed, 9) * span + t * (3 + noise(seed, 8) * 5)).truncatingRemainder(dividingBy: span) - 40
+            let length = CGFloat(12 + noise(seed, 10) * 22)
             var dash = Path()
             dash.move(to: CGPoint(x: CGFloat(px), y: y))
             dash.addLine(to: CGPoint(x: CGFloat(px) + length, y: y))
-            let flicker: Double = sin(t * 1.3 + seed)
-            context.opacity = 0.25 + 0.3 * (0.5 + 0.5 * flicker)
-            context.stroke(dash, with: .color(.white), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+            context.opacity = 0.3 + 0.35 * (0.5 + 0.5 * sin(t * 1.3 + seed))
+            context.stroke(dash, with: .color(phase.glint), style: StrokeStyle(lineWidth: 3, lineCap: .round))
         }
         context.opacity = 1
     }
 
-    private func drawSparkles(in context: inout GraphicsContext, size: CGSize, time t: Double) {
-        let skyHeight = min(horizon, size.height)
-        let spots: [(CGFloat, CGFloat, CGFloat, Double)] = [(0.12, 0.3, 18, 0), (0.9, 0.62, 12, 1.4), (0.08, 0.7, 10, 2.6), (0.6, 0.16, 9, 3.3)]
-        for spot in spots {
-            let pulse = 0.5 + 0.5 * sin(t * 2.2 + spot.3)
-            let s = spot.2 * CGFloat(0.6 + 0.4 * pulse)
-            let center = CGPoint(x: size.width * spot.0, y: skyHeight * spot.1)
-            context.opacity = 0.45 + 0.5 * pulse
-            context.fill(SparkleShape().path(in: CGRect(x: center.x - s / 2, y: center.y - s / 2, width: s, height: s)), with: .color(.white))
+    private func drawTaps(in context: inout GraphicsContext, now: Date) {
+        for (start, point) in taps {
+            let age = now.timeIntervalSince(start)
+            guard age >= 0, age < 1.6 else { continue }
+            let progress = age / 1.6
+            for ring in 0..<2 {
+                let p = max(progress - Double(ring) * 0.18, 0)
+                let rx = CGFloat(10 + p * 70)
+                let rect = CGRect(x: point.x - rx, y: point.y - rx * 0.28, width: rx * 2, height: rx * 0.56)
+                context.stroke(Path(ellipseIn: rect), with: .color(.white.opacity(0.85 * (1 - p))), lineWidth: 2.5)
+            }
         }
-        context.opacity = 1
     }
 }
 
@@ -390,68 +296,33 @@ struct LilyPad: View {
     var rippleTrigger: Int = 0
     var animated = true
 
-    @Environment(\.dewyTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var splashes: [Date] = []
 
     private var isLive: Bool { animated && !reduceMotion && !LaunchOptions.freezesMotion }
 
     var body: some View {
-        // Resting ripples barely move; splashes get the full frame rate.
-        TimelineView(.animation(minimumInterval: splashes.isEmpty ? 1.0 / 12.0 : 1.0 / 60.0, paused: !isLive && splashes.isEmpty)) { timeline in
-            let now = timeline.date
-            let t = isLive ? now.timeIntervalSinceReferenceDate : 0
-            Canvas { context, size in
-                let center = CGPoint(x: size.width / 2, y: size.height / 2)
-                let rx = width / 2
-                let ry = rx * 0.2
-
-                func ring(_ scale: CGFloat, opacity: Double, line: CGFloat = 2.5) {
-                    let rect = CGRect(x: center.x - rx * scale, y: center.y - ry * scale, width: rx * 2 * scale, height: ry * 2 * scale)
-                    context.stroke(Path(ellipseIn: rect), with: .color(.white.opacity(opacity)), lineWidth: line)
+        ZStack {
+            if animated {
+                TimelineView(.animation(minimumInterval: splashes.isEmpty ? 1.0 / 12.0 : 1.0 / 60.0, paused: !isLive && splashes.isEmpty)) { timeline in
+                    let now = timeline.date
+                    let t = isLive ? now.timeIntervalSinceReferenceDate : 0
+                    ripples(time: t, now: now)
                 }
+            } else {
+                ripples(time: 0, now: .now)
+            }
 
-                // Resting ripples breathe gently.
-                let breathe = CGFloat(sin(t * 1.3)) * 0.03
-                ring(1.32 + breathe, opacity: 0.45)
-                ring(1.8 + breathe * 1.5, opacity: 0.25)
-
-                // Splash ripples spread out and fade.
-                for start in splashes {
-                    let age = now.timeIntervalSince(start)
-                    guard age >= 0, age < 1.8 else { continue }
-                    let progress = age / 1.8
-                    ring(1.1 + CGFloat(progress) * 1.5, opacity: 0.85 * (1 - progress), line: 3.5)
-                    if age > 0.25 {
-                        let p2 = (age - 0.25) / 1.55
-                        ring(1.05 + CGFloat(p2) * 1.1, opacity: 0.6 * (1 - p2), line: 2.5)
-                    }
-                }
-
-                // Shadow in the water
-                context.fill(Path(ellipseIn: CGRect(x: center.x - rx, y: center.y - ry + 3, width: rx * 2, height: ry * 2)), with: .color(Color(hex: 0x0B4D7A).opacity(0.22)))
-
-                // The pad, with its little notch.
-                var pad = Path(ellipseIn: CGRect(x: center.x - rx, y: center.y - ry, width: rx * 2, height: ry * 2))
-                var notch = Path()
-                notch.move(to: center)
-                notch.addLine(to: CGPoint(x: center.x + rx * 0.5, y: center.y - ry * 1.2))
-                notch.addLine(to: CGPoint(x: center.x + rx * 0.05, y: center.y - ry * 1.2))
-                notch.closeSubpath()
-                pad = pad.subtracting(notch)
-                context.fill(pad, with: .color(theme.pad))
-                let inner = Path(ellipseIn: CGRect(x: center.x - rx * 0.86, y: center.y - ry * 0.95, width: rx * 1.72, height: ry * 1.6)).subtracting(notch)
-                context.fill(inner, with: .color(theme.padLight))
-
-                // A tiny lotus at the edge.
-                let lotus = CGPoint(x: center.x - rx * 0.82, y: center.y + ry * 0.1)
-                for angle in [-70.0, -35.0, 0.0, 35.0, 70.0] {
-                    var petal = Path(ellipseIn: CGRect(x: -4, y: -12, width: 8, height: 13))
-                    petal = petal.applying(CGAffineTransform(rotationAngle: CGFloat(angle * .pi / 180)))
-                        .applying(CGAffineTransform(translationX: lotus.x, y: lotus.y))
-                    context.fill(petal, with: .color(abs(angle) > 40 ? Color(hex: 0xFF9CC2) : Color(hex: 0xFFC2DA)))
-                }
-                context.fill(Path(ellipseIn: CGRect(x: lotus.x - 3.5, y: lotus.y - 5, width: 7, height: 6)), with: .color(Palette.sunshine))
+            if Art.exists("prop-lilypad") {
+                Image("prop-lilypad")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: width)
+                    .offset(y: width * 0.03)
+            } else {
+                Ellipse()
+                    .fill(LinearGradient(colors: [Color(hex: 0xB5EBC0), Color(hex: 0x7FD196)], startPoint: .top, endPoint: .bottom))
+                    .frame(width: width, height: width * 0.26)
             }
         }
         .frame(width: width * 1.9, height: width * 0.5)
@@ -465,26 +336,51 @@ struct LilyPad: View {
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
+
+    private func ripples(time t: Double, now: Date) -> some View {
+        Canvas { context, size in
+            let center = CGPoint(x: size.width / 2, y: size.height * 0.55)
+            let rx = width / 2
+            let ry = rx * 0.26
+            func ring(_ scale: CGFloat, opacity: Double, line: CGFloat = 2.5) {
+                let rect = CGRect(x: center.x - rx * scale, y: center.y - ry * scale, width: rx * 2 * scale, height: ry * 2 * scale)
+                context.stroke(Path(ellipseIn: rect), with: .color(.white.opacity(opacity)), lineWidth: line)
+            }
+            let breathe = CGFloat(sin(t * 1.3)) * 0.03
+            ring(1.3 + breathe, opacity: 0.5)
+            ring(1.75 + breathe * 1.5, opacity: 0.28)
+            for start in splashes {
+                let age = now.timeIntervalSince(start)
+                guard age >= 0, age < 1.8 else { continue }
+                let progress = age / 1.8
+                ring(1.1 + CGFloat(progress) * 1.5, opacity: 0.9 * (1 - progress), line: 3.5)
+                if age > 0.25 {
+                    let p2 = (age - 0.25) / 1.55
+                    ring(1.05 + CGFloat(p2) * 1.1, opacity: 0.6 * (1 - p2), line: 2.5)
+                }
+            }
+            // Shadow in the water.
+            context.fill(Path(ellipseIn: CGRect(x: center.x - rx * 0.98, y: center.y - ry + 5, width: rx * 1.96, height: ry * 2)), with: .color(Color(hex: 0x1E5A78).opacity(0.18)))
+        }
+    }
 }
 
 // MARK: - Sky header
 
-/// The world's sky behind the top of a screen. It keeps going upward in the sky's top color,
+/// The sky behind the top of a screen. It keeps going upward in the sky's top color,
 /// so the status bar area and overscrolling always show sky.
 struct SkyHeaderBackground: View {
     var height: CGFloat
     /// Horizon measured from the top of the header; `nil` shows only sky.
     var horizon: CGFloat?
-    var sunY: CGFloat = 70
-    var sunX: CGFloat = 0.86
-    var drawsHorizonClouds = false
+    var showsLandmark = true
 
     @Environment(\.dewyTheme) private var theme
 
     var body: some View {
         VStack(spacing: 0) {
-            theme.sky[0].frame(height: 800)
-            WorldScene(horizon: horizon ?? height + 1_000, sunPosition: CGPoint(x: sunX, y: sunY), drawsHorizonClouds: drawsHorizonClouds)
+            theme.phase().sky[0].frame(height: 800)
+            ClayWorld(horizon: horizon ?? height + 1_000, showsLandmark: showsLandmark)
                 .frame(height: height)
         }
         .frame(height: height, alignment: .bottom)

@@ -11,6 +11,10 @@ final class HydrationStore {
     var hasOnboarded: Bool
     /// Joined challenges and the day each one started.
     var challenges: [String: Date]
+    /// Dew Drops spent, friends, wardrobe and decor.
+    var collection: CollectionState
+    /// Mirrors Dewy+ from the purchase manager (set by the app, never persisted).
+    var isPremium = false
 
     private let persistence: Persistence?
     private let calendar = Calendar.current
@@ -22,6 +26,7 @@ final class HydrationStore {
             entries = demo.entries
             hasOnboarded = demo.hasOnboarded
             challenges = demo.challenges
+            collection = demo.collection
             persistence = nil
         } else {
             let persistence = Persistence()
@@ -30,6 +35,7 @@ final class HydrationStore {
             entries = data.entries
             hasOnboarded = data.hasOnboarded
             challenges = data.challenges
+            collection = data.collection
             self.persistence = persistence
         }
     }
@@ -98,13 +104,19 @@ final class HydrationStore {
         let entry = DrinkEntry(date: date, amount: amount, kind: kind)
         entries.append(entry)
         save()
+        HydrationStore.onAdd?(entry, self)
         return entry
     }
 
     func delete(_ entry: DrinkEntry) {
         entries.removeAll { $0.id == entry.id }
         save()
+        HydrationStore.onDelete?(entry, self)
     }
+
+    /// App-only hooks (Apple Health, Live Activity). The widget leaves these empty.
+    static var onAdd: (@MainActor (DrinkEntry, HydrationStore) -> Void)?
+    static var onDelete: (@MainActor (DrinkEntry, HydrationStore) -> Void)?
 
     func completeOnboarding(with profile: UserProfile) {
         self.profile = profile
@@ -123,13 +135,14 @@ final class HydrationStore {
         profile = UserProfile()
         hasOnboarded = false
         challenges = [:]
+        collection = CollectionState()
         save()
         ReminderScheduler.reschedule(for: profile)
     }
 
     func save() {
         guard let persistence else { return }
-        persistence.save(AppData(profile: profile, entries: entries, hasOnboarded: hasOnboarded, challenges: challenges))
+        persistence.save(AppData(profile: profile, entries: entries, hasOnboarded: hasOnboarded, challenges: challenges, collection: collection))
         WidgetCenter.shared.reloadAllTimelines()
     }
 
@@ -142,6 +155,7 @@ final class HydrationStore {
             }
         }
         challenges = data.challenges
+        collection = data.collection
     }
 
     // MARK: Stats
@@ -395,6 +409,8 @@ enum LaunchOptions {
     static var freezesMotion: Bool { isDemo && screenshot != "celebrate" }
     static var theme: AppTheme? { UserDefaults.standard.string(forKey: "theme").flatMap(AppTheme.init(rawValue:)) }
     static var forcePremium: Bool { UserDefaults.standard.bool(forKey: "premium") }
+    /// Pass `-phase dawn|day|dusk|night` to pin the sky.
+    static var phase: SkyPhase? { UserDefaults.standard.string(forKey: "phase").flatMap(SkyPhase.init(rawValue:)) }
     static var onboardingStep: Int? {
         guard screenshot == "onboarding" else { return nil }
         return UserDefaults.standard.integer(forKey: "step")

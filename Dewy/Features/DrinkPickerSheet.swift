@@ -12,20 +12,25 @@ struct DrinkPickerSheet: View {
     @State private var amount: Double = 250
     @State private var showPaywall = false
     @State private var pop = 0
+    @State private var appeared = LaunchOptions.freezesMotion
 
-    private let presets: [Double] = [150, 250, 350, 500]
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
+    private let presets: [Double] = [150, 250, 330, 500]
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 4)
     private let range: ClosedRange<Double> = 50...1_000
 
     private var isLocked: Bool { kind.isPremium && !purchases.isPremium }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 18) {
+            VStack(spacing: 24) {
                 header
-                preview
+                    .floatIn(appeared, index: 0)
+                hero
+                    .floatIn(appeared, index: 1)
                 amountCard
+                    .floatIn(appeared, index: 2)
                 drinksGrid
+                    .floatIn(appeared, index: 3)
             }
             .padding(.horizontal, 20)
             .padding(.top, 24)
@@ -35,32 +40,22 @@ struct DrinkPickerSheet: View {
         .scrollBounceBehavior(.basedOnSize)
         .background(theme.canvas.ignoresSafeArea())
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            PrimaryButton(
-                title: isLocked ? "Unlock \(kind.name)" : "Add \(store.format(amount))",
-                systemImage: isLocked ? "lock.fill" : "drop.fill",
-                style: .tinted(kind.color, kind.deep)
-            ) {
-                if isLocked {
-                    showPaywall = true
-                } else {
-                    onAdd(kind, amount)
-                    dismiss()
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 12)
-            .padding(.bottom, 6)
-            .background {
-                LinearGradient(colors: [theme.canvas.opacity(0), theme.canvas, theme.canvas], startPoint: .top, endPoint: .bottom)
-                    .ignoresSafeArea()
-            }
-            .animation(.smooth(duration: 0.3), value: kind)
+            footer
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .presentationCornerRadius(36)
+        .presentationCornerRadius(38)
+        .presentationBackground(theme.canvas)
         .sheet(isPresented: $showPaywall) {
             PaywallView()
+        }
+        .onAppear {
+            if !appeared {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.05))
+                    appeared = true
+                }
+            }
         }
     }
 
@@ -71,7 +66,7 @@ struct DrinkPickerSheet: View {
             VStack(alignment: .leading, spacing: 2) {
                 CapsLabel(text: "Every sip counts", color: theme.inkSoft, size: 11)
                 Text("Add a drink")
-                    .font(.display(30))
+                    .font(.display(34))
                     .foregroundStyle(theme.ink)
             }
             Spacer()
@@ -79,9 +74,79 @@ struct DrinkPickerSheet: View {
         }
     }
 
-    private var preview: some View {
-        HStack(spacing: 14) {
-            DrinkIcon(kind: kind, size: 124)
+    private var footer: some View {
+        PrimaryButton(
+            title: isLocked ? "Unlock \(kind.name)" : "Pour it in",
+            systemImage: isLocked ? "lock.fill" : "drop.fill",
+            style: .tinted(kind.color, kind.deep)
+        ) {
+            if isLocked {
+                Haptics.tap()
+                showPaywall = true
+            } else {
+                onAdd(kind, amount)
+                dismiss()
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+        .padding(.bottom, 6)
+        .background {
+            LinearGradient(
+                stops: [
+                    .init(color: theme.canvas.opacity(0), location: 0),
+                    .init(color: theme.canvas, location: 0.22),
+                    .init(color: theme.canvas, location: 1)
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
+        }
+        .animation(.smooth(duration: 0.3), value: kind)
+    }
+
+    // MARK: Hero
+
+    private var hero: some View {
+        VStack(spacing: 14) {
+            HStack(spacing: 10) {
+                heroArt
+                heroText
+                Spacer(minLength: 0)
+            }
+            factRow
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 16)
+        .background { heroBackground }
+        .overlay(alignment: .topTrailing) {
+            if isLocked {
+                PlusBadge()
+                    .padding(14)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.45, dampingFraction: 0.75), value: kind)
+    }
+
+    private var heroArt: some View {
+        ZStack {
+            // Clay glow in the drink's color.
+            Circle()
+                .fill(RadialGradient(colors: [kind.color.opacity(0.42), kind.color.opacity(0)], center: .center, startRadius: 4, endRadius: 78))
+                .frame(width: 156, height: 156)
+            Circle()
+                .fill(LinearGradient(colors: [Color.white.opacity(0.85), kind.light.opacity(0.6)], startPoint: .top, endPoint: .bottom))
+                .frame(width: 104, height: 104)
+                .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
+                .shadow(color: kind.deep.opacity(0.18), radius: 10, x: 0, y: 6)
+            Ellipse()
+                .fill(kind.deep.opacity(0.2))
+                .frame(width: 84, height: 14)
+                .blur(radius: 5)
+                .offset(y: 60)
+            DrinkIcon(kind: kind, size: 130)
                 .id(kind)
                 .transition(.scale(scale: 0.5).combined(with: .opacity))
                 .keyframeAnimator(initialValue: 1.0, trigger: pop) { content, scale in
@@ -93,59 +158,82 @@ struct DrinkPickerSheet: View {
                         SpringKeyframe(1.0, duration: 0.4, spring: .bouncy)
                     }
                 }
-                .frame(width: 124, height: 130)
+        }
+        .frame(width: 140, height: 150)
+    }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(kind.name)
+    private var heroText: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(kind.name)
+                .font(.display(22))
+                .foregroundStyle(kind.deep)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(store.format(amount, withUnit: false))
+                    .font(.display(52))
+                    .foregroundStyle(theme.ink)
+                    .monospacedDigit()
+                    .contentTransition(.numericText(value: amount))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(store.profile.unit.label)
                     .font(.display(20))
-                    .foregroundStyle(kind.deep)
-                HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text(store.format(amount, withUnit: false))
-                        .font(.display(52))
-                        .foregroundStyle(Palette.ink)
-                        .contentTransition(.numericText(value: amount))
-                    Text(store.profile.unit.label)
-                        .font(.display(20))
-                        .foregroundStyle(Palette.ink.opacity(0.55))
-                }
-                .animation(.snappy, value: amount)
-                Text(kind.blurb)
-                    .font(.dewy(13, .semibold))
-                    .foregroundStyle(Palette.ink.opacity(0.6))
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundStyle(theme.inkSoft)
+            }
+            .animation(.snappy, value: amount)
+            Text(kind.blurb)
+                .font(.dewy(14, .semibold))
+                .foregroundStyle(theme.inkSoft)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var factRow: some View {
+        HStack(spacing: 6) {
+            PickerFactChip(text: "\(Int(kind.hydration * 100))% hydrating", tint: kind.deep)
+            PickerFactChip(text: "counts \(store.format(amount * kind.hydration))", tint: kind.deep)
+            if kind.caffeinePerML > 0 {
+                PickerFactChip(text: "\(Int((amount * kind.caffeinePerML).rounded())) mg caffeine", tint: Color(hex: 0x8A6BC9))
             }
             Spacer(minLength: 0)
         }
-        .padding(16)
-        .background {
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(kind.light)
-                .overlay(alignment: .topTrailing) {
-                    // Soft bubbles in the drink's color.
-                    ZStack {
-                        Circle().fill(kind.color.opacity(0.18)).frame(width: 90).offset(x: 26, y: -30)
-                        Circle().fill(kind.color.opacity(0.14)).frame(width: 34).offset(x: -60, y: 8)
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        }
-        .overlay(alignment: .bottom) {
-            HStack(spacing: 6) {
-                FactChip(text: "\(Int(kind.hydration * 100))% hydrating", tint: kind.deep)
-                FactChip(text: "counts \(store.format(amount * kind.hydration))", tint: kind.deep)
-                if kind.caffeinePerML > 0 {
-                    FactChip(text: "\(Int((amount * kind.caffeinePerML).rounded())) mg caffeine", tint: Color(hex: 0x8A5BD6))
-                }
-            }
-            .offset(y: 15)
-        }
-        .padding(.bottom, 14)
-        .animation(.spring(response: 0.45, dampingFraction: 0.75), value: kind)
     }
+
+    private var heroBackground: some View {
+        let shape = RoundedRectangle(cornerRadius: 32, style: .continuous)
+        return ClaySurface(shape: shape, fill: kind.light.blended(with: .white, by: 0.25), glow: kind.color)
+            .overlay {
+                // A soft wash of the drink color with a couple of clay bubbles.
+                ZStack {
+                    LinearGradient(colors: [Color.white.opacity(0), kind.color.opacity(0.14)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    Circle()
+                        .fill(kind.color.opacity(0.16))
+                        .frame(width: 150, height: 150)
+                        .offset(x: 140, y: -70)
+                    Circle()
+                        .fill(Color.white.opacity(0.55))
+                        .frame(width: 34, height: 34)
+                        .offset(x: 70, y: -62)
+                    Circle()
+                        .fill(kind.color.opacity(0.1))
+                        .frame(width: 80, height: 80)
+                        .offset(x: -150, y: 80)
+                }
+                .clipShape(shape)
+                .allowsHitTesting(false)
+            }
+    }
+
+    // MARK: Amount
 
     private var amountCard: some View {
         VStack(spacing: 16) {
+            HStack {
+                SectionHeader(title: "How much?")
+                Spacer()
+            }
             HStack(spacing: 12) {
                 stepButton("minus") { step(-1) }
                 AmountSlider(value: $amount, range: range, step: store.profile.unit == .ml ? 10 : VolumeUnit.mlPerOunce, tint: kind.color, lip: kind.deep)
@@ -161,8 +249,7 @@ struct DrinkPickerSheet: View {
                 }
             }
         }
-        .dewyCard(padding: 16)
-        .padding(.top, 4)
+        .dewyCard(padding: 18)
     }
 
     private func stepButton(_ icon: String, action: @escaping () -> Void) -> some View {
@@ -173,6 +260,7 @@ struct DrinkPickerSheet: View {
                 .frame(width: 44, height: 44)
         }
         .buttonStyle(CandyButtonStyle(fill: kind.color, lip: kind.deep, shape: AnyShape(Circle()), depth: 4))
+        .accessibilityLabel(icon == "plus" ? "More" : "Less")
     }
 
     private func step(_ direction: Double) {
@@ -182,10 +270,12 @@ struct DrinkPickerSheet: View {
         }
     }
 
+    // MARK: Drinks
+
     private var drinksGrid: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "Drinks", trailing: purchases.isPremium ? "\(DrinkKind.allCases.count) drinks" : "4 free · \(DrinkKind.allCases.count - 4) with Dewy+")
-            LazyVGrid(columns: columns, spacing: 10) {
+            LazyVGrid(columns: columns, spacing: 14) {
                 ForEach(DrinkKind.allCases) { option in
                     DrinkChoiceTile(
                         kind: option,
@@ -207,7 +297,7 @@ struct DrinkPickerSheet: View {
 
 // MARK: - Pieces
 
-private struct FactChip: View {
+private struct PickerFactChip: View {
     var text: String
     var tint: Color
 
@@ -215,15 +305,17 @@ private struct FactChip: View {
         Text(text)
             .font(.dewy(12, .heavy))
             .foregroundStyle(tint)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .padding(.horizontal, 10)
             .frame(height: 28)
-            .background(Color.white, in: Capsule())
-            .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
-            .lineLimit(1)
+            .background {
+                ClaySurface(shape: Capsule(), fill: .white, glow: tint, elevation: 0.35)
+            }
     }
 }
 
-/// One drink in the grid.
+/// One drink in the grid: a white clay tile that lifts and takes a drink-colored rim when selected.
 struct DrinkChoiceTile: View {
     @Environment(\.dewyTheme) private var theme
     var kind: DrinkKind
@@ -231,52 +323,65 @@ struct DrinkChoiceTile: View {
     var isLocked: Bool
     var action: () -> Void
 
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 22, style: .continuous) }
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
-                DrinkIcon(kind: kind, size: 52)
+            VStack(spacing: 4) {
+                ZStack {
+                    Circle()
+                        .fill(kind.light)
+                        .frame(width: 48, height: 48)
+                        .offset(y: 4)
+                    DrinkIcon(kind: kind, size: 52)
+                }
+                .frame(height: 56)
                 Text(kind.name)
                     .font(.display(13))
-                    .foregroundStyle(Palette.ink)
+                    .foregroundStyle(theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
+            .padding(.horizontal, 4)
             .frame(maxWidth: .infinity)
-            .frame(height: 86)
-            .background(kind.light, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .frame(height: 94)
+            .background {
+                ClaySurface(shape: shape, fill: .white, glow: isSelected ? kind.color : Palette.shadow, elevation: isSelected ? 0.95 : 0.55)
+            }
             .overlay {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(isSelected ? kind.color : Color.clear, lineWidth: 3)
+                shape.strokeBorder(isSelected ? kind.color : Color.clear, lineWidth: 2.5)
             }
-            .overlay(alignment: .topTrailing) {
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundStyle(.white)
-                        .frame(width: 22, height: 22)
-                        .background(kind.color, in: Circle())
-                        .overlay(Circle().strokeBorder(Color.white, lineWidth: 2))
-                        .offset(x: 5, y: -5)
-                        .transition(.scale.combined(with: .opacity))
-                } else if isLocked {
-                    Image(systemName: "lock.fill")
-                        .font(.system(size: 9, weight: .black))
-                        .foregroundStyle(.white)
-                        .frame(width: 20, height: 20)
-                        .background(Palette.ink.opacity(0.7), in: Circle())
-                        .padding(6)
-                }
-            }
-            .scaleEffect(isSelected ? 1.04 : 1)
-            .shadow(color: isSelected ? kind.color.opacity(0.35) : .clear, radius: 10, x: 0, y: 6)
+            .overlay(alignment: .topTrailing) { cornerBadge }
+            .offset(y: isSelected ? -3 : 0)
+            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isSelected)
+            .contentShape(shape)
         }
         .buttonStyle(SquishyButtonStyle())
         .accessibilityLabel(isLocked ? "\(kind.name), Dewy+ only" : kind.name)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
+
+    @ViewBuilder
+    private var cornerBadge: some View {
+        if isLocked {
+            PlusBadge()
+                .scaleEffect(0.78, anchor: .topTrailing)
+                .offset(x: 6, y: -7)
+        } else if isSelected {
+            Image(systemName: "checkmark")
+                .font(.system(size: 10, weight: .black))
+                .foregroundStyle(.white)
+                .frame(width: 22, height: 22)
+                .background(kind.color, in: Circle())
+                .overlay(Circle().strokeBorder(Color.white, lineWidth: 2))
+                .shadow(color: kind.deep.opacity(0.3), radius: 3, x: 0, y: 2)
+                .offset(x: 5, y: -5)
+                .transition(.scale.combined(with: .opacity))
+        }
+    }
 }
 
-/// A chunky slider: a candy track filled with the drink color and a big white thumb.
+/// A puffy clay slider: a recessed track, a glossy candy fill in the drink color and a big white clay thumb.
 struct AmountSlider: View {
     @Binding var value: Double
     var range: ClosedRange<Double>
@@ -288,25 +393,19 @@ struct AmountSlider: View {
     @Environment(\.dewyTheme) private var theme
     @State private var isDragging = false
 
+    private var trackHeight: CGFloat { 18 }
+    private var thumb: CGFloat { 36 }
+
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
-            let thumb: CGFloat = 32
-            let fraction = (value - range.lowerBound) / (range.upperBound - range.lowerBound)
-            let x = thumb / 2 + CGFloat(fraction) * (width - thumb)
+            let span = max(range.upperBound - range.lowerBound, 0.0001)
+            let fraction = min(max((value - range.lowerBound) / span, 0), 1)
+            let x = thumb / 2 + CGFloat(fraction) * max(width - thumb, 1)
             ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(theme.well)
-                    .frame(height: 14)
-                Capsule()
-                    .fill(tint)
-                    .frame(width: max(x, 14), height: 14)
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: thumb, height: thumb)
-                    .overlay(Circle().strokeBorder(tint, lineWidth: 4))
-                    .shadow(color: lip.opacity(0.35), radius: isDragging ? 10 : 5, x: 0, y: 3)
-                    .scaleEffect(isDragging ? 1.15 : 1)
+                track
+                fill(width: max(x, trackHeight))
+                thumbView
                     .offset(x: x - thumb / 2)
             }
             .frame(height: proxy.size.height)
@@ -315,9 +414,9 @@ struct AmountSlider: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { gesture in
                         isDragging = true
-                        let raw = Double((gesture.location.x - thumb / 2) / (width - thumb))
+                        let raw = Double((gesture.location.x - thumb / 2) / max(width - thumb, 1))
                         let clamped = min(max(raw, 0), 1)
-                        let newValue = range.lowerBound + clamped * (range.upperBound - range.lowerBound)
+                        let newValue = range.lowerBound + clamped * span
                         let stepped = (newValue / step).rounded() * step
                         let final = min(max(stepped, range.lowerBound), range.upperBound)
                         if abs(final - value) >= step * 0.5 {
@@ -329,7 +428,7 @@ struct AmountSlider: View {
             )
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragging)
         }
-        .frame(height: 44)
+        .frame(height: 46)
         .accessibilityElement()
         .accessibilityLabel("Amount")
         .accessibilityValue("\(Int(value)) \(unitName)")
@@ -340,5 +439,40 @@ struct AmountSlider: View {
             @unknown default: break
             }
         }
+    }
+
+    private var track: some View {
+        Capsule()
+            .fill(theme.well.shadow(.inner(color: Palette.shadow.opacity(0.28), radius: 2, x: 0, y: 1.5)))
+            .overlay(Capsule().stroke(Color(hex: 0xEADBCD).opacity(0.7), lineWidth: 1))
+            .frame(height: trackHeight)
+    }
+
+    private func fill(width: CGFloat) -> some View {
+        Capsule()
+            .fill(LinearGradient(colors: [tint.blended(with: .white, by: 0.22), tint], startPoint: .top, endPoint: .bottom))
+            .overlay(alignment: .top) {
+                Capsule()
+                    .fill(Color.white.opacity(0.45))
+                    .frame(height: 5)
+                    .padding(.horizontal, 6)
+                    .padding(.top, 3)
+            }
+            .frame(width: width, height: trackHeight)
+            .shadow(color: lip.opacity(0.25), radius: 4, x: 0, y: 2)
+    }
+
+    private var thumbView: some View {
+        ZStack {
+            ClaySurface(shape: Circle(), fill: .white, glow: lip, elevation: isDragging ? 0.9 : 0.6)
+            Circle()
+                .fill(LinearGradient(colors: [tint.blended(with: .white, by: 0.2), tint], startPoint: .top, endPoint: .bottom))
+                .frame(width: 14, height: 14)
+                .overlay(alignment: .top) {
+                    Circle().fill(Color.white.opacity(0.5)).frame(width: 6, height: 4).padding(.top, 2)
+                }
+        }
+        .frame(width: thumb, height: thumb)
+        .scaleEffect(isDragging ? 1.14 : 1)
     }
 }
