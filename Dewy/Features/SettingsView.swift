@@ -25,23 +25,37 @@ struct SettingsView: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                header.floatIn(appeared, index: 0)
-                premiumCard.floatIn(appeared, index: 1)
-                goalCard.floatIn(appeared, index: 2)
-                remindersCard.floatIn(appeared, index: 3)
-                themeCard.floatIn(appeared, index: 4)
-                profileCard.floatIn(appeared, index: 5)
-                dataCard.floatIn(appeared, index: 6)
-                footer
+        ZStack {
+            HeroBackdrop()
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    header
+                        .padding(.horizontal, 22)
+                        .floatIn(appeared, index: 0)
+                    premiumCard
+                        .padding(.horizontal, 20)
+                        .padding(.top, 20)
+                        .padding(.bottom, 30)
+                        .floatIn(appeared, index: 1)
+                    VStack(spacing: 18) {
+                        goalCard.floatIn(appeared, index: 2)
+                        remindersCard.floatIn(appeared, index: 3)
+                        themeCard.floatIn(appeared, index: 4)
+                        profileCard.floatIn(appeared, index: 5)
+                        dataCard.floatIn(appeared, index: 6)
+                        footer
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 26)
+                    .padding(.bottom, 30)
+                    .canvasSheet()
+                }
+                .padding(.top, 6)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 6)
-            .padding(.bottom, 24)
+            .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
         }
-        .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.interactively)
         .onAppear { appeared = true }
         .sheet(isPresented: $showPaywall) { PaywallView() }
         .onChange(of: reminderSignature) {
@@ -88,63 +102,82 @@ struct SettingsView: View {
     // MARK: Header
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("MAKE IT YOURS")
-                .font(.dewy(13, .bold))
-                .tracking(1.2)
-                .foregroundStyle(theme.inkSoft)
-            Text("Settings")
-                .font(.dewy(30, .heavy))
-                .foregroundStyle(theme.ink)
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                CapsLabel(text: "Make it yours", color: theme.onHeroSoft, size: 12)
+                Text("Settings")
+                    .font(.dewy(32, .black))
+                    .foregroundStyle(.white)
+            }
+            Spacer()
+            MascotView(progress: store.todayProgress, mood: store.mood, size: 50, bands: store.todayBands, animated: false)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Premium
 
     @ViewBuilder
     private var premiumCard: some View {
+        let tile = theme.isDark ? theme.heroLight : Color(hex: 0x1E2340)
         if purchases.isPremium {
             HStack(spacing: 14) {
-                MascotView(progress: 1, mood: .ecstatic, size: 44, accessory: .crown)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Dewy+ is active")
-                        .font(.dewy(18, .heavy))
-                        .foregroundStyle(theme.ink)
+                MascotView(progress: 1, mood: .ecstatic, size: 50, accessory: .crown, backdrop: .tile, animated: false)
+                    .padding(.top, 10)
+                VStack(alignment: .leading, spacing: 3) {
+                    CapsLabel(text: "Dewy+", color: Palette.sunshine, size: 12)
+                    Text("Everything is unlocked")
+                        .font(.dewy(19, .black))
+                        .foregroundStyle(.white)
                     Text("Thank you for supporting a tiny indie app 💙")
-                        .font(.dewy(13, .medium))
-                        .foregroundStyle(theme.inkSoft)
+                        .font(.dewy(13, .semibold))
+                        .foregroundStyle(Color.white.opacity(0.75))
                 }
                 Spacer(minLength: 0)
             }
-            .glassCard()
+            .padding(18)
+            .background(tile, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .shadow(color: Color.black.opacity(0.2), radius: 16, x: 0, y: 10)
         } else {
             Button {
                 Haptics.tap()
                 showPaywall = true
             } label: {
                 HStack(spacing: 14) {
-                    MascotView(progress: 0.9, mood: .ecstatic, size: 50, accessory: .crown)
-                        .padding(.top, 8)
+                    MascotView(progress: 0.9, mood: .ecstatic, size: 54, accessory: .crown, backdrop: .tile, animated: false)
+                        .padding(.top, 12)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Unlock Dewy+")
-                            .font(.dewy(20, .heavy))
-                        Text("Dreamy themes, all drinks & 30-day insights")
+                        CapsLabel(text: "Dewy+", color: Palette.sunshine, size: 12)
+                        Text("Unlock everything")
+                            .font(.dewy(20, .black))
+                            .foregroundStyle(.white)
+                        Text("Themes, all drinks & 30-day insights")
                             .font(.dewy(13, .semibold))
-                            .opacity(0.9)
+                            .foregroundStyle(Color.white.opacity(0.75))
                             .multilineTextAlignment(.leading)
                     }
-                    .foregroundStyle(.white)
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 15, weight: .heavy))
-                        .foregroundStyle(.white.opacity(0.9))
+                    Text("TRY")
+                        .font(.dewy(14, .black))
+                        .tracking(1)
+                        .foregroundStyle(Color(hex: 0x1E2340))
+                        .padding(.horizontal, 14)
+                        .frame(height: 36)
+                        .background(Palette.sunshine, in: Capsule())
                 }
                 .padding(18)
-                .background(theme.accentGradient, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.4), lineWidth: 1))
+                .background {
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .fill(tile)
+                        .overlay(alignment: .topTrailing) {
+                            Circle()
+                                .fill(Color.white.opacity(0.06))
+                                .frame(width: 160, height: 160)
+                                .offset(x: 50, y: -70)
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                }
                 .shimmer()
-                .shadow(color: theme.accent.opacity(0.35), radius: 18, x: 0, y: 10)
+                .shadow(color: Color.black.opacity(0.22), radius: 18, x: 0, y: 10)
             }
             .buttonStyle(SquishyButtonStyle(scale: 0.97))
         }
@@ -155,7 +188,7 @@ struct SettingsView: View {
     private var goalCard: some View {
         let recommended = store.profile.recommendedGoal
         return VStack(alignment: .leading, spacing: 14) {
-            SettingsLabel(icon: "target", tint: theme.accent, title: "Daily goal")
+            SettingsLabel(icon: "target", tint: theme.accent, title: "Daily goal", subtitle: "Based on your body & day")
             HStack {
                 roundButton("minus") {
                     store.profile.dailyGoal = max(500, store.profile.dailyGoal - store.profile.unit.step)
@@ -163,12 +196,10 @@ struct SettingsView: View {
                 Spacer()
                 VStack(spacing: 0) {
                     Text(store.format(store.profile.dailyGoal, withUnit: false))
-                        .font(.dewy(40, .heavy))
+                        .font(.dewy(44, .black))
                         .foregroundStyle(theme.ink)
                         .contentTransition(.numericText(value: store.profile.dailyGoal))
-                    Text(store.profile.unit.label + " per day")
-                        .font(.dewy(14, .semibold))
-                        .foregroundStyle(theme.inkSoft)
+                    CapsLabel(text: store.profile.unit.label + " per day", color: theme.inkSoft, size: 12)
                 }
                 Spacer()
                 roundButton("plus") {
@@ -184,16 +215,16 @@ struct SettingsView: View {
                         Image(systemName: "sparkles")
                         Text("Use recommended \(store.format(recommended))")
                     }
-                    .font(.dewy(14, .bold))
+                    .font(.dewy(14, .heavy))
                     .foregroundStyle(theme.accent)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 40)
+                    .frame(height: 42)
                     .background(theme.accent.opacity(0.12), in: Capsule())
                 }
                 .buttonStyle(SquishyButtonStyle())
             }
         }
-        .glassCard()
+        .dewyCard()
     }
 
     private func roundButton(_ icon: String, action: @escaping () -> Void) -> some View {
@@ -202,10 +233,10 @@ struct SettingsView: View {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { action() }
         } label: {
             Image(systemName: icon)
-                .font(.system(size: 18, weight: .heavy))
+                .font(.system(size: 18, weight: .black))
                 .foregroundStyle(.white)
-                .frame(width: 48, height: 48)
-                .background(theme.accentGradient, in: Circle())
+                .frame(width: 50, height: 50)
+                .background(theme.accent, in: Circle())
                 .shadow(color: theme.accent.opacity(0.35), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(SquishyButtonStyle(scale: 0.85))
@@ -219,16 +250,14 @@ struct SettingsView: View {
                 get: { store.profile.remindersOn },
                 set: { newValue in toggleReminders(newValue) }
             )) {
-                SettingsLabel(icon: "bell.badge.fill", tint: Color(hex: 0xFF8A7A), title: "Sip reminders",
+                SettingsLabel(icon: "bell.badge.fill", tint: Palette.coral, title: "Sip reminders",
                               subtitle: store.profile.remindersOn ? "Dewy will nudge you gently" : "Off")
             }
             .tint(theme.accent)
 
             if store.profile.remindersOn {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Remind me every")
-                        .font(.dewy(14, .semibold))
-                        .foregroundStyle(theme.inkSoft)
+                    CapsLabel(text: "Remind me every", color: theme.inkSoft, size: 11)
                     HStack(spacing: 8) {
                         ForEach(intervals, id: \.minutes) { option in
                             let locked = option.minutes != 120 && !purchases.isPremium
@@ -246,12 +275,12 @@ struct SettingsView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            Divider().overlay(theme.inkSoft.opacity(0.15))
+            Divider().overlay(theme.line)
 
-            timeRow(icon: "sun.max.fill", tint: Palette.sunshine, title: "Wake up", minutes: binding(\.wakeMinutes))
-            timeRow(icon: "moon.stars.fill", tint: Palette.lilac, title: "Bedtime", minutes: binding(\.sleepMinutes))
+            timeRow(icon: "sun.max.fill", tint: Palette.tangerine, title: "Wake up", minutes: binding(\.wakeMinutes))
+            timeRow(icon: "moon.stars.fill", tint: Palette.grape, title: "Bedtime", minutes: binding(\.sleepMinutes))
         }
-        .glassCard()
+        .dewyCard()
         .animation(.spring(response: 0.45, dampingFraction: 0.8), value: store.profile.remindersOn)
     }
 
@@ -285,7 +314,7 @@ struct SettingsView: View {
 
     private var themeCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            SettingsLabel(icon: "paintpalette.fill", tint: Color(hex: 0xB78CFF), title: "Theme")
+            SettingsLabel(icon: "paintpalette.fill", tint: Color(hex: 0xFF5C93), title: "Theme", subtitle: "Pick Dewy's color world")
             HStack(spacing: 0) {
                 ForEach(AppTheme.allCases) { option in
                     let locked = option.isPremium && !purchases.isPremium
@@ -305,7 +334,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .glassCard()
+        .dewyCard()
     }
 
     // MARK: Profile
@@ -313,7 +342,7 @@ struct SettingsView: View {
     private var profileCard: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                SettingsLabel(icon: "person.crop.circle.fill", tint: Color(hex: 0x5AB4FF), title: "Name")
+                SettingsLabel(icon: "person.fill", tint: Palette.sky, title: "Name")
                 Spacer()
                 TextField("Your name", text: binding(\.name))
                     .multilineTextAlignment(.trailing)
@@ -322,7 +351,7 @@ struct SettingsView: View {
                     .submitLabel(.done)
                     .frame(maxWidth: 160)
             }
-            Divider().overlay(theme.inkSoft.opacity(0.15))
+            Divider().overlay(theme.line)
             HStack {
                 SettingsLabel(icon: "ruler.fill", tint: Palette.mint, title: "Units")
                 Spacer()
@@ -335,9 +364,9 @@ struct SettingsView: View {
                     }
                 }
             }
-            Divider().overlay(theme.inkSoft.opacity(0.15))
+            Divider().overlay(theme.line)
             HStack {
-                SettingsLabel(icon: "figure.walk", tint: Color(hex: 0xFFB347), title: "Activity")
+                SettingsLabel(icon: "figure.walk", tint: Palette.tangerine, title: "Activity")
                 Spacer()
                 Menu {
                     Picker("Activity", selection: binding(\.activity)) {
@@ -355,44 +384,41 @@ struct SettingsView: View {
                 }
             }
         }
-        .glassCard()
+        .dewyCard()
     }
 
     // MARK: Data
 
     private var dataCard: some View {
         VStack(spacing: 0) {
-            dataRow(icon: "arrow.counterclockwise", title: "Clear today's log", tint: theme.inkSoft) {
+            dataRow(icon: "arrow.counterclockwise", title: "Clear today's log", tint: Palette.sky) {
                 confirmClear = true
             }
-            Divider().overlay(theme.inkSoft.opacity(0.15)).padding(.vertical, 6)
-            dataRow(icon: "arrow.clockwise.circle.fill", title: "Restore purchases", tint: theme.accent) {
+            Divider().overlay(theme.line).padding(.vertical, 6)
+            dataRow(icon: "arrow.clockwise", title: "Restore purchases", tint: Palette.grape) {
                 Task { await purchases.restore() }
             }
-            Divider().overlay(theme.inkSoft.opacity(0.15)).padding(.vertical, 6)
-            dataRow(icon: "trash.fill", title: "Erase everything", tint: Color(hex: 0xFF6B6B)) {
+            Divider().overlay(theme.line).padding(.vertical, 6)
+            dataRow(icon: "trash.fill", title: "Erase everything", tint: Palette.berry) {
                 confirmErase = true
             }
         }
-        .glassCard()
+        .dewyCard()
     }
 
     private func dataRow(icon: String, title: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(tint)
-                    .frame(width: 30)
+                IconTile(systemImage: icon, color: tint, size: 34)
                 Text(title)
-                    .font(.dewy(16, .semibold))
-                    .foregroundStyle(tint == theme.inkSoft ? theme.ink : tint)
+                    .font(.dewy(16, .heavy))
+                    .foregroundStyle(tint == Palette.berry ? Palette.berry : theme.ink)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 13, weight: .black))
                     .foregroundStyle(theme.inkSoft.opacity(0.6))
             }
-            .padding(.vertical, 6)
+            .padding(.vertical, 4)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -400,12 +426,12 @@ struct SettingsView: View {
 
     private var footer: some View {
         VStack(spacing: 6) {
-            MascotView(progress: 0.6, mood: .happy, size: 36)
+            MascotView(progress: 0.6, mood: .happy, size: 40, backdrop: .light, animated: false)
             Text("Made with 💧 for tiny sips")
-                .font(.dewy(13, .semibold))
+                .font(.dewy(14, .heavy))
                 .foregroundStyle(theme.inkSoft)
-            Text("Dewy 1.0")
-                .font(.dewy(12, .medium))
+            Text("Dewy 1.1")
+                .font(.dewy(12, .bold))
                 .foregroundStyle(theme.inkSoft.opacity(0.7))
         }
         .padding(.top, 8)
@@ -423,18 +449,14 @@ struct SettingsLabel: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(tint)
-                .frame(width: 34, height: 34)
-                .background(tint.opacity(0.16), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+            IconTile(systemImage: icon, color: tint, size: 36)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.dewy(16, .bold))
+                    .font(.dewy(16, .heavy))
                     .foregroundStyle(theme.ink)
                 if let subtitle {
                     Text(subtitle)
-                        .font(.dewy(12, .medium))
+                        .font(.dewy(12, .semibold))
                         .foregroundStyle(theme.inkSoft)
                 }
             }
@@ -452,29 +474,37 @@ struct ThemeSwatch: View {
         VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(LinearGradient(colors: [theme.backgroundTop, theme.backgroundBottom], startPoint: .top, endPoint: .bottom))
+                    .fill(LinearGradient(colors: [theme.hero, theme.heroDeep], startPoint: .top, endPoint: .bottom))
                 DropletShape()
-                    .fill(theme.waterGradient)
-                    .frame(width: 22, height: 27)
+                    .fill(Color.white)
+                    .frame(width: 20, height: 25)
+                    .offset(y: 1)
+                DropletShape()
+                    .fill(theme.water)
+                    .frame(width: 20, height: 25)
+                    .mask {
+                        Rectangle()
+                            .frame(width: 20, height: 13)
+                            .offset(y: 6)
+                    }
                     .offset(y: 1)
                 if isLocked {
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 9, weight: .heavy))
+                        .font(.system(size: 9, weight: .black))
                         .foregroundStyle(.white)
-                        .frame(width: 18, height: 18)
-                        .background(current.inkSoft, in: Circle())
-                        .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
-                        .offset(x: 18, y: 18)
+                        .frame(width: 20, height: 20)
+                        .background(Color(hex: 0x1E2340), in: Circle())
+                        .overlay(Circle().strokeBorder(current.card, lineWidth: 2))
+                        .offset(x: 19, y: 19)
                 }
             }
-            .frame(width: 52, height: 52)
-            .overlay(Circle().strokeBorder(Color.white.opacity(0.9), lineWidth: 2))
-            .padding(3)
-            .overlay(Circle().strokeBorder(isSelected ? current.accent : .clear, lineWidth: 2.5))
-            .scaleEffect(isSelected ? 1.06 : 1)
-            .shadow(color: theme.waterBottom.opacity(0.25), radius: 6, x: 0, y: 3)
+            .frame(width: 54, height: 54)
+            .padding(4)
+            .overlay(Circle().strokeBorder(isSelected ? current.ink : Color.clear, lineWidth: 3))
+            .scaleEffect(isSelected ? 1.05 : 1)
+            .shadow(color: theme.hero.opacity(0.35), radius: 6, x: 0, y: 4)
             Text(theme.displayName)
-                .font(.dewy(12, isSelected ? .heavy : .semibold))
+                .font(.dewy(12, isSelected ? .black : .bold))
                 .foregroundStyle(isSelected ? current.ink : current.inkSoft)
         }
     }

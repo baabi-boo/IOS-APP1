@@ -56,9 +56,9 @@ enum DemoData {
         // Today
         let todays: [(Int, DrinkKind, Double)]
         if LaunchOptions.screenshot == "celebrate" {
-            todays = [(7 * 60 + 45, .water, 500), (9 * 60 + 10, .coffee, 250), (11 * 60, .water, 330), (13 * 60 + 20, .tea, 300)]
+            todays = [(7 * 60 + 45, .water, 500), (9 * 60 + 10, .coffee, 250), (11 * 60, .juice, 300), (13 * 60 + 20, .tea, 300)]
         } else {
-            todays = [(7 * 60 + 45, .water, 250), (9 * 60 + 10, .coffee, 200), (10 * 60 + 30, .water, 500), (12 * 60 + 40, .tea, 300), (14 * 60 + 5, .sparkling, 330)]
+            todays = [(7 * 60 + 45, .water, 350), (9 * 60 + 10, .coffee, 200), (10 * 60 + 30, .juice, 250), (12 * 60 + 40, .water, 400), (14 * 60 + 5, .tea, 300)]
         }
         for (minute, kind, amount) in todays {
             if let date = calendar.date(byAdding: .minute, value: minute, to: today) {

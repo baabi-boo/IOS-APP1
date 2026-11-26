@@ -20,7 +20,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            DreamyBackground()
+            HeroBackdrop(rays: step == 0 || step == lastStep, rayCenter: UnitPoint(x: 0.5, y: 0.36))
 
             VStack(spacing: 0) {
                 topBar
@@ -66,17 +66,17 @@ struct OnboardingView: View {
     private var topBar: some View {
         HStack(spacing: 14) {
             if step > 0 {
-                CircleIconButton(systemImage: "chevron.left", size: 38) { goBack() }
+                CircleIconButton(systemImage: "chevron.left", size: 40, onHero: true) { goBack() }
                     .transition(.scale.combined(with: .opacity))
                 HStack(spacing: 6) {
                     ForEach(1...lastStep, id: \.self) { index in
                         Capsule()
-                            .fill(index <= step ? AnyShapeStyle(theme.accentGradient) : AnyShapeStyle(theme.inkSoft.opacity(0.18)))
+                            .fill(Color.white.opacity(index <= step ? 1 : 0.3))
                             .frame(width: index == step ? 30 : 10, height: 10)
                     }
                 }
                 .frame(maxWidth: .infinity)
-                Color.clear.frame(width: 38, height: 38)
+                Color.clear.frame(width: 40, height: 40)
             }
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.75), value: step)
@@ -99,15 +99,20 @@ struct OnboardingView: View {
     private var welcome: some View {
         VStack(spacing: 22) {
             Spacer(minLength: 0)
-            MascotView(progress: 0.55, mood: .happy, size: 210, bounceTrigger: bounce)
-                .onTapGesture { bounce += 1; Haptics.tap() }
+            ZStack {
+                HaloRings(diameter: 340)
+                MascotView(progress: 0.62, mood: .happy, size: 210, bounceTrigger: bounce, bands: welcomeBands)
+                    .onTapGesture { bounce += 1; Haptics.tap() }
+            }
+            .frame(height: 300)
             VStack(spacing: 10) {
                 Text("Meet Dewy")
-                    .font(.dewy(44, .black))
-                    .foregroundStyle(theme.ink)
-                Text("Your tiny hydration buddy.\nDrink water, keep Dewy happy, grow a garden.")
-                    .font(.dewy(17, .medium))
-                    .foregroundStyle(theme.inkSoft)
+                    .font(.dewy(52, .black))
+                    .foregroundStyle(.white)
+                    .shadow(color: theme.heroDeep.opacity(0.5), radius: 0, x: 0, y: 4)
+                Text("Your tiny hydration buddy.\nEvery drink you log fills Dewy up.")
+                    .font(.dewy(18, .bold))
+                    .foregroundStyle(theme.onHeroSoft)
                     .multilineTextAlignment(.center)
             }
             HStack(spacing: 6) {
@@ -120,20 +125,41 @@ struct OnboardingView: View {
         .padding(.horizontal, 22)
     }
 
+    private var welcomeBands: [LiquidBand] {
+        [
+            LiquidBand(color: DrinkKind.water.color, upTo: 0.22),
+            LiquidBand(color: DrinkKind.coffee.color, upTo: 0.32),
+            LiquidBand(color: DrinkKind.juice.color, upTo: 0.44),
+            LiquidBand(color: DrinkKind.water.color, upTo: 0.62)
+        ]
+    }
+
     private func pill(_ emoji: String, _ text: String) -> some View {
         HStack(spacing: 5) {
             Text(emoji)
                 .font(.system(size: 13))
             Text(text)
-                .font(.dewy(13, .bold))
-                .foregroundStyle(theme.ink)
+                .font(.dewy(13, .heavy))
+                .foregroundStyle(.white)
                 .lineLimit(1)
         }
         .fixedSize()
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 11)
         .frame(height: 34)
-        .background(theme.card, in: Capsule())
-        .overlay(Capsule().strokeBorder(theme.cardStroke, lineWidth: 1))
+        .background(Color.white.opacity(0.2), in: Capsule())
+    }
+
+    /// A chip that sits on the hero color.
+    private func heroChip(_ title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.dewy(15, .heavy))
+                .foregroundStyle(isSelected ? theme.heroDeep : Color.white)
+                .padding(.horizontal, 14)
+                .frame(height: 40)
+                .background(isSelected ? Color.white : Color.white.opacity(0.2), in: Capsule())
+        }
+        .buttonStyle(SquishyButtonStyle())
     }
 
     private var nameStep: some View {
@@ -142,15 +168,15 @@ struct OnboardingView: View {
             MascotView(progress: 0.35, mood: .okay, size: 130)
             stepTitle("What should Dewy call you?", subtitle: "A little name makes reminders feel friendlier.")
             TextField("Your name", text: $draft.name)
-                .font(.dewy(24, .bold))
+                .font(.dewy(24, .heavy))
                 .foregroundStyle(theme.ink)
                 .multilineTextAlignment(.center)
                 .textInputAutocapitalization(.words)
                 .submitLabel(.next)
                 .focused($nameFocused)
                 .onSubmit { advance() }
-                .frame(height: 64)
-                .glassCard(padding: 0, radius: 32)
+                .frame(height: 66)
+                .dewyCard(padding: 0, radius: 33)
             Spacer(minLength: 0)
             Spacer(minLength: 0)
         }
@@ -168,7 +194,7 @@ struct OnboardingView: View {
             VStack(spacing: 18) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text("\(Int(displayWeight.rounded()))")
-                        .font(.dewy(72, .black))
+                        .font(.dewy(76, .black))
                         .foregroundStyle(theme.ink)
                         .contentTransition(.numericText(value: displayWeight.rounded()))
                         .animation(.snappy, value: displayWeight.rounded())
@@ -179,17 +205,17 @@ struct OnboardingView: View {
                 Slider(value: $draft.weightKg, in: 30...160, step: 0.5)
                     .tint(theme.accent)
                 HStack(spacing: 8) {
-                    ChipButton(title: "kg · ml", isSelected: !draft.usesPounds) {
+                    ChipButton(title: "kg · ml", isSelected: !draft.usesPounds, tint: theme.hero) {
                         Haptics.select()
                         withAnimation(.spring) { draft.usesPounds = false; draft.unit = .ml }
                     }
-                    ChipButton(title: "lb · oz", isSelected: draft.usesPounds) {
+                    ChipButton(title: "lb · oz", isSelected: draft.usesPounds, tint: theme.hero) {
                         Haptics.select()
                         withAnimation(.spring) { draft.usesPounds = true; draft.unit = .oz }
                     }
                 }
             }
-            .glassCard(padding: 22)
+            .dewyCard(padding: 22)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 22)
@@ -208,12 +234,10 @@ struct OnboardingView: View {
                 }
             }
             VStack(alignment: .leading, spacing: 10) {
-                Text("Where you live")
-                    .font(.dewy(15, .bold))
-                    .foregroundStyle(theme.inkSoft)
+                CapsLabel(text: "Where you live", color: theme.onHeroSoft, size: 12)
                 HStack(spacing: 8) {
                     ForEach(Climate.allCases) { climate in
-                        ChipButton(title: "\(climate.emoji) \(climate.title)", isSelected: draft.climate == climate) {
+                        heroChip("\(climate.emoji) \(climate.title)", isSelected: draft.climate == climate) {
                             Haptics.select()
                             withAnimation(.spring) { draft.climate = climate }
                         }
@@ -232,10 +256,10 @@ struct OnboardingView: View {
             stepTitle("When does your day happen?", subtitle: "Reminders only arrive while you're awake.")
             VStack(spacing: 14) {
                 scheduleRow(emoji: "☀️", title: "I wake up at", minutes: $draft.wakeMinutes)
-                Divider().overlay(theme.inkSoft.opacity(0.15))
+                Divider().overlay(theme.line)
                 scheduleRow(emoji: "🌙", title: "I go to bed at", minutes: $draft.sleepMinutes)
             }
-            .glassCard(padding: 20)
+            .dewyCard(padding: 20)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 22)
@@ -246,9 +270,9 @@ struct OnboardingView: View {
             Text(emoji)
                 .font(.system(size: 26))
                 .frame(width: 50, height: 50)
-                .background(theme.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(theme.well, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             Text(title)
-                .font(.dewy(17, .bold))
+                .font(.dewy(17, .heavy))
                 .foregroundStyle(theme.ink)
             Spacer()
             DatePicker(title, selection: minutes.timeOfDay, displayedComponents: .hourAndMinute)
@@ -258,27 +282,32 @@ struct OnboardingView: View {
 
     private var goalStep: some View {
         let progress = draft.dailyGoal > 0 ? revealedGoal / draft.dailyGoal : 0
-        return VStack(spacing: 18) {
+        return VStack(spacing: 16) {
             Spacer(minLength: 0)
-            Text("YOUR DAILY GOAL")
-                .font(.dewy(14, .heavy))
-                .tracking(1.5)
-                .foregroundStyle(theme.accent)
-            MascotView(progress: progress, mood: DewyMood(progress: progress), size: 150, bounceTrigger: bounce)
+            CapsLabel(text: "Your daily goal", color: .white, size: 14)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(Color.white.opacity(0.2), in: Capsule())
+            ZStack {
+                HaloRings(diameter: 250)
+                MascotView(progress: progress, mood: DewyMood(progress: progress), size: 150, bounceTrigger: bounce)
+            }
+            .frame(height: 220)
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(format(revealedGoal))
-                    .font(.dewy(64, .black))
-                    .foregroundStyle(theme.ink)
+                    .font(.dewy(72, .black))
+                    .foregroundStyle(.white)
                     .contentTransition(.numericText(value: revealedGoal))
                 Text(draft.unit.label)
-                    .font(.dewy(24, .bold))
-                    .foregroundStyle(theme.inkSoft)
+                    .font(.dewy(26, .heavy))
+                    .foregroundStyle(theme.onHeroSoft)
             }
+            .shadow(color: theme.heroDeep.opacity(0.5), radius: 0, x: 0, y: 4)
             HStack(spacing: 18) {
                 adjustButton("minus") { draft.dailyGoal = max(800, draft.dailyGoal - draft.unit.step) }
                 Text("Tap to adjust")
-                    .font(.dewy(14, .semibold))
-                    .foregroundStyle(theme.inkSoft)
+                    .font(.dewy(15, .heavy))
+                    .foregroundStyle(theme.onHeroSoft)
                 adjustButton("plus") { draft.dailyGoal = min(6_000, draft.dailyGoal + draft.unit.step) }
             }
             HStack(spacing: 8) {
@@ -300,11 +329,11 @@ struct OnboardingView: View {
             }
         } label: {
             Image(systemName: icon)
-                .font(.system(size: 17, weight: .heavy))
-                .foregroundStyle(theme.ink)
-                .frame(width: 46, height: 46)
-                .background(theme.card, in: Circle())
-                .overlay(Circle().strokeBorder(theme.cardStroke, lineWidth: 1))
+                .font(.system(size: 18, weight: .black))
+                .foregroundStyle(theme.heroDeep)
+                .frame(width: 50, height: 50)
+                .background(Color.white, in: Circle())
+                .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(SquishyButtonStyle(scale: 0.85))
     }
@@ -312,12 +341,12 @@ struct OnboardingView: View {
     private func stepTitle(_ title: String, subtitle: String) -> some View {
         VStack(spacing: 8) {
             Text(title)
-                .font(.dewy(30, .heavy))
-                .foregroundStyle(theme.ink)
+                .font(.dewy(31, .black))
+                .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
             Text(subtitle)
-                .font(.dewy(16, .medium))
-                .foregroundStyle(theme.inkSoft)
+                .font(.dewy(16, .bold))
+                .foregroundStyle(theme.onHeroSoft)
                 .multilineTextAlignment(.center)
         }
     }
@@ -397,10 +426,10 @@ private struct OptionCard: View {
                 Text(emoji)
                     .font(.system(size: 26))
                     .frame(width: 50, height: 50)
-                    .background(theme.accent.opacity(isSelected ? 0.18 : 0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(theme.well, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.dewy(17, .bold))
+                        .font(.dewy(17, .heavy))
                         .foregroundStyle(theme.ink)
                     Text(subtitle)
                         .font(.dewy(13, .medium))
@@ -408,19 +437,19 @@ private struct OptionCard: View {
                 }
                 Spacer()
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(isSelected ? theme.accent : theme.inkSoft.opacity(0.4))
                     .contentTransition(.symbolEffect(.replace))
             }
             .padding(14)
             .background {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(theme.card)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.1), radius: 12, x: 0, y: 6)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(isSelected ? AnyShapeStyle(theme.accentGradient) : AnyShapeStyle(theme.cardStroke), lineWidth: isSelected ? 2 : 1)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(isSelected ? (theme.isDark ? theme.accent : Color(hex: 0x1E2340)) : Color.clear, lineWidth: 3)
             }
             .scaleEffect(isSelected ? 1.015 : 1)
         }

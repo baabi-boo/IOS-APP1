@@ -11,35 +11,48 @@ struct PaywallView: View {
     @State private var pulse = false
 
     private struct Feature: Identifiable {
-        let emoji: String
+        let icon: String
+        let color: Color
         let title: String
         let detail: String
         var id: String { title }
     }
 
     private let features = [
-        Feature(emoji: "🎨", title: "4 dreamy themes", detail: "Peachy, Matcha, Lavender & Midnight"),
-        Feature(emoji: "🍓", title: "Every drink", detail: "Smoothies, milk, soda, sparkling & more"),
-        Feature(emoji: "📈", title: "30-day insights", detail: "See your monthly flow and rhythm"),
-        Feature(emoji: "🔔", title: "Custom reminders", detail: "Nudges every hour, 90 min or 3 hours"),
-        Feature(emoji: "💙", title: "Support a tiny indie app", detail: "Help Dewy keep growing")
+        Feature(icon: "paintpalette.fill", color: Palette.grape, title: "4 bold themes", detail: "Peachy, Matcha, Lavender & Midnight"),
+        Feature(icon: "cup.and.saucer.fill", color: Palette.tangerine, title: "Every drink", detail: "Smoothies, milk, soda, sparkling & more"),
+        Feature(icon: "chart.bar.fill", color: Palette.sky, title: "30-day insights", detail: "See your monthly flow and rhythm"),
+        Feature(icon: "bell.badge.fill", color: Palette.coral, title: "Custom reminders", detail: "Nudges every hour, 90 min or 3 hours"),
+        Feature(icon: "heart.fill", color: Palette.berry, title: "Support a tiny indie app", detail: "Help Dewy keep growing")
+    ]
+
+    /// A rainbow of drinks shows off everything Dewy+ unlocks.
+    private let rainbow: [LiquidBand] = [
+        LiquidBand(color: DrinkKind.water.color, upTo: 0.2),
+        LiquidBand(color: DrinkKind.juice.color, upTo: 0.38),
+        LiquidBand(color: DrinkKind.tea.color, upTo: 0.55),
+        LiquidBand(color: DrinkKind.smoothie.color, upTo: 0.73),
+        LiquidBand(color: DrinkKind.sparkling.color, upTo: 0.92)
     ]
 
     var body: some View {
         ZStack {
-            DreamyBackground()
+            theme.hero.ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: 22) {
+                VStack(spacing: 0) {
                     hero
-                    featureList
-                    plans
-                    cta
-                    footer
+                    VStack(spacing: 20) {
+                        featureList
+                        plans
+                        cta
+                        footer
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 26)
+                    .padding(.bottom, 30)
+                    .canvasSheet()
                 }
-                .padding(.horizontal, 22)
-                .padding(.top, 12)
-                .padding(.bottom, 30)
             }
             .scrollIndicators(.hidden)
 
@@ -47,9 +60,9 @@ struct PaywallView: View {
                 .ignoresSafeArea()
         }
         .overlay(alignment: .topTrailing) {
-            CircleIconButton(systemImage: "xmark", size: 36) { dismiss() }
+            CircleIconButton(systemImage: "xmark", size: 38, onHero: true) { dismiss() }
                 .padding(.trailing, 20)
-                .padding(.top, 14)
+                .padding(.top, 18)
         }
         .onAppear {
             appeared = true
@@ -71,25 +84,30 @@ struct PaywallView: View {
 
     private var hero: some View {
         VStack(spacing: 6) {
-            MascotView(progress: 0.92, mood: .ecstatic, size: 132, accessory: .crown)
-                .padding(.top, 30)
+            MascotView(progress: 0.92, mood: .ecstatic, size: 138, accessory: .crown, bands: rainbow)
                 .floatIn(appeared, index: 0)
 
             HStack(spacing: 0) {
                 Text("Dewy")
-                    .foregroundStyle(theme.ink)
+                    .foregroundStyle(.white)
                 Text("+")
-                    .foregroundStyle(theme.accentGradient)
+                    .foregroundStyle(Palette.sunshine)
             }
-            .font(.dewy(46, .black))
-            .shimmer()
+            .font(.dewy(56, .black))
+            .shadow(color: theme.heroDeep.opacity(0.5), radius: 0, x: 0, y: 4)
             .floatIn(appeared, index: 1)
 
             Text("Make every sip a little more magical")
-                .font(.dewy(17, .semibold))
-                .foregroundStyle(theme.inkSoft)
+                .font(.dewy(17, .heavy))
+                .foregroundStyle(theme.onHeroSoft)
                 .multilineTextAlignment(.center)
                 .floatIn(appeared, index: 2)
+        }
+        .padding(.top, 58)
+        .padding(.bottom, 36)
+        .frame(maxWidth: .infinity)
+        .background {
+            HeroBackdrop(rays: true, rayCenter: UnitPoint(x: 0.5, y: 0.4))
         }
     }
 
@@ -97,27 +115,26 @@ struct PaywallView: View {
         VStack(alignment: .leading, spacing: 14) {
             ForEach(Array(features.enumerated()), id: \.element.id) { index, feature in
                 HStack(spacing: 14) {
-                    Text(feature.emoji)
-                        .font(.system(size: 22))
-                        .frame(width: 44, height: 44)
-                        .background(theme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    IconTile(systemImage: feature.icon, color: feature.color, size: 42)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(feature.title)
-                            .font(.dewy(16, .bold))
+                            .font(.dewy(16, .heavy))
                             .foregroundStyle(theme.ink)
                         Text(feature.detail)
-                            .font(.dewy(13, .medium))
+                            .font(.dewy(13, .semibold))
                             .foregroundStyle(theme.inkSoft)
                     }
                     Spacer(minLength: 0)
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(theme.accent)
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .black))
+                        .foregroundStyle(.white)
+                        .frame(width: 24, height: 24)
+                        .background(Palette.leafDeep, in: Circle())
                 }
                 .floatIn(appeared, index: index + 3)
             }
         }
-        .glassCard()
+        .dewyCard()
     }
 
     private var plans: some View {
@@ -139,7 +156,7 @@ struct PaywallView: View {
     private var cta: some View {
         VStack(spacing: 10) {
             PrimaryButton(
-                title: selected == .yearly ? "Start 3-day free trial" : "Unlock Dewy+",
+                title: selected == .yearly ? "Start free trial" : "Unlock Dewy+",
                 systemImage: "sparkles",
                 isLoading: purchases.isPurchasing
             ) {
@@ -148,7 +165,7 @@ struct PaywallView: View {
             .scaleEffect(pulse ? 1.025 : 1)
 
             Text(selected == .lifetime ? "One-time purchase. Yours forever." : "Cancel anytime in Settings. No commitment.")
-                .font(.dewy(12, .medium))
+                .font(.dewy(12, .semibold))
                 .foregroundStyle(theme.inkSoft)
         }
         .floatIn(appeared, index: 11)
@@ -160,7 +177,7 @@ struct PaywallView: View {
             Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
             Link("Privacy", destination: URL(string: "https://www.apple.com/legal/privacy/")!)
         }
-        .font(.dewy(13, .semibold))
+        .font(.dewy(13, .bold))
         .foregroundStyle(theme.inkSoft)
     }
 
@@ -186,44 +203,47 @@ private struct PlanCard: View {
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
-                        .strokeBorder(isSelected ? theme.accent : theme.inkSoft.opacity(0.35), lineWidth: 2)
+                        .strokeBorder(isSelected ? theme.accent : theme.inkSoft.opacity(0.35), lineWidth: 2.5)
                     if isSelected {
-                        Circle()
-                            .fill(theme.accentGradient)
-                            .padding(5)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .black))
+                            .foregroundStyle(.white)
+                            .frame(width: 26, height: 26)
+                            .background(theme.accent, in: Circle())
                             .transition(.scale)
                     }
                 }
-                .frame(width: 24, height: 24)
+                .frame(width: 26, height: 26)
 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
                         Text(plan.title)
-                            .font(.dewy(17, .heavy))
+                            .font(.dewy(18, .black))
                             .foregroundStyle(theme.ink)
                         if let badge = plan.badge {
                             Text(badge)
                                 .font(.dewy(10, .black))
+                                .tracking(0.6)
                                 .foregroundStyle(.white)
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 3)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
                                 .background(
-                                    plan == .yearly ? AnyShapeStyle(theme.accentGradient) : AnyShapeStyle(Palette.flame),
+                                    plan == .yearly ? AnyShapeStyle(theme.accent) : AnyShapeStyle(Palette.flame),
                                     in: Capsule()
                                 )
                         }
                     }
                     Text(plan.detail)
-                        .font(.dewy(13, .medium))
+                        .font(.dewy(13, .semibold))
                         .foregroundStyle(theme.inkSoft)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(price)
-                        .font(.dewy(18, .heavy))
+                        .font(.dewy(19, .black))
                         .foregroundStyle(theme.ink)
                     Text(plan.cadence)
-                        .font(.dewy(12, .semibold))
+                        .font(.dewy(12, .bold))
                         .foregroundStyle(theme.inkSoft)
                 }
             }
@@ -231,11 +251,10 @@ private struct PlanCard: View {
             .background {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(theme.card)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             }
             .overlay {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(isSelected ? AnyShapeStyle(theme.accentGradient) : AnyShapeStyle(theme.cardStroke), lineWidth: isSelected ? 2.5 : 1)
+                    .strokeBorder(isSelected ? theme.accent : Color.clear, lineWidth: 3)
             }
             .shadow(color: isSelected ? theme.accent.opacity(0.25) : theme.shadow, radius: isSelected ? 14 : 8, x: 0, y: 6)
             .scaleEffect(isSelected ? 1.02 : 1)

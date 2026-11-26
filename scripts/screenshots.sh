@@ -32,15 +32,26 @@ print(best[2] + " / " + best[3], file=sys.stderr)
 ')
 echo "▸ Simulator: $UDID"
 
+# Always shut the simulator down, so the runner doesn't spend minutes reaping it.
+cleanup() { xcrun simctl shutdown "$UDID" >/dev/null 2>&1 || true; }
+trap cleanup EXIT
+
+# Start booting now: a cold boot takes minutes on CI and can overlap with the build.
+xcrun simctl boot "$UDID" 2>/dev/null || true
+
+echo "▸ Building…"
+SECONDS=0
 xcodebuild -project Dewy.xcodeproj -scheme Dewy -configuration Debug \
   -sdk iphonesimulator -destination "id=$UDID" -derivedDataPath build \
   CODE_SIGNING_ALLOWED=NO -quiet build
+echo "▸ Built in ${SECONDS}s"
 
 APP=build/Build/Products/Debug-iphonesimulator/Dewy.app
 test -d "$APP"
 
-xcrun simctl boot "$UDID" 2>/dev/null || true
-xcrun simctl bootstatus "$UDID" -b
+SECONDS=0
+xcrun simctl bootstatus "$UDID" -b >/dev/null
+echo "▸ Simulator ready after another ${SECONDS}s"
 xcrun simctl ui "$UDID" appearance light || true
 xcrun simctl status_bar "$UDID" override --time "9:41" --dataNetwork wifi --wifiMode active \
   --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100 || true
@@ -49,19 +60,24 @@ xcrun simctl install "$UDID" "$APP"
 DATA=$(xcrun simctl get_app_container "$UDID" "$BUNDLE" data)
 READY="$DATA/tmp/dewy-ready"
 
-shoot() {
+# Launches the app with demo arguments and waits until it reports its animations have settled.
+launch() {
   local name=$1; shift
   xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
   rm -f "$READY"
   sleep 1
   xcrun simctl launch "$UDID" "$BUNDLE" "$@" >/dev/null
-  # In demo mode the app writes a marker once its launch animations have settled.
-  for _ in $(seq 1 60); do
-    [ -f "$READY" ] && break
+  for _ in $(seq 1 90); do
+    [ -f "$READY" ] && return 0
     sleep 1
   done
-  [ -f "$READY" ] || echo "  … $name never signalled ready"
-  sleep 2
+  echo "  … $name never signalled ready"
+}
+
+shoot() {
+  local name=$1; shift
+  launch "$name" "$@"
+  sleep 1.5
   # CI simulators render on the CPU and can be slow to show the first frame:
   # a blank launch screen compresses to a tiny PNG, so retry until it's real.
   for _ in 1 2 3 4 5 6; do
@@ -76,8 +92,9 @@ shoot() {
 }
 
 # Warm-up launch so the first real shot isn't caught mid-launch.
-xcrun simctl launch "$UDID" "$BUNDLE" -screenshot today >/dev/null; sleep 20
+launch warm-up -screenshot today
 
+SECONDS=0
 shoot 01-today       -screenshot today
 shoot 02-add-drink   -screenshot add
 shoot 03-insights    -screenshot insights
@@ -90,6 +107,7 @@ shoot 09-peach       -screenshot today -theme peach
 shoot 10-matcha      -screenshot garden -theme matcha -premium YES
 shoot 11-lavender    -screenshot insights -theme lavender -premium YES
 shoot 12-midnight    -screenshot today -theme midnight
+echo "▸ Screenshots took ${SECONDS}s"
 
 # A short screen recording of Dewy reaching the daily goal (converted to a GIF later).
 xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true

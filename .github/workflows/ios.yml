@@ -23,9 +23,11 @@ concurrency:
 jobs:
   build:
     runs-on: ${{ inputs.runner || 'macos-15-intel' }}
-    timeout-minutes: 45
+    # Intel runners render the simulator on the CPU; a full run usually takes 30–40 minutes
+    # but has been seen close to 50, so leave plenty of headroom.
+    timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Toolchain
         run: |
@@ -36,13 +38,17 @@ jobs:
         run: bash scripts/screenshots.sh
 
       - name: Upload screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: docs/
+          path: |
+            docs/screenshots
+            docs/raw
+          if-no-files-found: ignore
 
       - name: Commit screenshots back to the branch
-        if: github.ref != 'refs/heads/main'
+        if: success() && github.ref != 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

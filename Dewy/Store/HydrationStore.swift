@@ -46,6 +46,25 @@ final class HydrationStore {
 
     var mood: DewyMood { DewyMood(progress: todayProgress) }
 
+    /// Today's drinks as stacked liquid layers for Dewy, oldest at the bottom.
+    var todayBands: [LiquidBand] {
+        var running = 0.0
+        let sorted = entries(on: .now).sorted { $0.date < $1.date }
+        return sorted.map { (entry) -> LiquidBand in
+            running += entry.effective
+            return LiquidBand(color: entry.kind.color, upTo: running / goal)
+        }
+    }
+
+    /// Effective hydration per drink kind on a day, in `DrinkKind.allCases` order.
+    func kindTotals(on day: Date) -> [KindAmount] {
+        let dayEntries = entries(on: day)
+        return DrinkKind.allCases.compactMap { (kind) -> KindAmount? in
+            let amount = dayEntries.filter { $0.kind == kind }.reduce(0) { $0 + $1.effective }
+            return amount > 0 ? KindAmount(kind: kind, amount: amount) : nil
+        }
+    }
+
     func entries(on day: Date) -> [DrinkEntry] {
         entries.filter { calendar.isDate($0.date, inSameDayAs: day) }
     }

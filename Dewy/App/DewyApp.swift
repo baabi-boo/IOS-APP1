@@ -90,11 +90,12 @@ enum AppTab: String, CaseIterable, Identifiable {
 }
 
 struct MainTabView: View {
+    @Environment(\.dewyTheme) private var theme
     @State private var tab: AppTab = .initial
 
     var body: some View {
         ZStack {
-            DreamyBackground()
+            theme.canvas.ignoresSafeArea()
 
             Group {
                 switch tab {
@@ -136,11 +137,11 @@ struct FloatingTabBar: View {
                 } label: {
                     HStack(spacing: 7) {
                         Image(systemName: item.icon)
-                            .font(.system(size: 17, weight: .bold))
+                            .font(.system(size: 17, weight: .heavy))
                             .symbolEffect(.bounce, value: isSelected)
                         if isSelected {
                             Text(item.title)
-                                .font(.dewy(15, .bold))
+                                .font(.dewy(15, .heavy))
                                 .lineLimit(1)
                                 .fixedSize()
                                 .transition(.opacity.combined(with: .scale(scale: 0.6, anchor: .leading)))
@@ -148,12 +149,12 @@ struct FloatingTabBar: View {
                     }
                     .foregroundStyle(isSelected ? Color.white : theme.inkSoft)
                     .frame(maxWidth: isSelected ? .infinity : 56)
-                    .frame(height: 50)
+                    .frame(height: 52)
                     .background {
                         if isSelected {
                             Capsule()
-                                .fill(theme.accentGradient)
-                                .shadow(color: theme.accent.opacity(0.45), radius: 10, x: 0, y: 5)
+                                .fill(theme.isDark ? theme.heroLight : theme.hero)
+                                .shadow(color: theme.hero.opacity(0.45), radius: 10, x: 0, y: 5)
                                 .matchedGeometryEffect(id: "pill", in: namespace)
                         }
                     }
@@ -164,9 +165,7 @@ struct FloatingTabBar: View {
             }
         }
         .padding(6)
-        .background(.ultraThinMaterial, in: Capsule())
         .background(theme.card, in: Capsule())
-        .overlay(Capsule().strokeBorder(theme.cardStroke, lineWidth: 1))
-        .shadow(color: theme.shadow, radius: 20, x: 0, y: 10)
+        .shadow(color: Color.black.opacity(theme.isDark ? 0.4 : 0.12), radius: 22, x: 0, y: 10)
     }
 }

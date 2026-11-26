@@ -13,37 +13,44 @@ struct DrinkPickerSheet: View {
     @State private var showPaywall = false
 
     private let presets: [Double] = [150, 250, 330, 500]
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 4)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
 
     var body: some View {
         ZStack {
-            DreamyBackground()
+            HeroBackdrop(top: kind.color, bottom: kind.color)
+                .overlay(LinearGradient(colors: [Color.white.opacity(0.1), Color.black.opacity(0.12)], startPoint: .top, endPoint: .bottom).ignoresSafeArea())
+                .animation(.smooth(duration: 0.5), value: kind)
 
             ScrollView {
-                VStack(spacing: 18) {
+                VStack(spacing: 0) {
                     header
+                        .padding(.horizontal, 22)
+                        .padding(.top, 24)
                     preview
-                    amountControls
-                    drinkGrid
-                    afterCard
+                        .padding(.horizontal, 22)
+                        .padding(.vertical, 22)
+                    panel
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 12)
             }
             .scrollIndicators(.hidden)
             .scrollBounceBehavior(.basedOnSize)
-            .safeAreaInset(edge: .bottom) {
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 PrimaryButton(title: "Add \(store.format(amount))", systemImage: "drop.fill") {
                     onAdd(kind, amount)
                     dismiss()
                 }
                 .padding(.horizontal, 20)
+                .padding(.top, 14)
                 .padding(.bottom, 8)
+                .background {
+                    LinearGradient(colors: [theme.canvas.opacity(0), theme.canvas, theme.canvas], startPoint: .top, endPoint: .bottom)
+                        .ignoresSafeArea()
+                }
             }
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .presentationCornerRadius(36)
+        .presentationCornerRadius(38)
         .sheet(isPresented: $showPaywall) {
             PaywallView()
         }
@@ -54,83 +61,81 @@ struct DrinkPickerSheet: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
+                CapsLabel(text: "Every sip counts", color: theme.onHeroSoft, size: 12)
                 Text("Add a drink")
-                    .font(.dewy(26, .heavy))
-                    .foregroundStyle(theme.ink)
-                Text("Every sip makes Dewy happier")
-                    .font(.dewy(14, .medium))
-                    .foregroundStyle(theme.inkSoft)
+                    .font(.dewy(30, .black))
+                    .foregroundStyle(.white)
             }
             Spacer()
-            CircleIconButton(systemImage: "xmark") { dismiss() }
+            CircleIconButton(systemImage: "xmark", onHero: true) { dismiss() }
         }
-        .padding(.top, 20)
     }
 
     private var preview: some View {
         HStack(spacing: 22) {
-            DrinkCup(kind: kind, fill: min(amount / 650, 1))
-                .frame(width: 104, height: 132)
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 150, height: 150)
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 124, height: 124)
+                    .shadow(color: Color.black.opacity(0.12), radius: 14, x: 0, y: 8)
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                    DrinkVessel(
+                        kind: kind,
+                        fill: 0.12 + min(amount / 650, 1) * 0.78,
+                        width: 62,
+                        wavePhase: timeline.date.timeIntervalSinceReferenceDate * 2.4
+                    )
+                }
+                .frame(width: 62, height: 78)
                 .animation(.spring(response: 0.6, dampingFraction: 0.7), value: amount)
-                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: kind)
+                .id(kind)
+                .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
+            .animation(.spring(response: 0.5, dampingFraction: 0.7), value: kind)
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(store.format(amount, withUnit: false))
-                        .font(.dewy(48, .heavy))
-                        .foregroundStyle(theme.ink)
+                        .font(.dewy(56, .black))
+                        .foregroundStyle(.white)
                         .contentTransition(.numericText(value: amount))
                     Text(store.profile.unit.label)
-                        .font(.dewy(20, .bold))
-                        .foregroundStyle(theme.inkSoft)
+                        .font(.dewy(22, .heavy))
+                        .foregroundStyle(theme.onHeroSoft)
                 }
                 .animation(.snappy, value: amount)
+                .shadow(color: Color.black.opacity(0.12), radius: 0, x: 0, y: 3)
 
-                Label("\(kind.name) · \(Int(kind.hydration * 100))% hydrating", systemImage: "drop.halffull")
-                    .font(.dewy(14, .semibold))
-                    .foregroundStyle(kind.color)
-                    .contentTransition(.interpolate)
+                CapsLabel(text: "\(kind.name) · \(Int(kind.hydration * 100))% hydrating", color: .white, size: 12)
 
                 Text("Counts as \(store.format(amount * kind.hydration))")
-                    .font(.dewy(13, .medium))
-                    .foregroundStyle(theme.inkSoft)
+                    .font(.dewy(14, .bold))
+                    .foregroundStyle(theme.onHeroSoft)
             }
             Spacer(minLength: 0)
         }
-        .glassCard()
     }
 
-    /// Shows what today's progress will look like once this drink is logged.
-    private var afterCard: some View {
-        let after = store.todayTotal + amount * kind.hydration
-        let progress = after / store.goal
-        return HStack(spacing: 14) {
-            MascotView(progress: progress, mood: DewyMood(progress: progress), size: 44)
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("After this drink")
-                        .font(.dewy(14, .semibold))
-                        .foregroundStyle(theme.inkSoft)
-                    Spacer()
-                    Text("\(Int((progress * 100).rounded()))%")
-                        .font(.dewy(15, .heavy))
-                        .foregroundStyle(theme.accent)
-                        .contentTransition(.numericText(value: progress))
-                }
-                Text("\(store.format(after)) of \(store.format(store.goal))")
-                    .font(.dewy(16, .bold))
-                    .foregroundStyle(theme.ink)
-                    .contentTransition(.numericText(value: after))
-                ProgressCapsule(progress: progress)
-                    .frame(height: 8)
+    private var panel: some View {
+        VStack(spacing: 22) {
+            amountControls
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader(title: "Drinks", trailing: purchases.isPremium ? nil : "4 free · 4 with Dewy+")
+                drinkGrid
             }
+            afterCard
         }
-        .glassCard(padding: 16)
-        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: after)
+        .padding(.horizontal, 20)
+        .padding(.top, 26)
+        .padding(.bottom, 16)
+        .canvasSheet()
     }
 
     private var amountControls: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 16) {
             HStack(spacing: 12) {
                 stepButton("minus") { amount = max(50, amount - store.profile.unit.step) }
                 Slider(value: $amount, in: 50...1_000, step: 10)
@@ -139,13 +144,44 @@ struct DrinkPickerSheet: View {
             }
             HStack(spacing: 8) {
                 ForEach(presets, id: \.self) { preset in
-                    ChipButton(title: store.format(preset), isSelected: abs(amount - preset) < 1) {
+                    ChipButton(title: store.format(preset), isSelected: abs(amount - preset) < 1, tint: kind.color) {
                         Haptics.select()
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) { amount = preset }
                     }
+                    .frame(maxWidth: .infinity)
                 }
             }
         }
+        .dewyCard()
+    }
+
+    /// Shows what today's progress will look like once this drink is logged.
+    private var afterCard: some View {
+        let added = amount * kind.hydration
+        let after = store.todayTotal + added
+        let progress = after / store.goal
+        let bands = store.todayBands + [LiquidBand(color: kind.color, upTo: progress)]
+        return HStack(spacing: 14) {
+            MascotView(progress: progress, mood: DewyMood(progress: progress), size: 50, bands: bands, backdrop: .light, animated: false)
+            VStack(alignment: .leading, spacing: 7) {
+                HStack {
+                    CapsLabel(text: "After this drink", color: theme.inkSoft, size: 11)
+                    Spacer()
+                    Text("\(Int((progress * 100).rounded()))%")
+                        .font(.dewy(16, .black))
+                        .foregroundStyle(kind.color)
+                        .contentTransition(.numericText(value: progress))
+                }
+                Text("\(store.format(after)) of \(store.format(store.goal))")
+                    .font(.dewy(17, .heavy))
+                    .foregroundStyle(theme.ink)
+                    .contentTransition(.numericText(value: after))
+                DrinkStripe(bands: bands, track: theme.well)
+                    .frame(height: 10)
+            }
+        }
+        .dewyCard(padding: 16)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: after)
     }
 
     private func stepButton(_ icon: String, action: @escaping () -> Void) -> some View {
@@ -154,17 +190,17 @@ struct DrinkPickerSheet: View {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) { action() }
         } label: {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .heavy))
-                .foregroundStyle(theme.ink)
-                .frame(width: 38, height: 38)
-                .background(theme.card, in: Circle())
-                .overlay(Circle().strokeBorder(theme.cardStroke, lineWidth: 1))
+                .font(.system(size: 16, weight: .black))
+                .foregroundStyle(.white)
+                .frame(width: 40, height: 40)
+                .background(kind.color, in: Circle())
+                .shadow(color: kind.color.opacity(0.4), radius: 6, x: 0, y: 3)
         }
-        .buttonStyle(SquishyButtonStyle())
+        .buttonStyle(SquishyButtonStyle(scale: 0.85))
     }
 
     private var drinkGrid: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
+        LazyVGrid(columns: columns, spacing: 10) {
             ForEach(DrinkKind.allCases) { option in
                 let locked = option.isPremium && !purchases.isPremium
                 DrinkTile(kind: option, isSelected: option == kind, isLocked: locked) {
@@ -195,83 +231,50 @@ struct DrinkTile: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                Text(kind.emoji)
-                    .font(.system(size: 28))
-                    .frame(width: 58, height: 58)
-                    .background(kind.color.opacity(isSelected ? 0.3 : 0.16), in: Circle())
-                    .overlay(Circle().strokeBorder(isSelected ? kind.color : .clear, lineWidth: 2.5))
-                    .overlay(alignment: .topTrailing) {
-                        if isLocked {
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 9, weight: .heavy))
-                                .foregroundStyle(.white)
-                                .frame(width: 20, height: 20)
-                                .background(theme.accentGradient, in: Circle())
-                                .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
-                                .offset(x: 3, y: -3)
-                        }
-                    }
-                    .scaleEffect(isSelected ? 1.08 : 1)
-                Text(kind.name)
-                    .font(.dewy(13, isSelected ? .bold : .semibold))
-                    .foregroundStyle(isSelected ? theme.ink : theme.inkSoft)
+            VStack(spacing: 8) {
+                DrinkVessel(kind: kind, fill: 0.72, width: 32)
+                    .frame(height: 42)
+                    .scaleEffect(isSelected ? 1.1 : 1)
+                Text(kind.name.uppercased())
+                    .font(.dewy(10, .black))
+                    .tracking(0.4)
+                    .foregroundStyle(isSelected ? kind.color : theme.ink)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .minimumScaleFactor(0.7)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
             .background {
-                if isSelected {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(theme.card)
-                        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(theme.cardStroke))
-                        .shadow(color: kind.color.opacity(0.25), radius: 10, x: 0, y: 5)
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(theme.card)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .strokeBorder(isSelected ? kind.color : Color.clear, lineWidth: 3)
+                    }
+                    .shadow(color: isSelected ? kind.color.opacity(0.3) : theme.shadow, radius: isSelected ? 12 : 8, x: 0, y: 5)
+            }
+            .overlay(alignment: .topTrailing) {
+                if isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 9, weight: .black))
+                        .foregroundStyle(.white)
+                        .frame(width: 20, height: 20)
+                        .background(Color(hex: 0x1E2340), in: Circle())
+                        .overlay(Circle().strokeBorder(theme.card, lineWidth: 2))
+                        .offset(x: 3, y: -3)
+                } else if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundStyle(.white)
+                        .frame(width: 22, height: 22)
+                        .background(kind.color, in: Circle())
+                        .overlay(Circle().strokeBorder(theme.card, lineWidth: 2))
+                        .offset(x: 4, y: -4)
+                        .transition(.scale.combined(with: .opacity))
                 }
             }
             .opacity(isLocked ? 0.75 : 1)
         }
         .buttonStyle(SquishyButtonStyle())
-    }
-}
-
-/// A large animated glass showing the selected drink and amount.
-struct DrinkCup: View {
-    @Environment(\.dewyTheme) private var theme
-    var kind: DrinkKind
-    var fill: Double
-
-    var body: some View {
-        TimelineView(.animation) { timeline in
-            let t = timeline.date.timeIntervalSinceReferenceDate
-            ZStack {
-                TumblerShape(taper: 0.12)
-                    .fill(Color.white.opacity(theme.isDark ? 0.14 : 0.65))
-                ZStack {
-                    WaveShape(level: 0.08 + fill * 0.84, phase: t * 1.8 + 1.4, amplitude: 4, frequency: 1)
-                        .fill(kind.color.opacity(0.45))
-                    WaveShape(level: 0.08 + fill * 0.84, phase: t * 2.4, amplitude: 5, frequency: 1)
-                        .fill(LinearGradient(colors: [kind.color.opacity(0.65), kind.color], startPoint: .top, endPoint: .bottom))
-                }
-                .clipShape(TumblerShape(taper: 0.12))
-
-                // Gloss
-                Capsule()
-                    .fill(Color.white.opacity(0.7))
-                    .frame(width: 7, height: 56)
-                    .rotationEffect(.degrees(-6))
-                    .offset(x: -30, y: -10)
-
-                TumblerShape(taper: 0.12)
-                    .stroke(Color.white, lineWidth: 3)
-
-                Text(kind.emoji)
-                    .font(.system(size: 30))
-                    .offset(y: CGFloat(8 + sin(t * 2) * 3))
-                    .id(kind)
-                    .transition(.scale.combined(with: .opacity))
-            }
-            .shadow(color: kind.color.opacity(0.3), radius: 14, x: 0, y: 8)
-        }
     }
 }

@@ -35,14 +35,31 @@ enum DrinkKind: String, Codable, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .water: Color(hex: 0x5AB4FF)
-        case .sparkling: Color(hex: 0x6FD6E8)
-        case .tea: Color(hex: 0x7CCB7E)
-        case .coffee: Color(hex: 0xB08463)
-        case .juice: Color(hex: 0xFFB347)
-        case .milk: Color(hex: 0xB9B4E8)
-        case .smoothie: Color(hex: 0xFF7FA3)
-        case .soda: Color(hex: 0xFF8A65)
+        case .water: Color(hex: 0x2EA8FF)
+        case .sparkling: Color(hex: 0x3FD3E0)
+        case .tea: Color(hex: 0x43C068)
+        case .coffee: Color(hex: 0x9A6340)
+        case .juice: Color(hex: 0xFFA41F)
+        case .milk: Color(hex: 0xB4A8F0)
+        case .smoothie: Color(hex: 0xFF5C93)
+        case .soda: Color(hex: 0xEC3B53)
+        }
+    }
+
+    /// The cup each drink is served in.
+    var vessel: VesselStyle {
+        switch self {
+        case .water, .sparkling, .milk: .glass
+        case .tea, .coffee: .mug
+        case .juice, .smoothie, .soda: .straw
+        }
+    }
+
+    var strawColor: Color {
+        switch self {
+        case .juice: Color(hex: 0xFF5A4E)
+        case .smoothie: Color(hex: 0xFFC83D)
+        default: Color(hex: 0x1E2340)
         }
     }
 
@@ -213,6 +230,12 @@ struct DayTotal: Identifiable, Hashable {
     var id: Date { date }
 }
 
+struct KindAmount: Identifiable, Hashable {
+    var kind: DrinkKind
+    var amount: Double
+    var id: DrinkKind { kind }
+}
+
 struct KindShare: Identifiable, Hashable {
     var kind: DrinkKind
     var amount: Double
@@ -269,17 +292,106 @@ enum Achievement: String, CaseIterable, Identifiable {
         }
     }
 
-    var colors: [Color] {
+    /// The bold tile color of the badge.
+    var tint: Color {
         switch self {
-        case .firstSip: [Color(hex: 0x9BE4FF), Color(hex: 0x4F9BFF)]
-        case .streak3: [Color(hex: 0xFFD08A), Color(hex: 0xFF7A6B)]
-        case .streak7: [Color(hex: 0xFFC4E4), Color(hex: 0xA98BFF)]
-        case .streak30: [Color(hex: 0xFFE68A), Color(hex: 0xFFAA33)]
-        case .earlyBird: [Color(hex: 0xFFF3A0), Color(hex: 0xFFC94D)]
-        case .rainbow: [Color(hex: 0xB8F2C8), Color(hex: 0x5CC8C2)]
-        case .overachiever: [Color(hex: 0x9EE7FF), Color(hex: 0x5D7CFF)]
-        case .liters10: [Color(hex: 0xD7C8FF), Color(hex: 0x8D7BFF)]
-        case .liters100: [Color(hex: 0xA8DBFF), Color(hex: 0x3D6FE0)]
+        case .firstSip: Color(hex: 0x2EA8FF)
+        case .streak3: Color(hex: 0xFF7A45)
+        case .streak7: Color(hex: 0x8C6BFF)
+        case .streak30: Color(hex: 0xFFB020)
+        case .earlyBird: Color(hex: 0xF5C400)
+        case .rainbow: Color(hex: 0x2CC17C)
+        case .overachiever: Color(hex: 0x15BEEC)
+        case .liters10: Color(hex: 0xFF5C93)
+        case .liters100: Color(hex: 0x3D5AFE)
+        }
+    }
+}
+
+// MARK: - Dewy friends
+
+/// Collectible Dewy variants, unlocked by growing the garden (days the goal was reached).
+enum DewyFriend: String, CaseIterable, Identifiable {
+    case classic, sunny, sprout, berry, frosty, royal, cocoa, starry, blaze
+
+    var id: String { rawValue }
+
+    var name: String {
+        switch self {
+        case .classic: "Dewy"
+        case .sunny: "Sunny"
+        case .sprout: "Sprout"
+        case .berry: "Berry"
+        case .frosty: "Frosty"
+        case .royal: "Royal"
+        case .cocoa: "Cocoa"
+        case .starry: "Starry"
+        case .blaze: "Blaze"
+        }
+    }
+
+    /// Flowers needed to unlock this friend.
+    var flowersNeeded: Int {
+        switch self {
+        case .classic: 0
+        case .sunny: 3
+        case .sprout: 7
+        case .berry: 14
+        case .frosty: 21
+        case .royal: 30
+        case .cocoa: 50
+        case .starry: 75
+        case .blaze: 100
+        }
+    }
+
+    var liquid: Color {
+        switch self {
+        case .classic: Color(hex: 0x2EA8FF)
+        case .sunny: Color(hex: 0xFFB020)
+        case .sprout: Color(hex: 0x43C068)
+        case .berry: Color(hex: 0xFF5C93)
+        case .frosty: Color(hex: 0x7FE3FF)
+        case .royal: Color(hex: 0x8C6BFF)
+        case .cocoa: Color(hex: 0x9A6340)
+        case .starry: Color(hex: 0x3D4BC9)
+        case .blaze: Color(hex: 0xFF5A3C)
+        }
+    }
+
+    var tile: Color {
+        switch self {
+        case .classic: Color(hex: 0x15BEEC)
+        case .sunny: Color(hex: 0xFF7A45)
+        case .sprout: Color(hex: 0x1FA463)
+        case .berry: Color(hex: 0xC2185B)
+        case .frosty: Color(hex: 0x3D7BFF)
+        case .royal: Color(hex: 0x5B3FD6)
+        case .cocoa: Color(hex: 0xE7A65C)
+        case .starry: Color(hex: 0x1E2340)
+        case .blaze: Color(hex: 0xFFC83D)
+        }
+    }
+
+    var accessory: MascotAccessory {
+        switch self {
+        case .classic: .none
+        case .sunny: .sunglasses
+        case .sprout: .leaf
+        case .berry: .heart
+        case .frosty: .snowflake
+        case .royal: .crown
+        case .cocoa: .star
+        case .starry: .moon
+        case .blaze: .flame
+        }
+    }
+
+    var mood: DewyMood {
+        switch self {
+        case .frosty, .cocoa: .okay
+        case .classic, .sprout, .starry: .happy
+        default: .ecstatic
         }
     }
 }

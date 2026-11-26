@@ -14,7 +14,10 @@ extension Color {
 
 // MARK: - Themes
 
-/// The dreamy color worlds Dewy can live in. Lagoon is free, the rest are part of Dewy+.
+/// The bold color worlds Dewy can live in. Lagoon is free, the rest are part of Dewy+.
+///
+/// Every screen is built from the same few layers: a saturated `hero` color field up top,
+/// a calm `canvas` underneath, and solid `card`s that hold the content.
 enum AppTheme: String, CaseIterable, Codable, Identifiable {
     case lagoon, peach, matcha, lavender, midnight
 
@@ -36,121 +39,149 @@ enum AppTheme: String, CaseIterable, Codable, Identifiable {
 
     var colorScheme: ColorScheme { isDark ? .dark : .light }
 
-    // Water inside Dewy
-    var waterTop: Color {
+    // MARK: Hero color field
+
+    /// The signature color of the theme, used for big full-bleed areas.
+    var hero: Color {
         switch self {
-        case .lagoon: Color(hex: 0x8EE0FF)
-        case .peach: Color(hex: 0xFFC2A8)
-        case .matcha: Color(hex: 0xA8EBC0)
-        case .lavender: Color(hex: 0xCDB6FF)
-        case .midnight: Color(hex: 0x7FE7FF)
+        case .lagoon: Color(hex: 0x15BEEC)
+        case .peach: Color(hex: 0xFF7E67)
+        case .matcha: Color(hex: 0x2CC17C)
+        case .lavender: Color(hex: 0x8D6CFF)
+        case .midnight: Color(hex: 0x262D74)
         }
     }
 
-    var waterBottom: Color {
+    /// A deeper shade of the hero color for depth, discs and shadows.
+    var heroDeep: Color {
         switch self {
-        case .lagoon: Color(hex: 0x4F9BFF)
-        case .peach: Color(hex: 0xFF7FA3)
-        case .matcha: Color(hex: 0x3FBF85)
-        case .lavender: Color(hex: 0x8C78FF)
-        case .midnight: Color(hex: 0x6C6CFF)
+        case .lagoon: Color(hex: 0x0793D7)
+        case .peach: Color(hex: 0xEF5468)
+        case .matcha: Color(hex: 0x139E62)
+        case .lavender: Color(hex: 0x6846EE)
+        case .midnight: Color(hex: 0x141846)
         }
     }
 
-    // Screen background
-    var backgroundTop: Color {
+    /// A lighter tint of the hero color.
+    var heroLight: Color {
         switch self {
-        case .lagoon: Color(hex: 0xE6F6FF)
-        case .peach: Color(hex: 0xFFF1EA)
-        case .matcha: Color(hex: 0xEEFAEE)
-        case .lavender: Color(hex: 0xF2EDFF)
-        case .midnight: Color(hex: 0x141833)
+        case .lagoon: Color(hex: 0x6BDDFF)
+        case .peach: Color(hex: 0xFFB59E)
+        case .matcha: Color(hex: 0x86E3B3)
+        case .lavender: Color(hex: 0xBCA8FF)
+        case .midnight: Color(hex: 0x4652BD)
         }
     }
 
-    var backgroundBottom: Color {
-        switch self {
-        case .lagoon: Color(hex: 0xF7EFFF)
-        case .peach: Color(hex: 0xFFE4EF)
-        case .matcha: Color(hex: 0xF7F6E2)
-        case .lavender: Color(hex: 0xFFEEF7)
-        case .midnight: Color(hex: 0x271B45)
-        }
-    }
-
-    /// Soft floating blobs that drift behind every screen.
-    var blobs: [Color] {
-        switch self {
-        case .lagoon: [Color(hex: 0x9BE4FF), Color(hex: 0xFFC6E0), Color(hex: 0xC9C2FF)]
-        case .peach: [Color(hex: 0xFFC9A8), Color(hex: 0xFFB3CF), Color(hex: 0xFFE3A3)]
-        case .matcha: [Color(hex: 0xB5F0C8), Color(hex: 0xE6F5A6), Color(hex: 0xA8E6E0)]
-        case .lavender: [Color(hex: 0xD3C2FF), Color(hex: 0xFFC4E4), Color(hex: 0xB8D4FF)]
-        case .midnight: [Color(hex: 0x3B3FA8), Color(hex: 0x7A3E9E), Color(hex: 0x1F6E9E)]
-        }
-    }
-
+    /// Brand color that stays readable on cards and the canvas.
     var accent: Color {
         switch self {
-        case .lagoon: Color(hex: 0x3E8BFF)
-        case .peach: Color(hex: 0xFF6F91)
-        case .matcha: Color(hex: 0x27A86B)
-        case .lavender: Color(hex: 0x7A5CFF)
-        case .midnight: Color(hex: 0x8FA8FF)
+        case .lagoon: Color(hex: 0x0A8ED3)
+        case .peach: Color(hex: 0xEC4F63)
+        case .matcha: Color(hex: 0x12985D)
+        case .lavender: Color(hex: 0x6846EE)
+        case .midnight: Color(hex: 0x93A6FF)
         }
     }
 
-    var accentSecondary: Color {
+    /// Dewy's default water color in this theme.
+    var water: Color {
         switch self {
-        case .lagoon: Color(hex: 0x7CC8FF)
-        case .peach: Color(hex: 0xFFA07A)
-        case .matcha: Color(hex: 0x7BD9A0)
-        case .lavender: Color(hex: 0xC08CFF)
-        case .midnight: Color(hex: 0xB78CFF)
+        case .lagoon: Color(hex: 0x2E8BFF)
+        case .peach: Color(hex: 0xFF5D7E)
+        case .matcha: Color(hex: 0x1FB06B)
+        case .lavender: Color(hex: 0x7A55FF)
+        case .midnight: Color(hex: 0x4FC3FF)
         }
     }
 
-    /// Primary text color — a deep, friendly ink instead of harsh black.
-    var ink: Color { isDark ? Color(hex: 0xF3F1FF) : Color(hex: 0x27304F) }
+    // MARK: Surfaces
+
+    /// Page background under the hero.
+    var canvas: Color { isDark ? Color(hex: 0x0E1131) : Color(hex: 0xF2F5FB) }
+
+    /// Solid card surface.
+    var card: Color { isDark ? Color(hex: 0x1B2054) : .white }
+
+    /// Slightly raised fill used for chips, tracks and empty glasses.
+    var well: Color { isDark ? Color.white.opacity(0.09) : Color(hex: 0xEDF1F8) }
+
+    /// Hairlines and dividers.
+    var line: Color { isDark ? Color.white.opacity(0.08) : Color(hex: 0xE7EBF3) }
+
+    var shadow: Color { isDark ? Color.black.opacity(0.45) : Color(hex: 0x1E2340).opacity(0.09) }
+
+    // MARK: Text
+
+    /// Primary text color: a deep, friendly navy instead of harsh black.
+    var ink: Color { isDark ? Color(hex: 0xF4F3FF) : Color(hex: 0x1E2340) }
 
     /// Secondary text color.
-    var inkSoft: Color { isDark ? Color(hex: 0xB3B0D6) : Color(hex: 0x7A809C) }
+    var inkSoft: Color { isDark ? Color(hex: 0xA8AEDC) : Color(hex: 0x7D84A3) }
 
-    /// Fill used under glass cards.
-    var card: Color { isDark ? Color.white.opacity(0.07) : Color.white.opacity(0.55) }
+    /// Text placed on the hero color.
+    var onHero: Color { .white }
 
-    var cardStroke: Color { isDark ? Color.white.opacity(0.12) : Color.white.opacity(0.85) }
+    var onHeroSoft: Color { Color.white.opacity(0.78) }
 
-    var shadow: Color { isDark ? Color.black.opacity(0.35) : waterBottom.opacity(0.16) }
+    // MARK: Call to action
+
+    /// Background of the big pill buttons (a dark navy, like a marker on paper).
+    var cta: Color { isDark ? Color(hex: 0xFFD45C) : Color(hex: 0x1E2340) }
+
+    var onCta: Color { isDark ? Color(hex: 0x1E2340) : .white }
 
     /// Ink used to draw Dewy's face.
-    var faceInk: Color { Color(hex: 0x27304F) }
+    var faceInk: Color { Color(hex: 0x1E2340) }
+
+    // MARK: Gradients
+
+    var heroGradient: LinearGradient {
+        LinearGradient(colors: [hero, heroDeep], startPoint: .top, endPoint: .bottom)
+    }
 
     var waterGradient: LinearGradient {
-        LinearGradient(colors: [waterTop, waterBottom], startPoint: .top, endPoint: .bottom)
+        LinearGradient(colors: [water.opacity(0.85), water], startPoint: .top, endPoint: .bottom)
     }
 
-    var accentGradient: LinearGradient {
-        LinearGradient(colors: [accentSecondary, accent], startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
-
-    var backgroundGradient: LinearGradient {
-        LinearGradient(colors: [backgroundTop, backgroundBottom], startPoint: .top, endPoint: .bottom)
+    /// Sky colors for the garden landscape.
+    var sky: [Color] {
+        switch self {
+        case .lagoon: [Color(hex: 0x47CFF5), Color(hex: 0xB9EEFF)]
+        case .peach: [Color(hex: 0xFF8E73), Color(hex: 0xFFD7B8)]
+        case .matcha: [Color(hex: 0x5BD3C0), Color(hex: 0xD3F7E6)]
+        case .lavender: [Color(hex: 0x9C7DFF), Color(hex: 0xE3D8FF)]
+        case .midnight: [Color(hex: 0x10133C), Color(hex: 0x353F9E)]
+        }
     }
 }
 
 // MARK: - Shared palette
 
+/// Bold, flat colors shared by every theme.
 enum Palette {
-    static let blush = Color(hex: 0xFF8FB1)
-    static let sunshine = Color(hex: 0xFFD66B)
-    static let mint = Color(hex: 0x8FE3C0)
-    static let coral = Color(hex: 0xFF8A7A)
-    static let lilac = Color(hex: 0xC3A8FF)
-    static let sky = Color(hex: 0x8ED8FF)
-    static let flame = LinearGradient(colors: [Color(hex: 0xFFC15E), Color(hex: 0xFF6B6B)], startPoint: .top, endPoint: .bottom)
-    static let leaf = Color(hex: 0x6CCB8C)
-    static let soil = Color(hex: 0xC9A27E)
-    static let confetti: [Color] = [blush, sunshine, mint, lilac, sky, coral]
+    static let sunshine = Color(hex: 0xFFC83D)
+    static let tangerine = Color(hex: 0xFF9F1C)
+    static let coral = Color(hex: 0xFF6B5E)
+    static let berry = Color(hex: 0xE5384F)
+    static let blush = Color(hex: 0xFF7FA8)
+    static let grape = Color(hex: 0x6C5CE7)
+    static let sky = Color(hex: 0x2FB4FF)
+    static let aqua = Color(hex: 0x19C6D9)
+    static let mint = Color(hex: 0x37CB8B)
+    static let leaf = Color(hex: 0x48C46F)
+    static let leafDeep = Color(hex: 0x2B9F57)
+    static let soil = Color(hex: 0xB98563)
+    static let flame = LinearGradient(colors: [Color(hex: 0xFFC03F), Color(hex: 0xFF5A4E)], startPoint: .top, endPoint: .bottom)
+    static let gold = LinearGradient(colors: [Color(hex: 0xFFE27A), Color(hex: 0xFFAE2B)], startPoint: .top, endPoint: .bottom)
+    static let confetti: [Color] = [sunshine, blush, mint, grape, sky, coral, tangerine]
+
+    /// Colors for streak runs on the calendar, picked in order.
+    static let runs: [Color] = [
+        Color(hex: 0x5B5BD6), Color(hex: 0xE5384F), Color(hex: 0x1FA463),
+        Color(hex: 0x10A7E0), Color(hex: 0xFF8A1C), Color(hex: 0xF0508D)
+    ]
 }
 
 // MARK: - Environment
@@ -169,7 +200,7 @@ extension EnvironmentValues {
 // MARK: - Typography
 
 extension Font {
-    /// Dewy speaks in soft, rounded letters.
+    /// Dewy speaks in chunky, rounded letters.
     static func dewy(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight, design: .rounded)
     }
