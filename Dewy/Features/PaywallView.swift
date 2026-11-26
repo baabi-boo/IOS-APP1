@@ -41,7 +41,7 @@ struct PaywallView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let heroHeight = max(proxy.size.height * 0.44, 326)
+            let heroHeight = max(proxy.size.height * 0.36, 294)
             ZStack {
                 theme.canvas.ignoresSafeArea()
 
@@ -50,18 +50,20 @@ struct PaywallView: View {
                         stage(height: heroHeight)
                         titleBlock
                             .floatIn(appeared, index: 1)
-                        VStack(spacing: 24) {
-                            perksCard.floatIn(appeared, index: 2)
-                            plans.floatIn(appeared, index: 3)
-                            cta.floatIn(appeared, index: 4)
-                            footer
+                        VStack(spacing: 20) {
+                            plans.floatIn(appeared, index: 2)
+                            perksCard.floatIn(appeared, index: 3)
                         }
                         .padding(.horizontal, 20)
-                        .padding(.top, 22)
-                        .padding(.bottom, 36)
+                        .padding(.top, 18)
+                        .padding(.bottom, 24)
                     }
                 }
                 .scrollIndicators(.hidden)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    stickyBottomBar
+                        .floatIn(appeared, index: 4)
+                }
 
                 ConfettiView(trigger: celebrate, origin: UnitPoint(x: 0.5, y: 0.25))
                     .ignoresSafeArea()
@@ -96,16 +98,16 @@ struct PaywallView: View {
 
     private func stage(height: CGFloat) -> some View {
         ZStack(alignment: .bottom) {
-            LilyPad(width: 170, animated: isLive)
+            LilyPad(width: 158, animated: isLive)
 
-            companion(.octopus, size: 56, x: -86, y: -132, delay: 0.9)
-            companion(.unicorn, size: 74, x: -122, y: -24, delay: 0)
-            companion(.dino, size: 74, x: 122, y: -24, delay: 0.45)
+            companion(.octopus, size: 52, x: -84, y: -116, delay: 0.9)
+            companion(.unicorn, size: 68, x: -116, y: -20, delay: 0)
+            companion(.dino, size: 68, x: 116, y: -20, delay: 0.45)
 
             MascotView(
                 progress: 0.92,
                 mood: .ecstatic,
-                size: 150,
+                size: 138,
                 outfits: [.crown],
                 sparkles: true,
                 bands: rainbow,
@@ -113,9 +115,9 @@ struct PaywallView: View {
                 showsShadow: false
             )
             .liveMeniscusGlow(strength: 0.14)
-            .padding(.bottom, 18)
+            .padding(.bottom, 16)
         }
-        .padding(.bottom, 18)
+        .padding(.bottom, 12)
         .frame(maxWidth: .infinity)
         .frame(height: height, alignment: .bottom)
         .background(alignment: .bottom) {
@@ -227,27 +229,24 @@ struct PaywallView: View {
         }
     }
 
-    private var cta: some View {
-        VStack(spacing: 12) {
+    private var stickyBottomBar: some View {
+        VStack(spacing: 9) {
             PrimaryButton(
                 title: selected == .yearly ? "Start free trial" : "Continue",
                 style: .accent,
-                isLoading: purchases.isPurchasing
+                isLoading: purchases.isPurchasing,
+                height: 54
             ) {
                 Task { await buy() }
             }
             .scaleEffect(pulse ? 1.015 : 1)
 
             Text(ctaNote)
-                .font(.dewy(12.5, .bold))
+                .font(.dewy(12, .bold))
                 .foregroundStyle(theme.inkSoft)
                 .multilineTextAlignment(.center)
                 .contentTransition(.opacity)
-        }
-    }
 
-    private var footer: some View {
-        VStack(spacing: 10) {
             HStack(spacing: 8) {
                 Button("Restore purchases") {
                     Haptics.tap()
@@ -256,17 +255,26 @@ struct PaywallView: View {
                 .buttonStyle(.plain)
                 Text("·")
                 Text("Cancel anytime")
-            }
-            .font(.dewy(12.5, .bold))
-            .foregroundStyle(theme.inkSoft)
-
-            HStack(spacing: 18) {
+                Text("·")
                 Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                Text("·")
                 Link("Privacy", destination: URL(string: "https://www.apple.com/legal/privacy/")!)
             }
-            .font(.dewy(12, .semibold))
+            .font(.dewy(11, .semibold))
             .foregroundStyle(theme.inkSoft)
             .tint(theme.inkSoft)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+        .background {
+            VStack(spacing: 0) {
+                Rectangle().fill(theme.line).frame(height: 1)
+                theme.canvas.opacity(0.96)
+            }
+            .ignoresSafeArea(edges: .bottom)
         }
     }
 

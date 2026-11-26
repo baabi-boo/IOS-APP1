@@ -731,7 +731,8 @@ private struct StageFriendPad: View {
                 size: 72,
                 animated: true,
                 celebrateTrigger: cheerTrigger,
-                isNight: isNight
+                isNight: isNight,
+                phaseOffset: Double(index) * 1.9
             )
             .scaleEffect(x: index == 0 ? 1 : -1, y: 1)
             .offset(y: -4)

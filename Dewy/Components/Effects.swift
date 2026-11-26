@@ -413,25 +413,39 @@ struct GouachePourStream: View {
     }
 
     private func liftedCupPoint(progress t: Double) -> CGPoint {
-        let liftEase = 1.0 - pow(1.0 - min(t / 0.24, 1.0), 3.0)
-        let drift = CGFloat(min(t / 0.55, 1.0)) * 0.10
+        let drift = CGFloat(min(max((t - 0.06) / 0.50, 0.0), 1.0)) * 0.10
         let x = from.x + (to.x - from.x) * drift
-        let y = from.y - CGFloat(liftEase) * 26.0
+        let y: CGFloat
+        if t < 0.12 {
+            // Tactile 3pt downward anticipation dip during the first ~0.075s before lifting.
+            let dipPhase = t / 0.12
+            let dip = CGFloat(sin(dipPhase * Double.pi)) * 3.0
+            y = from.y + dip
+        } else {
+            let liftPhase = min((t - 0.12) / 0.22, 1.0)
+            let liftEase = 1.0 - pow(1.0 - liftPhase, 3.0)
+            y = from.y - CGFloat(liftEase) * 26.0
+        }
         return CGPoint(x: x, y: y)
     }
 
     private func cupTiltDegrees(progress t: Double, tiltRight: Bool) -> Double {
         let dir = tiltRight ? 1.0 : -1.0
-        let ramp = min(max((t - 0.05) / 0.20, 0.0), 1.0)
+        let ramp = min(max((t - 0.10) / 0.18, 0.0), 1.0)
         let eased = 1.0 - pow(1.0 - ramp, 2.0)
         return dir * 28.0 * eased
     }
 
     private func cupScaleFactor(progress t: Double) -> CGFloat {
-        if t < 0.22 {
-            return 1.0 + CGFloat(t / 0.22) * 0.10
+        if t < 0.12 {
+            let squash = CGFloat(sin((t / 0.12) * Double.pi)) * 0.035
+            return 1.0 - squash
         }
-        let fade = min(max((t - 0.42) / 0.28, 0.0), 1.0)
+        if t < 0.26 {
+            let liftFrac = CGFloat((t - 0.12) / 0.14)
+            return 1.0 + liftFrac * 0.10
+        }
+        let fade = min(max((t - 0.44) / 0.26, 0.0), 1.0)
         return 1.10 - CGFloat(fade) * 0.38
     }
 
@@ -450,8 +464,8 @@ struct GouachePourStream: View {
     }
 
     private func drawLiquidArc(in context: inout GraphicsContext, start: CGPoint, end: CGPoint, progress t: Double) {
-        let head = min(max((t - 0.06) / 0.58, 0.0), 1.0)
-        let tail = min(max((t - 0.34) / 0.62, 0.0), 1.0)
+        let head = min(max((t - 0.10) / 0.55, 0.0), 1.0)
+        let tail = min(max((t - 0.36) / 0.61, 0.0), 1.0)
         guard head > tail + 0.01 else { return }
 
         let dir: CGFloat = start.x <= end.x ? 1 : -1
@@ -469,12 +483,14 @@ struct GouachePourStream: View {
             points.append(bezierPoint(u, p0: spout, p1: apex, p2: end))
         }
 
-        // Render tapered gouache watercolor ribbon in overlapping soft strokes.
+        let auraTint = color.blended(with: .white, by: 0.45)
+
+        // Render tapered gouache watercolor ribbon in overlapping luminous & core strokes.
         for idx in 0..<(points.count - 1) {
             let frac = Double(idx) / Double(max(points.count - 1, 1))
             let taper = sin(frac * Double.pi)
             let coreW = CGFloat(3.5 + 7.5 * taper)
-            let washW = coreW * 1.75
+            let washW = coreW * 1.85
             let pA = points[idx]
             let pB = points[idx + 1]
 
@@ -482,14 +498,14 @@ struct GouachePourStream: View {
             seg.move(to: pA)
             seg.addLine(to: pB)
 
-            context.stroke(seg, with: .color(color.opacity(0.30)), style: StrokeStyle(lineWidth: washW, lineCap: .round))
-            context.stroke(seg, with: .color(color.opacity(0.86)), style: StrokeStyle(lineWidth: coreW, lineCap: .round))
+            context.stroke(seg, with: .color(auraTint.opacity(0.24)), style: StrokeStyle(lineWidth: washW, lineCap: .round))
+            context.stroke(seg, with: .color(color.opacity(0.88)), style: StrokeStyle(lineWidth: coreW, lineCap: .round))
 
             if taper > 0.25 {
                 var ridge = Path()
                 ridge.move(to: CGPoint(x: pA.x, y: pA.y - coreW * 0.22))
                 ridge.addLine(to: CGPoint(x: pB.x, y: pB.y - coreW * 0.22))
-                context.stroke(ridge, with: .color(Color(hex: 0xFFFDF8).opacity(0.68 * taper)), style: StrokeStyle(lineWidth: 2.0, lineCap: .round))
+                context.stroke(ridge, with: .color(Color(hex: 0xFFFDF8).opacity(0.72 * taper)), style: StrokeStyle(lineWidth: 2.0, lineCap: .round))
             }
         }
 
@@ -506,6 +522,7 @@ struct GouachePourStream: View {
         tail: Double
     ) {
         let count = 7
+        let auraBase = color.blended(with: .white, by: 0.45)
         for i in 0..<count {
             let seed = Double(i) + 17.0
             let rel = 0.14 + 0.78 * (Double(i) / Double(count - 1))
@@ -518,11 +535,20 @@ struct GouachePourStream: View {
             let center = CGPoint(x: base.x + spread, y: base.y + dropY)
             let r = CGFloat(2.8 + effectNoise(seed, 3.5) * 3.2)
 
+            // Soft luminous nocturnal outer aura halo so droplets shimmer on Starlight & Dusk ponds.
+            let auraR = r * 2.15
+            let auraRect = CGRect(x: center.x - auraR, y: center.y - auraR, width: auraR * 2, height: auraR * 2)
+            let auraGrad = Gradient(colors: [auraBase.opacity(0.28), auraBase.opacity(0.0)])
+            context.fill(
+                Path(ellipseIn: auraRect),
+                with: .radialGradient(auraGrad, center: center, startRadius: r * 0.3, endRadius: auraR)
+            )
+
             let rect = CGRect(x: center.x - r, y: center.y - r * 1.15, width: r * 2, height: r * 2.3)
             let drop = TeardropBeadShape().path(in: rect)
-            context.fill(drop, with: .color(color.opacity(0.88)))
+            context.fill(drop, with: .color(color.opacity(0.90)))
             let spec = CGRect(x: center.x - r * 0.42, y: center.y - r * 0.25, width: r * 0.52, height: r * 0.45)
-            context.fill(Path(ellipseIn: spec), with: .color(Color(hex: 0xFFFDF8).opacity(0.90)))
+            context.fill(Path(ellipseIn: spec), with: .color(Color(hex: 0xFFFDF8).opacity(0.92)))
         }
     }
 }

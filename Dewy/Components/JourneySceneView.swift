@@ -84,17 +84,17 @@ private func chapterWaterBand(_ chapter: Chapter, size: CGSize) -> WaterBandSpec
     let h = max(size.height, 1)
     switch chapter {
     case .spring:
-        return WaterBandSpec(top: h * 0.52, height: h * 0.25, causticTint: Color(hex: 0xD8FFF5), causticStrength: 0.19)
+        return WaterBandSpec(top: h * 0.555, height: h * 0.215, causticTint: Color(hex: 0xD8FFF5), causticStrength: 0.19)
     case .brook:
-        return WaterBandSpec(top: h * 0.465, height: h * 0.315, causticTint: Color(hex: 0xE6FDFF), causticStrength: 0.18)
+        return WaterBandSpec(top: h * 0.515, height: h * 0.265, causticTint: Color(hex: 0xE6FDFF), causticStrength: 0.18)
     case .meadow:
-        return WaterBandSpec(top: h * 0.48, height: h * 0.29, causticTint: Color(hex: 0xECFFE6), causticStrength: 0.16)
+        return WaterBandSpec(top: h * 0.525, height: h * 0.245, causticTint: Color(hex: 0xECFFE6), causticStrength: 0.16)
     case .falls:
-        return WaterBandSpec(top: h * 0.565, height: h * 0.215, causticTint: Color(hex: 0xE2F8FF), causticStrength: 0.20)
+        return WaterBandSpec(top: h * 0.605, height: h * 0.175, causticTint: Color(hex: 0xE2F8FF), causticStrength: 0.20)
     case .cove:
-        return WaterBandSpec(top: h * 0.445, height: h * 0.315, causticTint: Color(hex: 0xFFF3E2), causticStrength: 0.18)
+        return WaterBandSpec(top: h * 0.51, height: h * 0.25, causticTint: Color(hex: 0xFFF3E2), causticStrength: 0.18)
     case .lake:
-        return WaterBandSpec(top: h * 0.49, height: h * 0.28, causticTint: Color(hex: 0xC4D2FF), causticStrength: 0.13)
+        return WaterBandSpec(top: h * 0.55, height: h * 0.22, causticTint: Color(hex: 0xC4D2FF), causticStrength: 0.13)
     case .peak, .grove:
         return nil
     }
@@ -601,40 +601,40 @@ private func drawSpringBackdrop(in context: inout GraphicsContext, size: CGSize,
         )
     }
 
-    // Plane 1: Far misty eucalyptus mountain ridge.
+    // Plane 1: Far misty eucalyptus mountain ridge (cleanly below y = 0.445*h header band).
     var farMtn = Path()
-    farMtn.move(to: CGPoint(x: 0, y: h * 0.54))
-    farMtn.addQuadCurve(to: CGPoint(x: w * 0.36, y: h * 0.39), control: CGPoint(x: w * 0.16, y: h * 0.32))
-    farMtn.addQuadCurve(to: CGPoint(x: w * 0.72, y: h * 0.44), control: CGPoint(x: w * 0.54, y: h * 0.46))
-    farMtn.addQuadCurve(to: CGPoint(x: w, y: h * 0.37), control: CGPoint(x: w * 0.88, y: h * 0.31))
-    farMtn.addLine(to: CGPoint(x: w, y: h * 0.62))
-    farMtn.addLine(to: CGPoint(x: 0, y: h * 0.62))
+    farMtn.move(to: CGPoint(x: 0, y: h * 0.56))
+    farMtn.addQuadCurve(to: CGPoint(x: w * 0.36, y: h * 0.485), control: CGPoint(x: w * 0.16, y: h * 0.455))
+    farMtn.addQuadCurve(to: CGPoint(x: w * 0.72, y: h * 0.505), control: CGPoint(x: w * 0.54, y: h * 0.515))
+    farMtn.addQuadCurve(to: CGPoint(x: w, y: h * 0.475), control: CGPoint(x: w * 0.88, y: h * 0.448))
+    farMtn.addLine(to: CGPoint(x: w, y: h * 0.64))
+    farMtn.addLine(to: CGPoint(x: 0, y: h * 0.64))
     farMtn.closeSubpath()
     context.fill(farMtn, with: .color(Color(hex: 0x9AD2BD).opacity(0.68)))
 
-    // Plane 2: Mid cedar & pine misty ridge.
+    // Plane 2: Mid cedar & pine misty ridge (tallest tips strictly >= 0.455*h).
     let cedars: [(CGFloat, CGFloat)] = [
-        (0.05, 0.21), (0.13, 0.27), (0.22, 0.19), (0.31, 0.14),
-        (0.70, 0.15), (0.79, 0.22), (0.87, 0.28), (0.95, 0.22)
+        (0.05, 0.095), (0.13, 0.115), (0.22, 0.085), (0.31, 0.070),
+        (0.70, 0.075), (0.79, 0.095), (0.87, 0.115), (0.95, 0.095)
     ]
     for (xf, hf) in cedars {
-        drawJourneyPine(in: &context, base: CGPoint(x: w * xf, y: h * 0.54), height: h * hf, color: Color(hex: 0x6BB098).opacity(0.80))
+        drawJourneyPine(in: &context, base: CGPoint(x: w * xf, y: h * 0.57), height: h * hf, color: Color(hex: 0x6BB098).opacity(0.80))
     }
 
     // Plane 3: Mossy forest shoreline valley behind the spring pool.
     var valley = Path()
-    valley.move(to: CGPoint(x: 0, y: h * 0.55))
-    valley.addQuadCurve(to: CGPoint(x: w * 0.48, y: h * 0.49), control: CGPoint(x: w * 0.22, y: h * 0.44))
-    valley.addQuadCurve(to: CGPoint(x: w, y: h * 0.54), control: CGPoint(x: w * 0.78, y: h * 0.43))
-    valley.addLine(to: CGPoint(x: w, y: h * 0.66))
-    valley.addLine(to: CGPoint(x: 0, y: h * 0.66))
+    valley.move(to: CGPoint(x: 0, y: h * 0.58))
+    valley.addQuadCurve(to: CGPoint(x: w * 0.48, y: h * 0.53), control: CGPoint(x: w * 0.22, y: h * 0.495))
+    valley.addQuadCurve(to: CGPoint(x: w, y: h * 0.57), control: CGPoint(x: w * 0.78, y: h * 0.49))
+    valley.addLine(to: CGPoint(x: w, y: h * 0.68))
+    valley.addLine(to: CGPoint(x: 0, y: h * 0.68))
     valley.closeSubpath()
     context.fill(valley, with: .color(Color(hex: 0x569E82).opacity(0.86)))
 
     // Stacked sculpted mossy river boulders framing left and right flanks.
-    drawSculptedBoulder(in: &context, rect: CGRect(x: -w * 0.06, y: h * 0.44, width: w * 0.30, height: h * 0.14), stoneLit: Color(hex: 0x8CA8A2), stoneDark: Color(hex: 0x577572), mossLit: Color(hex: 0x7ED194), mossDark: Color(hex: 0x478F64))
-    drawSculptedBoulder(in: &context, rect: CGRect(x: w * 0.14, y: h * 0.49, width: w * 0.16, height: h * 0.08), stoneLit: Color(hex: 0x9BB5AF), stoneDark: Color(hex: 0x64837E), mossLit: Color(hex: 0x8AD99E), mossDark: Color(hex: 0x529B6F))
-    drawSculptedBoulder(in: &context, rect: CGRect(x: w * 0.75, y: h * 0.45, width: w * 0.30, height: h * 0.14), stoneLit: Color(hex: 0x86A29C), stoneDark: Color(hex: 0x516E6B), mossLit: Color(hex: 0x76C98C), mossDark: Color(hex: 0x3F855D))
+    drawSculptedBoulder(in: &context, rect: CGRect(x: -w * 0.06, y: h * 0.50, width: w * 0.28, height: h * 0.11), stoneLit: Color(hex: 0x8CA8A2), stoneDark: Color(hex: 0x577572), mossLit: Color(hex: 0x7ED194), mossDark: Color(hex: 0x478F64))
+    drawSculptedBoulder(in: &context, rect: CGRect(x: w * 0.14, y: h * 0.54, width: w * 0.15, height: h * 0.07), stoneLit: Color(hex: 0x9BB5AF), stoneDark: Color(hex: 0x64837E), mossLit: Color(hex: 0x8AD99E), mossDark: Color(hex: 0x529B6F))
+    drawSculptedBoulder(in: &context, rect: CGRect(x: w * 0.76, y: h * 0.505, width: w * 0.29, height: h * 0.11), stoneLit: Color(hex: 0x86A29C), stoneDark: Color(hex: 0x516E6B), mossLit: Color(hex: 0x76C98C), mossDark: Color(hex: 0x3F855D))
 }
 
 private func drawSpringWater(in context: inout GraphicsContext, size: CGSize, time t: Double) {
@@ -709,32 +709,31 @@ private func drawBrookBackdrop(in context: inout GraphicsContext, size: CGSize, 
         Color(hex: 0xDDF4FF), Color(hex: 0xC4EBFC), Color(hex: 0xE6FBF0)
     ])
 
-    let drift = CGFloat(sin(t * 0.18)) * 10
-    drawGhibliCloud(in: &context, center: CGPoint(x: w * 0.77 + drift, y: h * 0.24), width: w * 0.28, lit: .white, rim: Color(hex: 0xFFFDF5), shade: Color(hex: 0xC6E6F6), alpha: 0.90)
-    drawGhibliCloud(in: &context, center: CGPoint(x: w * 0.21 - drift * 0.7, y: h * 0.30), width: w * 0.21, lit: .white, rim: Color(hex: 0xFFFDF5), shade: Color(hex: 0xCDEBF7), alpha: 0.80)
+    let drift = CGFloat(sin(t * 0.18)) * 8
+    drawGhibliCloud(in: &context, center: CGPoint(x: w * 0.80 + drift, y: h * 0.44), width: w * 0.24, lit: .white, rim: Color(hex: 0xFFFDF5), shade: Color(hex: 0xC6E6F6), alpha: 0.88)
 
-    // Layered Studio Ghibli rolling sunlit butter-mint hills.
+    // Layered Studio Ghibli rolling sunlit butter-mint hills (strictly >= 0.455*h).
     var farHill = Path()
     farHill.move(to: CGPoint(x: 0, y: h * 0.56))
-    farHill.addQuadCurve(to: CGPoint(x: w * 0.54, y: h * 0.44), control: CGPoint(x: w * 0.24, y: h * 0.36))
-    farHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.49), control: CGPoint(x: w * 0.80, y: h * 0.38))
-    farHill.addLine(to: CGPoint(x: w, y: h * 0.62))
-    farHill.addLine(to: CGPoint(x: 0, y: h * 0.62))
+    farHill.addQuadCurve(to: CGPoint(x: w * 0.54, y: h * 0.49), control: CGPoint(x: w * 0.24, y: h * 0.455))
+    farHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.52), control: CGPoint(x: w * 0.80, y: h * 0.46))
+    farHill.addLine(to: CGPoint(x: w, y: h * 0.64))
+    farHill.addLine(to: CGPoint(x: 0, y: h * 0.64))
     farHill.closeSubpath()
     context.fill(farHill, with: .color(Color(hex: 0xB3E4BC)))
 
     var midHill = Path()
-    midHill.move(to: CGPoint(x: 0, y: h * 0.54))
-    midHill.addQuadCurve(to: CGPoint(x: w * 0.46, y: h * 0.49), control: CGPoint(x: w * 0.20, y: h * 0.43))
-    midHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.48), control: CGPoint(x: w * 0.76, y: h * 0.43))
-    midHill.addLine(to: CGPoint(x: w, y: h * 0.60))
-    midHill.addLine(to: CGPoint(x: 0, y: h * 0.60))
+    midHill.move(to: CGPoint(x: 0, y: h * 0.56))
+    midHill.addQuadCurve(to: CGPoint(x: w * 0.46, y: h * 0.525), control: CGPoint(x: w * 0.20, y: h * 0.485))
+    midHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.52), control: CGPoint(x: w * 0.76, y: h * 0.485))
+    midHill.addLine(to: CGPoint(x: w, y: h * 0.63))
+    midHill.addLine(to: CGPoint(x: 0, y: h * 0.63))
     midHill.closeSubpath()
     let hillGrad = Gradient(colors: [Color(hex: 0xA8E0A4), Color(hex: 0x79C98E)])
-    context.fill(midHill, with: .linearGradient(hillGrad, startPoint: CGPoint(x: 0, y: h * 0.43), endPoint: CGPoint(x: 0, y: h * 0.58)))
+    context.fill(midHill, with: .linearGradient(hillGrad, startPoint: CGPoint(x: 0, y: h * 0.485), endPoint: CGPoint(x: 0, y: h * 0.60)))
 
-    // Distant rounded meadow trees nestled on the hill crest.
-    for (xf, yf, r) in [(0.16, 0.43, 14.0), (0.24, 0.44, 11.0), (0.82, 0.43, 15.0)] {
+    // Distant rounded meadow trees nestled cleanly below y = 0.45*h.
+    for (xf, yf, r) in [(0.14, 0.485, 11.5), (0.22, 0.492, 9.5), (0.83, 0.482, 12.5)] {
         let cr = CGFloat(r)
         context.fill(Path(ellipseIn: CGRect(x: w * CGFloat(xf) - cr, y: h * CGFloat(yf) - cr, width: cr * 2, height: cr * 1.8)), with: .color(Color(hex: 0x62B37C)))
     }
@@ -809,13 +808,13 @@ private func drawBrookForeground(in context: inout GraphicsContext, size: CGSize
         context.fill(Path(ellipseIn: CGRect(x: pt.x - 1.6, y: pt.y - 1.6, width: 3.2, height: 3.2)), with: .color(Color(hex: 0xFFFDF5)))
     }
 
-    // Delicate overhanging weeping-willow vines framed cleanly along open right canopy & lower-left margin (clear of title).
-    let sway = CGFloat(sin(t * 0.85)) * 5.5
-    for strand in 0..<5 {
-        let dropH = h * (0.24 + CGFloat(strand % 2) * 0.11)
+    // Delicate overhanging weeping-willow vines framed strictly below y = 0.44*h header band.
+    let sway = CGFloat(sin(t * 0.85)) * 5.0
+    for strand in 0..<4 {
+        let dropH = h * (0.14 + CGFloat(strand % 2) * 0.06)
         drawWillowVine(
             in: &context,
-            top: CGPoint(x: w * (0.98 - CGFloat(strand) * 0.044), y: -2),
+            top: CGPoint(x: w * (0.98 - CGFloat(strand) * 0.042), y: h * 0.44),
             drop: dropH,
             sway: -sway - 4,
             stemColor: Color(hex: 0x56A06C).opacity(0.68),
@@ -825,21 +824,21 @@ private func drawBrookForeground(in context: inout GraphicsContext, size: CGSize
     for strand in 0..<2 {
         drawWillowVine(
             in: &context,
-            top: CGPoint(x: w * (0.015 + CGFloat(strand) * 0.03), y: h * 0.25),
-            drop: h * (0.16 + CGFloat(strand) * 0.04),
+            top: CGPoint(x: w * (0.018 + CGFloat(strand) * 0.032), y: h * 0.455),
+            drop: h * (0.13 + CGFloat(strand) * 0.035),
             sway: sway + 4,
-            stemColor: Color(hex: 0x56A06C).opacity(0.60),
-            leafColor: Color(hex: 0x76C487).opacity(0.68)
+            stemColor: Color(hex: 0x56A06C).opacity(0.62),
+            leafColor: Color(hex: 0x76C487).opacity(0.70)
         )
     }
 
-    // Layered iridescent rising brook bubbles.
+    // Layered iridescent rising brook bubbles rising gently in the brook basin (>= 0.46*h).
     for i in 0..<10 {
         let seed = Double(i) + 31.0
         let cycle = (t * (0.15 + journeyNoise(seed, 1.4) * 0.11) + journeyNoise(seed, 2.4)).truncatingRemainder(dividingBy: 1.0)
         let bx = w * (0.10 + CGFloat(journeyNoise(seed, 3.4)) * 0.80) + CGFloat(sin(t * 1.1 + seed)) * 10
-        let by = h * 0.72 - CGFloat(cycle) * h * 0.44
-        let r = CGFloat(5.2 + journeyNoise(seed, 4.4) * 7.8)
+        let by = h * 0.72 - CGFloat(cycle) * h * 0.25
+        let r = CGFloat(5.0 + journeyNoise(seed, 4.4) * 7.2)
         let alpha = sin(cycle * Double.pi) * 0.86
 
         let rect = CGRect(x: bx - r, y: by - r, width: r * 2, height: r * 2)
@@ -859,28 +858,28 @@ private func drawMeadowBackdrop(in context: inout GraphicsContext, size: CGSize,
         Color(hex: 0xEFFBE8), Color(hex: 0xDBF4DF), Color(hex: 0xFBF9DF)
     ])
 
-    // Far sunlit sage hill plane.
+    // Far sunlit sage hill plane (strictly >= 0.455*h).
     var farHill = Path()
-    farHill.move(to: CGPoint(x: 0, y: h * 0.52))
-    farHill.addQuadCurve(to: CGPoint(x: w * 0.45, y: h * 0.43), control: CGPoint(x: w * 0.22, y: h * 0.35))
-    farHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.47), control: CGPoint(x: w * 0.76, y: h * 0.36))
-    farHill.addLine(to: CGPoint(x: w, y: h * 0.58))
-    farHill.addLine(to: CGPoint(x: 0, y: h * 0.58))
+    farHill.move(to: CGPoint(x: 0, y: h * 0.56))
+    farHill.addQuadCurve(to: CGPoint(x: w * 0.45, y: h * 0.49), control: CGPoint(x: w * 0.22, y: h * 0.455))
+    farHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.51), control: CGPoint(x: w * 0.76, y: h * 0.46))
+    farHill.addLine(to: CGPoint(x: w, y: h * 0.62))
+    farHill.addLine(to: CGPoint(x: 0, y: h * 0.62))
     farHill.closeSubpath()
     context.fill(farHill, with: .color(Color(hex: 0xB5E3B4)))
 
     // Mid Studio Ghibli lush meadow hill plane.
     var midHill = Path()
-    midHill.move(to: CGPoint(x: 0, y: h * 0.53))
-    midHill.addQuadCurve(to: CGPoint(x: w * 0.52, y: h * 0.47), control: CGPoint(x: w * 0.26, y: h * 0.41))
-    midHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.51), control: CGPoint(x: w * 0.78, y: h * 0.42))
-    midHill.addLine(to: CGPoint(x: w, y: h * 0.58))
-    midHill.addLine(to: CGPoint(x: 0, y: h * 0.58))
+    midHill.move(to: CGPoint(x: 0, y: h * 0.56))
+    midHill.addQuadCurve(to: CGPoint(x: w * 0.52, y: h * 0.515), control: CGPoint(x: w * 0.26, y: h * 0.48))
+    midHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.54), control: CGPoint(x: w * 0.78, y: h * 0.485))
+    midHill.addLine(to: CGPoint(x: w, y: h * 0.62))
+    midHill.addLine(to: CGPoint(x: 0, y: h * 0.62))
     midHill.closeSubpath()
     context.fill(midHill, with: .color(Color(hex: 0x86CE92)))
 
-    // Sunlit distant rounded tree silhouettes with sunlit crowns.
-    let trees: [(CGFloat, CGFloat, CGFloat)] = [(0.09, 0.45, 22), (0.19, 0.46, 16), (0.81, 0.45, 18), (0.91, 0.44, 24)]
+    // Sunlit distant rounded tree silhouettes cleanly below y = 0.45*h.
+    let trees: [(CGFloat, CGFloat, CGFloat)] = [(0.09, 0.495, 17), (0.19, 0.505, 13), (0.81, 0.498, 14), (0.91, 0.49, 18)]
     for (xf, yf, r) in trees {
         let cx = w * xf
         let cy = h * yf
@@ -980,14 +979,14 @@ private func drawFallsBackdrop(in context: inout GraphicsContext, size: CGSize, 
         Color(hex: 0xDCEAFF), Color(hex: 0xC2DCFF), Color(hex: 0xE8F5FF)
     ])
 
-    // Distant hazy canyon silhouette.
+    // Distant hazy canyon silhouette (strictly >= 0.46*h, leaving header sky open).
     var farCanyon = Path()
-    farCanyon.move(to: CGPoint(x: 0, y: h * 0.36))
-    farCanyon.addLine(to: CGPoint(x: w * 0.42, y: h * 0.39))
-    farCanyon.addLine(to: CGPoint(x: w * 0.56, y: h * 0.37))
-    farCanyon.addLine(to: CGPoint(x: w, y: h * 0.35))
-    farCanyon.addLine(to: CGPoint(x: w, y: h * 0.62))
-    farCanyon.addLine(to: CGPoint(x: 0, y: h * 0.62))
+    farCanyon.move(to: CGPoint(x: 0, y: h * 0.465))
+    farCanyon.addLine(to: CGPoint(x: w * 0.42, y: h * 0.485))
+    farCanyon.addLine(to: CGPoint(x: w * 0.56, y: h * 0.475))
+    farCanyon.addLine(to: CGPoint(x: w, y: h * 0.46))
+    farCanyon.addLine(to: CGPoint(x: w, y: h * 0.66))
+    farCanyon.addLine(to: CGPoint(x: 0, y: h * 0.66))
     farCanyon.closeSubpath()
     context.fill(farCanyon, with: .color(Color(hex: 0xA8B6DF).opacity(0.62)))
 
@@ -996,36 +995,36 @@ private func drawFallsBackdrop(in context: inout GraphicsContext, size: CGSize, 
     drawFacetedCliff(in: &context, isLeft: false, width: w, height: h, sway: CGFloat(cos(t * 0.9)) * 2.5)
 
     // Animated multi-ribbon cascading waterfall through the stepped canyon notch.
-    let fallRect = CGRect(x: w * 0.355, y: h * 0.405, width: w * 0.285, height: h * 0.21)
+    let fallRect = CGRect(x: w * 0.355, y: h * 0.49, width: w * 0.285, height: h * 0.165)
     let fallGrad = Gradient(colors: [Color(hex: 0xB8F2FF), Color(hex: 0x62CEF5), Color(hex: 0xD2F9FF)])
     context.fill(Path(roundedRect: fallRect, cornerRadius: 8), with: .linearGradient(fallGrad, startPoint: CGPoint(x: 0, y: fallRect.minY), endPoint: CGPoint(x: 0, y: fallRect.maxY)))
 
     for i in 0..<8 {
         let xf = 0.38 + CGFloat(i) * 0.033
         let p = (t * 0.92 + Double(i) * 0.21).truncatingRemainder(dividingBy: 1.0)
-        let yStart = fallRect.minY + CGFloat(p) * (fallRect.height * 0.70)
+        let yStart = fallRect.minY + CGFloat(p) * (fallRect.height * 0.68)
         var streak = Path()
         streak.move(to: CGPoint(x: w * xf, y: yStart))
-        streak.addLine(to: CGPoint(x: w * xf, y: min(yStart + 26, fallRect.maxY)))
+        streak.addLine(to: CGPoint(x: w * xf, y: min(yStart + 22, fallRect.maxY)))
         context.stroke(streak, with: .color(.white.opacity(0.78 * sin(p * Double.pi))), style: StrokeStyle(lineWidth: i.isMultiple(of: 2) ? 3.0 : 2.0, lineCap: .round))
     }
 
-    // Soft translucent 5-band watercolor rainbow arc fading into waterfall mist.
-    let rainbowCenter = CGPoint(x: w * 0.50, y: h * 0.62)
+    // Soft translucent 5-band watercolor rainbow arc cresting strictly at y = 0.46*h (clear of title & wax seals!).
+    let rainbowCenter = CGPoint(x: w * 0.50, y: h * 0.655)
     let bands: [Color] = [
         Color(hex: 0xFF9EA8), Color(hex: 0xFFD28C), Color(hex: 0xB8EDA8), Color(hex: 0x98E3FA), Color(hex: 0xCAB4FF)
     ]
-    let baseR = min(w * 0.41, h * 0.29)
+    let baseR = min(w * 0.39, h * 0.195)
     for (idx, col) in bands.enumerated() {
-        let r = baseR - CGFloat(idx) * 5.0
+        let r = baseR - CGFloat(idx) * 4.6
         var arc = Path()
         arc.addArc(center: rainbowCenter, radius: r, startAngle: .degrees(194), endAngle: .degrees(346), clockwise: false)
-        context.stroke(arc, with: .color(col.opacity(0.54)), style: StrokeStyle(lineWidth: 5.0, lineCap: .round))
+        context.stroke(arc, with: .color(col.opacity(0.56)), style: StrokeStyle(lineWidth: 4.6, lineCap: .round))
     }
 }
 
 private func drawFacetedCliff(in context: inout GraphicsContext, isLeft: Bool, width w: CGFloat, height h: CGFloat, sway: CGFloat) {
-    let topY = isLeft ? h * 0.41 : h * 0.395
+    let topY = isLeft ? h * 0.495 : h * 0.485
     let edgeX = isLeft ? w * 0.35 : w * 0.64
     let outerX: CGFloat = isLeft ? -4 : w + 4
     let midX = isLeft ? w * 0.22 : w * 0.78
@@ -1034,8 +1033,8 @@ private func drawFacetedCliff(in context: inout GraphicsContext, isLeft: Bool, w
     var front = Path()
     front.move(to: CGPoint(x: outerX, y: topY))
     front.addLine(to: CGPoint(x: midX, y: topY))
-    front.addLine(to: CGPoint(x: midX + (isLeft ? 10 : -10), y: h * 0.64))
-    front.addLine(to: CGPoint(x: outerX, y: h * 0.64))
+    front.addLine(to: CGPoint(x: midX + (isLeft ? 10 : -10), y: h * 0.66))
+    front.addLine(to: CGPoint(x: outerX, y: h * 0.66))
     front.closeSubpath()
     context.fill(front, with: .color(isLeft ? Color(hex: 0xC4A7B8) : Color(hex: 0x8D9AC4)))
 
@@ -1043,20 +1042,20 @@ private func drawFacetedCliff(in context: inout GraphicsContext, isLeft: Bool, w
     var inner = Path()
     inner.move(to: CGPoint(x: midX, y: topY))
     inner.addLine(to: CGPoint(x: edgeX, y: topY + 6))
-    inner.addLine(to: CGPoint(x: edgeX + (isLeft ? 14 : -14), y: h * 0.64))
-    inner.addLine(to: CGPoint(x: midX + (isLeft ? 10 : -10), y: h * 0.64))
+    inner.addLine(to: CGPoint(x: edgeX + (isLeft ? 14 : -14), y: h * 0.66))
+    inner.addLine(to: CGPoint(x: midX + (isLeft ? 10 : -10), y: h * 0.66))
     inner.closeSubpath()
     context.fill(inner, with: .color(Color(hex: 0x5D6C9A)))
 
     // Crisp sunlit moss & terrace cap ledge.
     let capMinX = min(outerX, edgeX)
     let capW = abs(edgeX - outerX)
-    context.fill(Path(roundedRect: CGRect(x: capMinX, y: topY - 4, width: capW, height: 11), cornerRadius: 5), with: .color(Color(hex: 0x62BE87)))
-    context.fill(Path(roundedRect: CGRect(x: capMinX, y: topY - 4, width: capW * 0.72, height: 5), cornerRadius: 2.5), with: .color(Color(hex: 0xA8EBAC).opacity(0.75)))
+    context.fill(Path(roundedRect: CGRect(x: capMinX, y: topY - 4, width: capW, height: 10), cornerRadius: 5), with: .color(Color(hex: 0x62BE87)))
+    context.fill(Path(roundedRect: CGRect(x: capMinX, y: topY - 4, width: capW * 0.72, height: 4.5), cornerRadius: 2.2), with: .color(Color(hex: 0xA8EBAC).opacity(0.75)))
 
     // Draping cliffside hanging fern vines.
     let vineX = isLeft ? w * 0.28 : w * 0.71
-    drawWillowVine(in: &context, top: CGPoint(x: vineX, y: topY + 4), drop: h * 0.12, sway: sway, stemColor: Color(hex: 0x3D8A5F), leafColor: Color(hex: 0x6CC48E))
+    drawWillowVine(in: &context, top: CGPoint(x: vineX, y: topY + 4), drop: h * 0.095, sway: sway, stemColor: Color(hex: 0x3D8A5F), leafColor: Color(hex: 0x6CC48E))
 }
 
 private func drawFallsWater(in context: inout GraphicsContext, size: CGSize, time t: Double) {
@@ -1105,70 +1104,70 @@ private func drawCoveBackdrop(in context: inout GraphicsContext, size: CGSize, t
         Color(hex: 0xFFE9DB), Color(hex: 0xFFD8C4), Color(hex: 0xFFF3E2)
     ])
 
-    // Warm sunlit coastal sun on upper-right horizon.
-    let sunC = CGPoint(x: w * 0.78, y: h * 0.34)
+    // Warm sunlit coastal sun nestled cleanly on open right horizon sky (>= 0.45*h).
+    let sunC = CGPoint(x: w * 0.82, y: h * 0.455)
     context.fill(
-        Path(ellipseIn: CGRect(x: sunC.x - 46, y: sunC.y - 46, width: 92, height: 92)),
-        with: .radialGradient(Gradient(colors: [Color(hex: 0xFFF7D4).opacity(0.88), Color(hex: 0xFFF7D4).opacity(0)]), center: sunC, startRadius: 6, endRadius: 46)
+        Path(ellipseIn: CGRect(x: sunC.x - 42, y: sunC.y - 42, width: 84, height: 84)),
+        with: .radialGradient(Gradient(colors: [Color(hex: 0xFFF7D4).opacity(0.88), Color(hex: 0xFFF7D4).opacity(0)]), center: sunC, startRadius: 6, endRadius: 42)
     )
-    context.fill(Path(ellipseIn: CGRect(x: sunC.x - 16, y: sunC.y - 16, width: 32, height: 32)), with: .color(Color(hex: 0xFFFCE6)))
+    context.fill(Path(ellipseIn: CGRect(x: sunC.x - 15, y: sunC.y - 15, width: 30, height: 30)), with: .color(Color(hex: 0xFFFCE6)))
 
     // Far rose-ochre cape receding in coastal mist.
     var farCape = Path()
-    farCape.move(to: CGPoint(x: w * 0.66, y: h * 0.48))
-    farCape.addQuadCurve(to: CGPoint(x: w + 4, y: h * 0.40), control: CGPoint(x: w * 0.84, y: h * 0.37))
-    farCape.addLine(to: CGPoint(x: w + 4, y: h * 0.49))
+    farCape.move(to: CGPoint(x: w * 0.66, y: h * 0.54))
+    farCape.addQuadCurve(to: CGPoint(x: w + 4, y: h * 0.475), control: CGPoint(x: w * 0.84, y: h * 0.46))
+    farCape.addLine(to: CGPoint(x: w + 4, y: h * 0.55))
     farCape.closeSubpath()
     context.fill(farCape, with: .color(Color(hex: 0xD9A4A4).opacity(0.58)))
 
-    // Sculpted burnt-terracotta headland with sunlit rim & natural sea arch.
+    // Sculpted burnt-terracotta headland cleanly below y = 0.45*h header band.
     var headland = Path()
-    headland.move(to: CGPoint(x: -4, y: h * 0.48))
-    headland.addLine(to: CGPoint(x: -4, y: h * 0.31))
-    headland.addQuadCurve(to: CGPoint(x: w * 0.39, y: h * 0.47), control: CGPoint(x: w * 0.23, y: h * 0.28))
+    headland.move(to: CGPoint(x: -4, y: h * 0.54))
+    headland.addLine(to: CGPoint(x: -4, y: h * 0.465))
+    headland.addQuadCurve(to: CGPoint(x: w * 0.39, y: h * 0.535), control: CGPoint(x: w * 0.23, y: h * 0.448))
     headland.closeSubpath()
     let rockGrad = Gradient(colors: [Color(hex: 0xD97D63), Color(hex: 0x9C493A)])
-    context.fill(headland, with: .linearGradient(rockGrad, startPoint: CGPoint(x: 0, y: h * 0.31), endPoint: CGPoint(x: 0, y: h * 0.47)))
+    context.fill(headland, with: .linearGradient(rockGrad, startPoint: CGPoint(x: 0, y: h * 0.455), endPoint: CGPoint(x: 0, y: h * 0.535)))
     context.stroke(headland, with: .color(Color(hex: 0xFFF2DE).opacity(0.68)), lineWidth: 1.4)
 
-    // Cutout glowing coastal sea arch cleanly above the bay shoreline.
+    // Cutout glowing coastal sea arch cleanly above the curved bay lip (h * 0.52).
     var arch = Path()
-    arch.addArc(center: CGPoint(x: w * 0.22, y: h * 0.454), radius: 14.5, startAngle: .degrees(180), endAngle: .degrees(0), clockwise: false)
+    arch.addArc(center: CGPoint(x: w * 0.22, y: h * 0.518), radius: 13.5, startAngle: .degrees(180), endAngle: .degrees(0), clockwise: false)
     arch.closeSubpath()
     context.fill(arch, with: .color(Color(hex: 0xFFF3E2)))
 
-    // Swaying coastal palm nestled on headland shoulder (cleanly below chapter title).
-    let sway = CGFloat(sin(t * 0.9)) * 3.2
-    drawSwayingPalm(in: &context, base: CGPoint(x: w * 0.075, y: h * 0.37), height: 34, lean: 11 + sway, trunkColor: Color(hex: 0x7A493D), frondLight: Color(hex: 0x4E9470), frondDark: Color(hex: 0x357255))
+    // Swaying coastal palm on the open right cape balancing the left sea-arch headland asymmetrically.
+    let sway = CGFloat(sin(t * 0.9)) * 2.8
+    drawSwayingPalm(in: &context, base: CGPoint(x: w * 0.91, y: h * 0.505), height: 28, lean: -10 - sway, trunkColor: Color(hex: 0x7A493D), frondLight: Color(hex: 0x4E9470), frondDark: Color(hex: 0x357255))
 
     // Tiny distant paper-cut white sailboat on the right horizon.
     let bx = w * 0.85
-    let by = h * 0.455 + CGFloat(sin(t * 1.1)) * 1.8
+    let by = h * 0.52 + CGFloat(sin(t * 1.1)) * 1.8
     var sail = Path()
-    sail.move(to: CGPoint(x: bx, y: by - 20))
-    sail.addQuadCurve(to: CGPoint(x: bx + 11, y: by - 4), control: CGPoint(x: bx + 9, y: by - 12))
+    sail.move(to: CGPoint(x: bx, y: by - 19))
+    sail.addQuadCurve(to: CGPoint(x: bx + 10, y: by - 4), control: CGPoint(x: bx + 8.5, y: by - 11))
     sail.addLine(to: CGPoint(x: bx, y: by - 4))
     sail.closeSubpath()
     context.fill(sail, with: .color(Color(hex: 0xFFFDF8)))
     var hull = Path()
-    hull.move(to: CGPoint(x: bx - 9, y: by - 3))
-    hull.addLine(to: CGPoint(x: bx + 12, y: by - 3))
-    hull.addLine(to: CGPoint(x: bx + 8, y: by + 1))
-    hull.addLine(to: CGPoint(x: bx - 6, y: by + 1))
+    hull.move(to: CGPoint(x: bx - 8.5, y: by - 3))
+    hull.addLine(to: CGPoint(x: bx + 11.5, y: by - 3))
+    hull.addLine(to: CGPoint(x: bx + 7.5, y: by + 1))
+    hull.addLine(to: CGPoint(x: bx - 5.5, y: by + 1))
     hull.closeSubpath()
     context.fill(hull, with: .color(Color(hex: 0xB85947)))
 
-    // Soaring coastal gulls.
-    let drift = CGFloat(sin(t * 0.4)) * 9
+    // Soaring coastal gulls gliding cleanly in open right sky band (>= 0.45*h).
+    let drift = CGFloat(sin(t * 0.4)) * 8
     for idx in 0..<3 {
-        let gx = w * (0.34 + CGFloat(idx) * 0.12) + drift
-        let gy = h * (0.26 + CGFloat(idx % 2) * 0.045)
-        let flap = CGFloat(sin(t * 3.0 + Double(idx))) * 2.0
+        let gx = w * (0.46 + CGFloat(idx) * 0.11) + drift
+        let gy = h * (0.462 + CGFloat(idx % 2) * 0.025)
+        let flap = CGFloat(sin(t * 3.0 + Double(idx))) * 1.8
         var gull = Path()
-        gull.move(to: CGPoint(x: gx - 8, y: gy + flap))
-        gull.addQuadCurve(to: CGPoint(x: gx, y: gy + 2), control: CGPoint(x: gx - 4, y: gy - 3))
-        gull.addQuadCurve(to: CGPoint(x: gx + 8, y: gy + flap), control: CGPoint(x: gx + 4, y: gy - 3))
-        context.stroke(gull, with: .color(Color(hex: 0x7A5458).opacity(0.65)), style: StrokeStyle(lineWidth: 1.3, lineCap: .round))
+        gull.move(to: CGPoint(x: gx - 7.5, y: gy + flap))
+        gull.addQuadCurve(to: CGPoint(x: gx, y: gy + 2), control: CGPoint(x: gx - 3.8, y: gy - 2.8))
+        gull.addQuadCurve(to: CGPoint(x: gx + 7.5, y: gy + flap), control: CGPoint(x: gx + 3.8, y: gy - 2.8))
+        context.stroke(gull, with: .color(Color(hex: 0x7A5458).opacity(0.65)), style: StrokeStyle(lineWidth: 1.25, lineCap: .round))
     }
 }
 
@@ -1239,38 +1238,38 @@ private func drawPeakBackdrop(in context: inout GraphicsContext, size: CGSize, t
         Color(hex: 0xFFE9D2), Color(hex: 0xFFD4AC), Color(hex: 0xFFF2D6)
     ])
 
-    // Radiant Alto's Odyssey alpine sunrise orb on mid-right horizon.
-    let sunC = CGPoint(x: w * 0.78, y: h * 0.35)
+    // Radiant Alto's Odyssey alpine sunrise orb nestled cleanly on mid-right horizon (>= 0.46*h).
+    let sunC = CGPoint(x: w * 0.78, y: h * 0.468)
     context.fill(
-        Path(ellipseIn: CGRect(x: sunC.x - 62, y: sunC.y - 62, width: 124, height: 124)),
-        with: .radialGradient(Gradient(colors: [Color(hex: 0xFFF5C2).opacity(0.88), Color(hex: 0xFFF5C2).opacity(0)]), center: sunC, startRadius: 8, endRadius: 62)
+        Path(ellipseIn: CGRect(x: sunC.x - 58, y: sunC.y - 58, width: 116, height: 116)),
+        with: .radialGradient(Gradient(colors: [Color(hex: 0xFFF5C2).opacity(0.88), Color(hex: 0xFFF5C2).opacity(0)]), center: sunC, startRadius: 8, endRadius: 58)
     )
-    context.fill(Path(ellipseIn: CGRect(x: sunC.x - 19, y: sunC.y - 19, width: 38, height: 38)), with: .color(Color(hex: 0xFFFCE8)))
+    context.fill(Path(ellipseIn: CGRect(x: sunC.x - 17, y: sunC.y - 17, width: 34, height: 34)), with: .color(Color(hex: 0xFFFCE8)))
 
-    // Multi-plane Alto's Odyssey faceted sweeping alpine peaks (warm sunlit apricot + cool wisteria shadow).
+    // Multi-plane Alto's Odyssey faceted sweeping alpine peaks (all crests strictly >= 0.46*h).
     drawFacetedPeak(
         in: &context,
-        apex: CGPoint(x: w * 0.56, y: h * 0.36),
-        leftFoot: CGPoint(x: w * 0.24, y: h * 0.62),
-        rightFoot: CGPoint(x: w * 0.88, y: h * 0.62),
+        apex: CGPoint(x: w * 0.56, y: h * 0.475),
+        leftFoot: CGPoint(x: w * 0.24, y: h * 0.66),
+        rightFoot: CGPoint(x: w * 0.88, y: h * 0.66),
         litColor: Color(hex: 0xF3D0B8),
         shadowColor: Color(hex: 0xB8A6CE),
         ridgeGlow: Color(hex: 0xFFF6E0)
     )
     drawFacetedPeak(
         in: &context,
-        apex: CGPoint(x: w * 0.19, y: h * 0.34),
-        leftFoot: CGPoint(x: -w * 0.14, y: h * 0.62),
-        rightFoot: CGPoint(x: w * 0.52, y: h * 0.62),
+        apex: CGPoint(x: w * 0.19, y: h * 0.462),
+        leftFoot: CGPoint(x: -w * 0.14, y: h * 0.66),
+        rightFoot: CGPoint(x: w * 0.52, y: h * 0.66),
         litColor: Color(hex: 0xF7C99E),
         shadowColor: Color(hex: 0x8F80B8),
         ridgeGlow: Color(hex: 0xFFF7E2)
     )
     drawFacetedPeak(
         in: &context,
-        apex: CGPoint(x: w * 0.86, y: h * 0.38),
-        leftFoot: CGPoint(x: w * 0.54, y: h * 0.64),
-        rightFoot: CGPoint(x: w * 1.18, y: h * 0.64),
+        apex: CGPoint(x: w * 0.86, y: h * 0.485),
+        leftFoot: CGPoint(x: w * 0.54, y: h * 0.67),
+        rightFoot: CGPoint(x: w * 1.18, y: h * 0.67),
         litColor: Color(hex: 0xF5C39A),
         shadowColor: Color(hex: 0x7A6EA8),
         ridgeGlow: Color(hex: 0xFFF4D6)
@@ -1279,9 +1278,9 @@ private func drawPeakBackdrop(in context: inout GraphicsContext, size: CGSize, t
     // Billowing golden-rimmed multi-layer paper-cut sea of clouds rolling below the summit.
     let driftA = CGFloat(sin(t * 0.25)) * 12
     let driftB = CGFloat(cos(t * 0.22)) * 14
-    drawCloudSeaBand(in: &context, width: w, baseY: h * 0.55, amp: 24, shift: driftA, color: Color(hex: 0xFBE8DF), highlight: Color(hex: 0xFFF9E6))
-    drawCloudSeaBand(in: &context, width: w, baseY: h * 0.63, amp: 22, shift: -driftB, color: Color(hex: 0xF2DCE6), highlight: Color(hex: 0xFFFBF2))
-    drawCloudSeaBand(in: &context, width: w, baseY: h * 0.71, amp: 18, shift: driftA * 0.7, color: Color(hex: 0xFFF9F4), highlight: .white)
+    drawCloudSeaBand(in: &context, width: w, baseY: h * 0.595, amp: 20, shift: driftA, color: Color(hex: 0xFBE8DF), highlight: Color(hex: 0xFFF9E6))
+    drawCloudSeaBand(in: &context, width: w, baseY: h * 0.655, amp: 19, shift: -driftB, color: Color(hex: 0xF2DCE6), highlight: Color(hex: 0xFFFBF2))
+    drawCloudSeaBand(in: &context, width: w, baseY: h * 0.715, amp: 16, shift: driftA * 0.7, color: Color(hex: 0xFFF9F4), highlight: .white)
 }
 
 private func drawCloudSeaBand(
@@ -1372,11 +1371,12 @@ private func drawGroveBackdrop(in context: inout GraphicsContext, size: CGSize, 
         Color(hex: 0x24244E), Color(hex: 0x382B64), Color(hex: 0x604484), Color(hex: 0x946292)
     ])
 
-    // Delicate twilight 6-point starlets above the blossom boughs.
-    for i in 0..<14 {
+    // Delicate twilight 6-point starlets strictly clear of top-left header band (x < 0.68, y < 0.44*h).
+    for i in 0..<12 {
         let seed = Double(i) + 43.0
-        let x = w * CGFloat(journeyNoise(seed, 1.2))
-        let y = h * (0.24 + CGFloat(journeyNoise(seed, 2.2)) * 0.16)
+        let x = w * (0.06 + CGFloat(journeyNoise(seed, 1.2)) * 0.88)
+        let y = h * (0.43 + CGFloat(journeyNoise(seed, 2.2)) * 0.08)
+        if x < w * 0.68 && y < h * 0.45 { continue }
         let twinkle = 0.25 + 0.55 * (0.5 + 0.5 * sin(t * 1.3 + seed))
         if i.isMultiple(of: 4) {
             let s: CGFloat = 3.6
@@ -1390,28 +1390,28 @@ private func drawGroveBackdrop(in context: inout GraphicsContext, size: CGSize, 
     // Distant twilight hill & silhouetted garden torii/pavilion roof in mist.
     var farHill = Path()
     farHill.move(to: CGPoint(x: 0, y: h * 0.78))
-    farHill.addLine(to: CGPoint(x: 0, y: h * 0.56))
-    farHill.addQuadCurve(to: CGPoint(x: w * 0.52, y: h * 0.52), control: CGPoint(x: w * 0.26, y: h * 0.45))
-    farHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.57), control: CGPoint(x: w * 0.78, y: h * 0.46))
+    farHill.addLine(to: CGPoint(x: 0, y: h * 0.60))
+    farHill.addQuadCurve(to: CGPoint(x: w * 0.52, y: h * 0.56), control: CGPoint(x: w * 0.26, y: h * 0.51))
+    farHill.addQuadCurve(to: CGPoint(x: w, y: h * 0.61), control: CGPoint(x: w * 0.78, y: h * 0.52))
     farHill.addLine(to: CGPoint(x: w, y: h * 0.78))
     farHill.closeSubpath()
     context.fill(farHill, with: .color(Color(hex: 0x392C60).opacity(0.86)))
 
     // Distant silhouetted pavilion roofline on right crest.
     let px = w * 0.78
-    let py = h * 0.51
+    let py = h * 0.555
     var roof = Path()
     roof.move(to: CGPoint(x: px - 26, y: py))
-    roof.addQuadCurve(to: CGPoint(x: px, y: py - 14), control: CGPoint(x: px - 10, y: py - 4))
+    roof.addQuadCurve(to: CGPoint(x: px, y: py - 13), control: CGPoint(x: px - 10, y: py - 4))
     roof.addQuadCurve(to: CGPoint(x: px + 26, y: py), control: CGPoint(x: px + 10, y: py - 4))
     roof.closeSubpath()
     context.fill(roof, with: .color(Color(hex: 0x2B204C).opacity(0.85)))
     context.fill(Path(CGRect(x: px - 14, y: py, width: 3.5, height: 18)), with: .color(Color(hex: 0x2B204C).opacity(0.8)))
     context.fill(Path(CGRect(x: px + 10.5, y: py, width: 3.5, height: 18)), with: .color(Color(hex: 0x2B204C).opacity(0.8)))
 
-    // Gnarled cherry-blossom boughs arching organically from both flanks.
-    drawBlossomBough(in: &context, start: CGPoint(x: -6, y: h * 0.40), end: CGPoint(x: w * 0.42, y: h * 0.47), ctrl: CGPoint(x: w * 0.20, y: h * 0.34))
-    drawBlossomBough(in: &context, start: CGPoint(x: w + 6, y: h * 0.39), end: CGPoint(x: w * 0.58, y: h * 0.46), ctrl: CGPoint(x: w * 0.80, y: h * 0.33))
+    // Gnarled cherry-blossom boughs arching organically from mid-left & upper-right (>= 0.44*h clear of header!).
+    drawBlossomBough(in: &context, start: CGPoint(x: -6, y: h * 0.485), end: CGPoint(x: w * 0.40, y: h * 0.53), ctrl: CGPoint(x: w * 0.18, y: h * 0.468))
+    drawBlossomBough(in: &context, start: CGPoint(x: w + 6, y: h * 0.445), end: CGPoint(x: w * 0.58, y: h * 0.515), ctrl: CGPoint(x: w * 0.80, y: h * 0.442))
 
     // Five softly swaying hand-ribbed paper lanterns (including Dewy's glowing aqua lantern!).
     drawGroveLanterns(in: &context, size: size, time: t)
@@ -1421,8 +1421,8 @@ private func drawGroveLanterns(in context: inout GraphicsContext, size: CGSize, 
     let w = size.width
     let h = size.height
     let lanterns: [(xf: CGFloat, yf: CGFloat, aqua: Bool, phase: Double)] = [
-        (0.14, 0.48, false, 0.2), (0.32, 0.53, false, 1.5), (0.50, 0.56, true, 2.6),
-        (0.70, 0.52, false, 3.8), (0.86, 0.47, false, 5.0)
+        (0.14, 0.54, false, 0.2), (0.32, 0.575, false, 1.5), (0.50, 0.60, true, 2.6),
+        (0.70, 0.56, false, 3.8), (0.86, 0.515, false, 5.0)
     ]
     for item in lanterns {
         let swing = CGFloat(sin(t * 1.15 + item.phase)) * 3.0
@@ -1517,10 +1517,10 @@ private func drawLakeBackdrop(in context: inout GraphicsContext, size: CGSize, t
         Color(hex: 0x131B3E), Color(hex: 0x1D2859), Color(hex: 0x2B3672), Color(hex: 0x414C8C)
     ])
 
-    // Delicate 6-point StarletShape constellations strictly below upper title margin.
+    // Delicate 6-point StarletShape constellation strictly below header safe band (>= 0.45*h).
     let leftStars: [CGPoint] = [
-        CGPoint(x: w * 0.12, y: h * 0.31), CGPoint(x: w * 0.21, y: h * 0.28),
-        CGPoint(x: w * 0.30, y: h * 0.35), CGPoint(x: w * 0.38, y: h * 0.30)
+        CGPoint(x: w * 0.10, y: h * 0.472), CGPoint(x: w * 0.19, y: h * 0.456),
+        CGPoint(x: w * 0.29, y: h * 0.492), CGPoint(x: w * 0.37, y: h * 0.468)
     ]
     var constLine = Path()
     for (idx, pt) in leftStars.enumerated() {
@@ -1529,55 +1529,56 @@ private func drawLakeBackdrop(in context: inout GraphicsContext, size: CGSize, t
     context.stroke(constLine, with: .color(Color(hex: 0xD2DCFF).opacity(0.28)), style: StrokeStyle(lineWidth: 0.9, lineCap: .round, dash: [3, 3]))
     for (idx, pt) in leftStars.enumerated() {
         let pulse = 0.65 + 0.35 * sin(t * 1.5 + Double(idx))
-        let s: CGFloat = 4.2
+        let s: CGFloat = 4.0
         context.fill(StarletShape().path(in: CGRect(x: pt.x - s, y: pt.y - s, width: s * 2, height: s * 2)), with: .color(Color(hex: 0xFFF7D6).opacity(pulse)))
     }
 
-    // Crisp pearl starfield across the mid-upper sky band.
-    for i in 0..<24 {
+    // Crisp pearl starfield strictly below header band (y >= 0.445*h).
+    for i in 0..<22 {
         let seed = Double(i) + 71.0
         let x = w * CGFloat(journeyNoise(seed, 1.6))
-        let y = h * (0.27 + CGFloat(journeyNoise(seed, 2.6)) * 0.20)
+        let y = h * (0.448 + CGFloat(journeyNoise(seed, 2.6)) * 0.085)
         let twinkle = 0.4 + 0.6 * (0.5 + 0.5 * sin(t * (1.2 + journeyNoise(seed, 3.6) * 1.6) + seed))
         if i.isMultiple(of: 6) {
-            let s: CGFloat = 3.8
+            let s: CGFloat = 3.6
             context.fill(StarletShape().path(in: CGRect(x: x - s, y: y - s, width: s * 2, height: s * 2)), with: .color(Color(hex: 0xFFF7D6).opacity(twinkle)))
         } else {
-            let r = CGFloat(1.1 + journeyNoise(seed, 4.6) * 1.4)
+            let r = CGFloat(1.0 + journeyNoise(seed, 4.6) * 1.3)
             context.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)), with: .color(Color(hex: 0xFFFDF8).opacity(twinkle)))
         }
     }
 
-    drawJourneyMoon(in: &context, center: CGPoint(x: w * 0.78, y: h * 0.35), radius: min(w * 0.052, 20))
+    // Luminous crescent moon serenely positioned in open right mid-sky (cleanly clear of header & peaks).
+    drawJourneyMoon(in: &context, center: CGPoint(x: w * 0.80, y: h * 0.468), radius: min(w * 0.048, 18))
 
-    // 3-plane misty pine mountain ridges.
+    // 3-plane misty pine mountain ridges (strictly >= 0.495*h).
     var farPeaks = Path()
-    farPeaks.move(to: CGPoint(x: 0, y: h * 0.54))
-    farPeaks.addLine(to: CGPoint(x: w * 0.16, y: h * 0.37))
-    farPeaks.addLine(to: CGPoint(x: w * 0.36, y: h * 0.47))
-    farPeaks.addLine(to: CGPoint(x: w * 0.60, y: h * 0.43))
-    farPeaks.addLine(to: CGPoint(x: w * 0.84, y: h * 0.36))
-    farPeaks.addLine(to: CGPoint(x: w, y: h * 0.46))
-    farPeaks.addLine(to: CGPoint(x: w, y: h * 0.58))
-    farPeaks.addLine(to: CGPoint(x: 0, y: h * 0.58))
+    farPeaks.move(to: CGPoint(x: 0, y: h * 0.58))
+    farPeaks.addLine(to: CGPoint(x: w * 0.16, y: h * 0.495))
+    farPeaks.addLine(to: CGPoint(x: w * 0.36, y: h * 0.54))
+    farPeaks.addLine(to: CGPoint(x: w * 0.60, y: h * 0.525))
+    farPeaks.addLine(to: CGPoint(x: w * 0.88, y: h * 0.505))
+    farPeaks.addLine(to: CGPoint(x: w, y: h * 0.54))
+    farPeaks.addLine(to: CGPoint(x: w, y: h * 0.62))
+    farPeaks.addLine(to: CGPoint(x: 0, y: h * 0.62))
     farPeaks.closeSubpath()
     context.fill(farPeaks, with: .color(Color(hex: 0x2B346E).opacity(0.82)))
 
     var midRidge = Path()
-    midRidge.move(to: CGPoint(x: 0, y: h * 0.55))
-    midRidge.addQuadCurve(to: CGPoint(x: w * 0.48, y: h * 0.50), control: CGPoint(x: w * 0.22, y: h * 0.42))
-    midRidge.addQuadCurve(to: CGPoint(x: w, y: h * 0.53), control: CGPoint(x: w * 0.78, y: h * 0.43))
-    midRidge.addLine(to: CGPoint(x: w, y: h * 0.58))
-    midRidge.addLine(to: CGPoint(x: 0, y: h * 0.58))
+    midRidge.move(to: CGPoint(x: 0, y: h * 0.58))
+    midRidge.addQuadCurve(to: CGPoint(x: w * 0.48, y: h * 0.555), control: CGPoint(x: w * 0.22, y: h * 0.515))
+    midRidge.addQuadCurve(to: CGPoint(x: w, y: h * 0.57), control: CGPoint(x: w * 0.78, y: h * 0.52))
+    midRidge.addLine(to: CGPoint(x: w, y: h * 0.62))
+    midRidge.addLine(to: CGPoint(x: 0, y: h * 0.62))
     midRidge.closeSubpath()
     context.fill(midRidge, with: .color(Color(hex: 0x1A2152)))
 
     let pines: [(CGFloat, CGFloat)] = [
-        (0.04, 0.14), (0.11, 0.18), (0.18, 0.13), (0.25, 0.10),
-        (0.76, 0.11), (0.83, 0.15), (0.90, 0.18), (0.96, 0.14)
+        (0.04, 0.085), (0.11, 0.105), (0.18, 0.080), (0.25, 0.065),
+        (0.76, 0.068), (0.84, 0.088), (0.91, 0.102), (0.97, 0.082)
     ]
     for (xf, hf) in pines {
-        drawJourneyPine(in: &context, base: CGPoint(x: w * xf, y: h * 0.525), height: h * hf, color: Color(hex: 0x10163B))
+        drawJourneyPine(in: &context, base: CGPoint(x: w * xf, y: h * 0.575), height: h * hf, color: Color(hex: 0x10163B))
     }
 }
 

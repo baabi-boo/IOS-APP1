@@ -289,9 +289,10 @@ private struct WidgetHorizonSilhouette: View {
 private struct WidgetStars: View {
     var size: CGSize
 
+    // Kept strictly in the open right sky (x >= 0.54) so top-left text never collides with stars.
     private let points: [(CGFloat, CGFloat, CGFloat)] = [
-        (0.12, 0.14, 5.5), (0.34, 0.09, 2.2), (0.56, 0.18, 5.0), (0.72, 0.08, 2.0),
-        (0.22, 0.34, 4.2), (0.48, 0.38, 2.4), (0.09, 0.52, 4.0), (0.64, 0.46, 2.0)
+        (0.54, 0.14, 4.8), (0.66, 0.10, 2.0), (0.76, 0.24, 5.2), (0.88, 0.12, 2.2),
+        (0.58, 0.36, 4.0), (0.70, 0.44, 2.2), (0.86, 0.38, 4.4), (0.93, 0.28, 2.0)
     ]
 
     var body: some View {
@@ -446,13 +447,19 @@ private struct WidgetProgressBar: View {
     var isNight: Bool = false
 
     var body: some View {
-        let trackFill: Color = isNight ? Ink.starlight.opacity(0.16) : Palette.paper.opacity(0.84)
+        let trackFill: Color = isNight ? Color(hex: 0x101634, opacity: 0.44) : Palette.paper.opacity(0.84)
         let trackBorder: Color = isNight ? Ink.starlight.opacity(0.28) : Ink.hairlineStrong
-        let fillGrad = LinearGradient(
-            colors: [Palette.aquaLight, Palette.aqua],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
+        let fillGrad = isNight
+            ? LinearGradient(
+                colors: [Color(hex: 0x9BEBF5), Color(hex: 0x5EC7DF)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            : LinearGradient(
+                colors: [Palette.aquaLight, Palette.aqua],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
 
         GeometryReader { proxy in
             let width = proxy.size.width
@@ -464,7 +471,12 @@ private struct WidgetProgressBar: View {
                 if fraction > 0 {
                     Capsule()
                         .fill(fillGrad)
-                        .overlay(Capsule().stroke(Palette.aquaDeep.opacity(0.32), lineWidth: 0.75))
+                        .overlay(
+                            Capsule().stroke(
+                                isNight ? Color(hex: 0xEEFCFF).opacity(0.6) : Palette.aquaDeep.opacity(0.32),
+                                lineWidth: 0.75
+                            )
+                        )
                         .frame(width: max(width * fraction, height))
                         .padding(1.5)
                 }
@@ -527,13 +539,13 @@ struct DewyWidgetSmall: View {
                     VStack(alignment: .leading, spacing: -1) {
                         HStack(alignment: .firstTextBaseline, spacing: 2) {
                             Text(snapshot.format(snapshot.total, withUnit: false))
-                                .font(.display(26, .bold))
+                                .font(.display(23.5, .bold))
                                 .monospacedDigit()
                                 .foregroundStyle(ink)
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.65)
+                                .minimumScaleFactor(0.68)
                             Text(snapshot.unit.label)
-                                .font(.display(12, .medium))
+                                .font(.display(11.5, .medium))
                                 .foregroundStyle(soft)
                         }
                         Text("of \(snapshot.format(snapshot.goal))")
@@ -543,7 +555,7 @@ struct DewyWidgetSmall: View {
                             .minimumScaleFactor(0.8)
                     }
                     .layoutPriority(1)
-                    Spacer(minLength: 0)
+                    Spacer(minLength: 2)
                     if snapshot.streak > 0 {
                         WidgetStreakPill(streak: snapshot.streak)
                     }
@@ -551,15 +563,19 @@ struct DewyWidgetSmall: View {
                 Spacer(minLength: 0)
                 VStack(alignment: .leading, spacing: 5) {
                     Text("\(snapshot.percent)%")
-                        .font(.display(15, .bold))
+                        .font(.display(14.5, .bold))
                         .monospacedDigit()
                         .foregroundStyle(ink)
-                    WidgetProgressBar(progress: snapshot.clampedProgress, height: 11, isNight: phase.isNight)
+                    WidgetProgressBar(
+                        progress: snapshot.clampedProgress,
+                        height: 11,
+                        isNight: phase == .dusk || phase == .night
+                    )
                         .frame(width: 62)
                 }
                 .padding(.bottom, 2)
             }
-            .padding(13)
+            .padding(12)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .ignore)
@@ -579,8 +595,8 @@ struct DewyWidgetMedium: View {
         let ink = widgetInk(theme: snapshot.theme, phase: phase, showsBackground: showsBackground)
         let soft = widgetInk(theme: snapshot.theme, phase: phase, showsBackground: showsBackground, soft: true)
 
-        HStack(alignment: .bottom, spacing: 10) {
-            WidgetDewyOnPad(snapshot: snapshot, size: 88)
+        HStack(alignment: .bottom, spacing: 8) {
+            WidgetDewyOnPad(snapshot: snapshot, size: 78)
                 .padding(.bottom, 4)
                 .frame(maxHeight: .infinity, alignment: .bottom)
 
@@ -589,11 +605,11 @@ struct DewyWidgetMedium: View {
                     VStack(alignment: .leading, spacing: -1) {
                         HStack(alignment: .firstTextBaseline, spacing: 3) {
                             Text(snapshot.format(snapshot.total, withUnit: false))
-                                .font(.display(29, .bold))
+                                .font(.display(28, .bold))
                                 .monospacedDigit()
                                 .foregroundStyle(ink)
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.7)
+                                .minimumScaleFactor(0.72)
                             Text(snapshot.unit.label)
                                 .font(.display(13.5, .medium))
                                 .foregroundStyle(soft)
@@ -602,7 +618,7 @@ struct DewyWidgetMedium: View {
                             .font(.dewy(11.5, .bold))
                             .foregroundStyle(soft)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            .minimumScaleFactor(0.82)
                     }
                     Spacer(minLength: 0)
                     if snapshot.streak > 0 {
@@ -610,7 +626,11 @@ struct DewyWidgetMedium: View {
                     }
                 }
 
-                WidgetProgressBar(progress: snapshot.clampedProgress, height: 12, isNight: phase.isNight)
+                WidgetProgressBar(
+                    progress: snapshot.clampedProgress,
+                    height: 11.5,
+                    isNight: phase == .dusk || phase == .night
+                )
                     .padding(.top, 8)
 
                 Spacer(minLength: 6)
@@ -630,23 +650,22 @@ struct DewyWidgetMedium: View {
 
     private func quickButton(_ kind: DrinkKind) -> some View {
         Button(intent: LogDrinkIntent(kind: kind, amount: kind.defaultAmount)) {
-            HStack(spacing: 3) {
+            HStack(spacing: 2.5) {
                 Image(kind.imageName)
                     .resizable()
                     .interpolation(.high)
                     .scaledToFit()
-                    .frame(width: 24, height: 24)
+                    .frame(width: 18, height: 18)
                 Text("+\(snapshot.format(kind.defaultAmount, withUnit: false))")
                     .font(.dewy(11.5, .bold))
                     .monospacedDigit()
                     .foregroundStyle(Ink.primary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.72)
+                    .minimumScaleFactor(0.8)
             }
-            .padding(.leading, 5)
-            .padding(.trailing, 7)
+            .padding(.horizontal, 5)
             .frame(maxWidth: .infinity)
-            .frame(height: 34)
+            .frame(height: 33)
             .background { WidgetPaperPill(tint: kind.color) }
         }
         .buttonStyle(.plain)

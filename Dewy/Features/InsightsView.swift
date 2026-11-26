@@ -331,9 +331,11 @@ struct InsightsView: View {
                 maxValue: maxValue,
                 range: range,
                 appeared: appeared,
+                selected: selected,
+                format: { store.format($0) },
                 selectedDate: $selectedDate
             )
-            .frame(height: 196)
+            .frame(height: 204)
             chartLegend
         }
         .dewyCard(padding: 20)
@@ -779,6 +781,8 @@ private struct InsightsBarChart: View {
     var maxValue: Double
     var range: InsightsRange
     var appeared: Bool
+    var selected: InsightsBar?
+    var format: (Double) -> String
     @Binding var selectedDate: Date?
 
     private var unit: Calendar.Component { range == .year ? .month : .day }
@@ -787,6 +791,10 @@ private struct InsightsBarChart: View {
 
     var body: some View {
         Chart {
+            RuleMark(y: .value("Half", goal * 0.5))
+                .foregroundStyle(theme.line)
+                .lineStyle(StrokeStyle(lineWidth: 1, lineCap: .round, dash: [3, 5]))
+
             ForEach(bars) { bar in
                 BarMark(
                     x: .value("Date", bar.date, unit: unit),
@@ -797,9 +805,23 @@ private struct InsightsBarChart: View {
                 .foregroundStyle(fill(for: bar))
                 .opacity(isDimmed(bar) ? 0.36 : 1)
             }
+
             RuleMark(y: .value("Goal", goal))
                 .foregroundStyle(Palette.coral)
                 .lineStyle(StrokeStyle(lineWidth: 1.8, lineCap: .round, dash: [4, 5]))
+
+            if let selected {
+                RuleMark(x: .value("Selected", selected.date, unit: unit))
+                    .foregroundStyle(Palette.aqua.opacity(0.32))
+                    .lineStyle(StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
+                    .annotation(
+                        position: .top,
+                        spacing: 4,
+                        overflowResolution: .init(x: .fit(to: .chart), y: .disabled)
+                    ) {
+                        scrubCallout(for: selected)
+                    }
+            }
         }
         .chartYScale(domain: 0...maxValue)
         .chartYAxis(.hidden)
@@ -807,10 +829,16 @@ private struct InsightsBarChart: View {
             AxisMarks(values: axisValues) { value in
                 AxisValueLabel(centered: true) {
                     if let date = value.as(Date.self) {
-                        Text(axisLabel(for: date))
-                            .font(.dewy(11.5, .bold))
-                            .foregroundStyle(theme.inkSoft)
-                            .padding(.top, 4)
+                        let isCurrent = isCurrentPeriod(date)
+                        VStack(spacing: 3) {
+                            Text(axisLabel(for: date))
+                                .font(.dewy(11.5, isCurrent ? .heavy : .bold))
+                                .foregroundStyle(isCurrent ? Palette.aquaDeep : theme.inkSoft)
+                            Circle()
+                                .fill(isCurrent ? Palette.aqua : Color.clear)
+                                .frame(width: 4, height: 4)
+                        }
+                        .padding(.top, 4)
                     }
                 }
             }
@@ -818,6 +846,22 @@ private struct InsightsBarChart: View {
         .chartXSelection(value: $selectedDate)
         .animation(.spring(response: 0.72, dampingFraction: 0.82), value: appeared)
         .animation(.spring(response: 0.55, dampingFraction: 0.84), value: range)
+    }
+
+    private func scrubCallout(for bar: InsightsBar) -> some View {
+        Text(format(bar.amount))
+            .font(.dewy(11.5, .bold))
+            .monospacedDigit()
+            .foregroundStyle(theme.ink)
+            .padding(.horizontal, 9)
+            .frame(height: 24)
+            .background {
+                PaperSurface(shape: Capsule(), fill: Palette.paper, tint: Palette.aqua, elevation: 0.5)
+            }
+    }
+
+    private func isCurrentPeriod(_ date: Date) -> Bool {
+        Calendar.current.isDate(date, equalTo: .now, toGranularity: unit)
     }
 
     private var axisValues: AxisMarkValues {
@@ -967,7 +1011,11 @@ private struct InsightsWeekDroplets: View {
         let percent: Int = Int((day.amount * 100).rounded())
         let reached = day.amount >= 1
 
-        return VStack(spacing: 6) {
+        return VStack(spacing: 4) {
+            StarletShape()
+                .fill(reached ? Palette.butter : Color.clear)
+                .frame(width: 9, height: 9)
+
             ZStack(alignment: .bottom) {
                 DewyShape()
                     .fill(Palette.paper)

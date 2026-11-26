@@ -27,6 +27,7 @@ struct TodayView: View {
     @Environment(PurchaseManager.self) private var purchases
     @Environment(AppRouter.self) private var router
     @Environment(\.dewyTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var showShare = false
     @State private var bounce = 0
@@ -264,6 +265,7 @@ struct TodayView: View {
                 mood: store.mood,
                 size: mascotSize,
                 bounceTrigger: bounce,
+                sipTrigger: splash,
                 outfits: store.outfits,
                 bands: store.todayBands,
                 isNight: phase.isNight
@@ -614,26 +616,37 @@ struct TodayView: View {
     private func add(_ kind: DrinkKind, amount: Double) {
         let wasBelowGoal = store.todayProgress < 1
         let dropsBefore = store.todayDrops
+        let instant = LaunchOptions.freezesMotion || reduceMotion
+
+        // t = 0.00s: liquid pours in, Dewy gulps & fizzes, watercolor splash bursts.
         lastPouredColor = kind.color
         var entry: DrinkEntry?
         withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
             entry = store.add(kind, amount: amount)
         }
-        bounce += 1
-        ripple += 1
         splash += 1
-        companionCheer += 1
         Haptics.splash()
         SoundFX.play(.pour)
+
         let gained = store.todayDrops - dropsBefore
-        if gained > 0 {
-            let pop = DropPop(value: gained)
-            pops.append(pop)
+        if instant {
+            bounce += 1
+            ripple += 1
+            companionCheer += 1
+            emitDropPop(gained)
+        } else {
+            // Organic Pixar follow-through: recoil+ripple -> companion cheer -> +drops pop.
             Task { @MainActor in
-                try? await Task.sleep(for: .seconds(1.4))
-                pops.removeAll { $0.id == pop.id }
+                try? await Task.sleep(for: .milliseconds(40))
+                bounce += 1
+                ripple += 1
+                try? await Task.sleep(for: .milliseconds(80))
+                companionCheer += 1
+                try? await Task.sleep(for: .milliseconds(60))
+                emitDropPop(gained)
             }
         }
+
         if wasBelowGoal && store.todayProgress >= 1 {
             celebrationReward = store.goalReward + min(store.currentStreak, DropRules.streakCap)
             Task { @MainActor in
@@ -657,6 +670,16 @@ struct TodayView: View {
             try? await Task.sleep(for: .seconds(2.6))
             guard !Task.isCancelled else { return }
             withAnimation(.easeInOut(duration: 0.3)) { toast = nil }
+        }
+    }
+
+    private func emitDropPop(_ gained: Int) {
+        guard gained > 0 else { return }
+        let pop = DropPop(value: gained)
+        pops.append(pop)
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.4))
+            pops.removeAll { $0.id == pop.id }
         }
     }
 
@@ -758,6 +781,7 @@ private struct DropPopView: View {
 /// Full-screen storybook celebration when the daily hydration goal is reached.
 private struct CelebrationOverlay: View {
     @Environment(\.dewyTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var reward: Int
     var streak: Int
     var goal: String
@@ -767,6 +791,8 @@ private struct CelebrationOverlay: View {
 
     @State private var jump = 0
     @State private var shown = false
+
+    private var raysLive: Bool { !reduceMotion && !LaunchOptions.freezesMotion }
 
     var body: some View {
         ZStack {
@@ -779,15 +805,20 @@ private struct CelebrationOverlay: View {
             BubbleField(count: 14)
                 .ignoresSafeArea()
 
-            VStack(spacing: 14) {
+            VStack(spacing: 12) {
                 ZStack {
+                    CelebrationSunRays(animated: raysLive)
+                        .frame(width: 340, height: 340)
+                        .scaleEffect(shown ? 1 : 0.55)
+                        .opacity(shown ? 1 : 0)
+
                     Circle()
                         .fill(
                             RadialGradient(
-                                colors: [Palette.butter.opacity(0.38), Palette.butter.opacity(0)],
+                                colors: [Palette.butter.opacity(0.36), Palette.butter.opacity(0)],
                                 center: .center,
                                 startRadius: 10,
-                                endRadius: 165
+                                endRadius: 160
                             )
                         )
                         .frame(width: 320, height: 320)
@@ -822,6 +853,21 @@ private struct CelebrationOverlay: View {
                     }
                 }
                 .frame(height: 250)
+
+                HStack(spacing: 6) {
+                    StarletShape()
+                        .fill(Palette.butterDeep)
+                        .frame(width: 9, height: 9)
+                    CapsLabel(text: "Daily goal met", color: Palette.butterDeep, size: 10.5)
+                    StarletShape()
+                        .fill(Palette.butterDeep)
+                        .frame(width: 9, height: 9)
+                }
+                .padding(.horizontal, 13)
+                .frame(height: 26)
+                .background {
+                    PaperSurface(shape: Capsule(), fill: Palette.butterSoft, tint: Palette.butter, elevation: 0.35)
+                }
 
                 Text("Goal reached!")
                     .font(.display(36, .bold))
@@ -878,6 +924,43 @@ private struct CelebrationJump {
     var spin: Double = 0
 }
 
+/// Slowly rotating translucent golden botanical sun-rays radiating softly behind celebrating Dewy.
+private struct CelebrationSunRays: View {
+    var animated: Bool
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !animated)) { timeline in
+            let angle = animated ? timeline.date.timeIntervalSinceReferenceDate * 0.14 : 0.22
+            Canvas { context, size in
+                let center = CGPoint(x: size.width * 0.5, y: size.height * 0.5)
+                let radius = min(size.width, size.height) * 0.5
+                let rays = 12
+                let halfSpread = 0.085
+                let grad = Gradient(stops: [
+                    .init(color: Palette.butter.opacity(0.30), location: 0.12),
+                    .init(color: Palette.butterSoft.opacity(0.18), location: 0.62),
+                    .init(color: Palette.butter.opacity(0.0), location: 1.0)
+                ])
+
+                for index in 0..<rays {
+                    let theta = angle + Double(index) * (Double.pi * 2.0 / Double(rays))
+                    let innerR = radius * 0.18
+                    let a1 = theta - halfSpread
+                    let a2 = theta + halfSpread
+                    var ray = Path()
+                    ray.move(to: CGPoint(x: center.x + CGFloat(cos(theta)) * innerR, y: center.y + CGFloat(sin(theta)) * innerR))
+                    ray.addLine(to: CGPoint(x: center.x + CGFloat(cos(a1)) * radius, y: center.y + CGFloat(sin(a1)) * radius))
+                    ray.addLine(to: CGPoint(x: center.x + CGFloat(cos(a2)) * radius, y: center.y + CGFloat(sin(a2)) * radius))
+                    ray.closeSubpath()
+                    context.fill(ray, with: .radialGradient(grad, center: center, startRadius: innerR, endRadius: radius))
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
 // MARK: - Pieces
 
 /// A live animated pond companion resting on a miniature handcrafted botanical lily pad.
@@ -896,7 +979,8 @@ private struct CompanionPad: View {
                 size: 72,
                 animated: true,
                 celebrateTrigger: cheerTrigger,
-                isNight: isNight
+                isNight: isNight,
+                phaseOffset: Double(index) * 1.9
             )
             .scaleEffect(x: index == 0 ? 1 : -1, y: 1)
             .offset(y: -4)
@@ -915,13 +999,19 @@ struct ClayProgressBar: View {
     var body: some View {
         let clamped = min(max(progress, 0), 1)
         let pct = Int((progress * 100).rounded())
-        let trackFill: Color = isNight ? Ink.starlight.opacity(0.12) : Palette.creamDeep
-        let trackBorder: Color = isNight ? Ink.starlight.opacity(0.22) : Ink.hairlineStrong
-        let barGradient = LinearGradient(
-            colors: [tint.blended(with: .white, by: 0.14), tint, tint.blended(with: .black, by: 0.08)],
-            startPoint: .leading,
-            endPoint: .trailing
-        )
+        let trackFill: Color = isNight ? Color(hex: 0x101634, opacity: 0.44) : Palette.creamDeep
+        let trackBorder: Color = isNight ? Ink.starlight.opacity(0.28) : Ink.hairlineStrong
+        let barGradient = isNight
+            ? LinearGradient(
+                colors: [Color(hex: 0x9BEBF5), Color(hex: 0x5EC7DF)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            : LinearGradient(
+                colors: [tint.blended(with: .white, by: 0.14), tint, tint.blended(with: .black, by: 0.08)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
 
         HStack(spacing: 10) {
             GeometryReader { proxy in
@@ -936,7 +1026,12 @@ struct ClayProgressBar: View {
                         Capsule()
                             .fill(barGradient)
                             .overlay {
-                                Capsule().stroke(tint.blended(with: Ink.primary, by: 0.28).opacity(0.32), lineWidth: 0.75)
+                                Capsule().stroke(
+                                    isNight
+                                        ? Color(hex: 0xEEFCFF).opacity(0.60)
+                                        : tint.blended(with: Ink.primary, by: 0.28).opacity(0.32),
+                                    lineWidth: 0.85
+                                )
                             }
                             .frame(width: min(w, proxy.size.width))
                             .padding(2.5)
@@ -952,13 +1047,13 @@ struct ClayProgressBar: View {
                 .padding(.horizontal, 9)
                 .frame(height: 24)
                 .background(
-                    isNight ? Ink.starlight.opacity(0.14) : Palette.aquaSoft,
+                    isNight ? Color(hex: 0x101634, opacity: 0.44) : Palette.aquaSoft,
                     in: Capsule()
                 )
                 .overlay {
                     Capsule().stroke(
-                        isNight ? Ink.starlight.opacity(0.24) : Palette.aqua.opacity(0.25),
-                        lineWidth: 0.75
+                        isNight ? Ink.starlight.opacity(0.28) : Palette.aqua.opacity(0.25),
+                        lineWidth: 0.85
                     )
                 }
                 .contentTransition(.numericText())
@@ -1026,14 +1121,15 @@ private struct QuickSipTile: View {
                 .foregroundStyle(Palette.paper)
                 .frame(width: 21, height: 21)
                 .background(Palette.gold, in: Circle())
-                .overlay(Circle().stroke(Color(hex: 0x7A5110).opacity(0.35), lineWidth: 0.75))
+                .overlay(Circle().stroke(Color(hex: 0x7A5110).opacity(0.42), lineWidth: 0.85))
         } else {
             Image(systemName: "plus")
-                .font(.system(size: 10.5, weight: .bold))
+                .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(Palette.paper)
                 .frame(width: 21, height: 21)
                 .background(kind.deep, in: Circle())
                 .overlay(Circle().stroke(Palette.paper, lineWidth: 1.5))
+                .overlay(Circle().stroke(Ink.primary.opacity(0.24), lineWidth: 0.75))
         }
     }
 }

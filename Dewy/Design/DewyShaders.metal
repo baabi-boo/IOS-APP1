@@ -3,7 +3,10 @@
 
 using namespace metal;
 
-// MARK: - Procedural noise helpers
+// MARK: - Constants & Procedural Noise Helpers
+
+/// Premultiplied alpha threshold preventing SIMD-predicated 0/0 under MTL_FAST_MATH.
+static constant half kDewyAlphaFloor = half(1.0e-4h);
 
 /// Fast, artifact-free polynomial 2D hash (avoids trig banding under MTL_FAST_MATH).
 static inline float dewyHash21(float2 p) {
@@ -12,11 +15,11 @@ static inline float dewyHash21(float2 p) {
     return fract((p3.x + p3.y) * p3.z);
 }
 
-/// Smooth bilinear value noise in [0, 1].
+/// C2-continuous quintic bilinear value noise in [0, 1] (eliminates grid-line ridges).
 static inline float dewyValueNoise(float2 p) {
     float2 i = floor(p);
     float2 f = fract(p);
-    float2 u = f * f * (3.0f - 2.0f * f);
+    float2 u = f * f * f * (f * (f * 6.0f - 15.0f) + 10.0f);
 
     float a = dewyHash21(i);
     float b = dewyHash21(i + float2(1.0f, 0.0f));
@@ -33,36 +36,45 @@ static inline float dewySoftFBM(float2 p) {
     return n1 * 0.65f + n2 * 0.35f;
 }
 
+/// Unpremultiplies a SwiftUI half4 color safely without NaN risk on near-zero alpha.
+static inline half3 dewyUnpremultiply(half4 color) {
+    return clamp(color.rgb / max(color.a, kDewyAlphaFloor), half3(0.0h), half3(1.0h));
+}
+
 // MARK: - Cold-press watercolor paper grain
 
-/// Subtle cold-press cotton-rag paper texture with gentle linen fiber tooth
-/// and warm/cool rag micro-variation. Preserves premultiplied alpha cleanly.
+/// Anti-aliased cold-press cotton-rag paper texture with off-axis rotated linen weave
+/// and sub-Nyquist rag tooth so 2x/3x Retina displays stay tactile with zero moire static.
 [[stitchable]] half4 paperGrain(float2 position, half4 color, float intensity) {
-    if (color.a <= half(0.001h) || intensity <= 0.0f) {
+    if (color.a <= kDewyAlphaFloor || intensity <= 0.0f) {
         return color;
     }
 
     float safeIntensity = clamp(intensity, 0.0f, 0.25f);
 
-    // Medium organic paper tooth + cross-woven cotton fibers + fine micro tooth.
-    float tooth = dewyValueNoise(position * 0.28f);
-    float fiberH = dewyValueNoise(position * float2(0.82f, 0.34f) + float2(19.3f, 7.1f));
-    float fiberV = dewyValueNoise(position * float2(0.34f, 0.82f) + float2(47.1f, 23.8f));
-    float micro = dewyValueNoise(position * 1.45f + float2(73.7f, 11.9f));
+    // Rotate weave coordinates off-axis (~20 deg) so cotton fibers never alias pixel rows.
+    float2 rotPos = float2(
+        position.x * 0.9397f - position.y * 0.3420f,
+        position.x * 0.3420f + position.y * 0.9397f
+    );
 
-    float combined = tooth * 0.44f + (fiberH + fiberV) * 0.20f + micro * 0.16f;
+    // All sampling frequencies stay strictly sub-Nyquist (<= 0.46 cycles/pt) for silky Retina grain.
+    float tooth = dewyValueNoise(position * 0.16f);
+    float fiberWarp = dewyValueNoise(rotPos * float2(0.42f, 0.19f) + float2(19.3f, 7.1f));
+    float fiberWeft = dewyValueNoise(rotPos * float2(0.19f, 0.42f) + float2(47.1f, 23.8f));
+    float microTooth = dewyValueNoise(position * 0.46f + float2(73.7f, 11.9f));
+
+    float combined = tooth * 0.46f + (fiberWarp + fiberWeft) * 0.21f + microTooth * 0.12f;
     float signedGrain = (combined - 0.5f) * 2.0f;
 
-    half3 rgb = color.rgb / max(color.a, half(0.001h));
+    half3 rgb = dewyUnpremultiply(color);
 
     // Warm cream highlight on fiber peaks, whisper-cool shadow in valleys.
     half3 warmBias = half3(1.06h, 1.00h, 0.92h);
     half3 coolBias = half3(0.94h, 0.97h, 1.05h);
     half3 tint = signedGrain >= 0.0f ? warmBias : coolBias;
 
-    half3 grained = rgb + tint * half(signedGrain * safeIntensity);
-    grained = clamp(grained, half3(0.0h), half3(1.0h));
-
+    half3 grained = clamp(rgb + tint * half(signedGrain * safeIntensity), half3(0.0h), half3(1.0h));
     return half4(grained * color.a, color.a);
 }
 
@@ -77,7 +89,7 @@ static inline float dewySoftFBM(float2 p) {
     half4 tint,
     float strength
 ) {
-    if (color.a <= half(0.001h) || strength <= 0.0f) {
+    if (color.a <= kDewyAlphaFloor || strength <= 0.0f) {
         return color;
     }
 
@@ -124,11 +136,11 @@ static inline float dewySoftFBM(float2 p) {
     float nearFade = 1.0f - 0.20f * smoothstep(0.78f, 1.0f, uv.y);
     float mask = shoreFade * nearFade;
 
-    half3 tintRGB = tint.a > half(0.001h)
-        ? clamp(tint.rgb / tint.a, half3(0.0h), half3(1.0h))
+    half3 tintRGB = tint.a > kDewyAlphaFloor
+        ? dewyUnpremultiply(tint)
         : half3(1.0h, 0.98h, 0.94h);
 
-    half3 rgb = color.rgb / max(color.a, half(0.001h));
+    half3 rgb = dewyUnpremultiply(color);
     half mixAmount = half(clamp(caustic * dapple * mask * clamp(strength, 0.0f, 0.8f), 0.0f, 0.65f));
 
     // Soft luminous screen lift so bright skies never blow out harshly.
@@ -160,7 +172,7 @@ static inline float dewySoftFBM(float2 p) {
     float2 size,
     float strength
 ) {
-    if (color.a <= half(0.001h) || strength <= 0.0f) {
+    if (color.a <= kDewyAlphaFloor || strength <= 0.0f) {
         return color;
     }
 
@@ -170,14 +182,14 @@ static inline float dewySoftFBM(float2 p) {
 
     // Broad gouache wash + medium pigment settling in paper hollows.
     float wash = dewySoftFBM(uv * float2(3.8f, 3.2f) + float2(4.2f, 9.7f));
-    float granulation = dewyValueNoise(position * 0.16f + float2(29.1f, 53.4f));
+    float granulation = dewyValueNoise(position * 0.15f + float2(29.1f, 53.4f));
     float pigmentDelta = ((wash * 0.68f + granulation * 0.32f) - 0.5f) * 2.0f;
 
     // Gentle sunlit atmospheric skylight diffusion near upper-middle horizon.
     float2 lightDelta = (uv - float2(0.56f, 0.28f)) * float2(1.0f, 1.35f);
     float skyDiffusion = exp(-dot(lightDelta, lightDelta) * 2.4f);
 
-    half3 rgb = color.rgb / max(color.a, half(0.001h));
+    half3 rgb = dewyUnpremultiply(color);
     half3 warmLight = half3(1.0h, 0.97h, 0.90h);
 
     half3 painterly = rgb
@@ -208,7 +220,7 @@ static inline float dewySoftFBM(float2 p) {
     float time,
     float strength
 ) {
-    if (color.a <= half(0.001h) || strength <= 0.0f) {
+    if (color.a <= kDewyAlphaFloor || strength <= 0.0f) {
         return color;
     }
 
@@ -220,9 +232,9 @@ static inline float dewySoftFBM(float2 p) {
     float band = sin((uv.x * 4.5f + uv.y * 3.2f) + sin(uv.y * 5.0f - t) * 0.55f - t * 0.9f);
     float sBase = clamp(band * 0.5f + 0.5f, 0.0f, 1.0f);
     float sheen = sBase * sBase * sBase;
-    float edgeSoft = sin(uv.x * 3.14159265f) * sin(uv.y * 3.14159265f);
+    float edgeSoft = max(sin(uv.x * 3.14159265f) * sin(uv.y * 3.14159265f), 0.0f);
 
-    half3 rgb = color.rgb / max(color.a, half(0.001h));
+    half3 rgb = dewyUnpremultiply(color);
     half lift = half(sheen * edgeSoft * safeStrength);
     half3 result = clamp(rgb + half3(0.95h, 0.99h, 1.0h) * lift, half3(0.0h), half3(1.0h));
 

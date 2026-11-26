@@ -140,22 +140,38 @@ private struct ShareDayCard: View {
             PaperSurface(shape: outerShape, fill: Palette.paper, tint: Palette.shadow, elevation: 1.0)
         }
         .overlay(outerShape.strokeBorder(Ink.hairlineStrong, lineWidth: 1))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(Ink.hairline, lineWidth: 0.75)
+                .padding(6)
+        }
         .environment(\.dewyTheme, theme)
     }
 
     // MARK: Scene
 
     private var scene: some View {
-        let frameShape = RoundedRectangle(cornerRadius: 22, style: .continuous)
+        let frameShape = RoundedRectangle(cornerRadius: 20, style: .continuous)
         return ZStack(alignment: .bottom) {
-            ClayWorld(horizon: 128, animated: false, decor: store.placedDecor)
+            ClayWorld(horizon: 128, animated: false, decor: store.placedDecor, headerSafeTop: 32)
+
+            if let friend = store.companions.first {
+                ZStack(alignment: .bottom) {
+                    LilyPad(width: 56, animated: false)
+                        .offset(y: 6)
+                    FriendView(friend: friend, size: 50, animated: false, isNight: isNight)
+                        .scaleEffect(x: -1, y: 1)
+                        .offset(y: -4)
+                }
+                .offset(x: 84, y: -12)
+            }
 
             ZStack(alignment: .bottom) {
-                LilyPad(width: 112, animated: false)
+                LilyPad(width: 110, animated: false)
                 MascotView(
                     progress: store.todayProgress,
                     mood: store.mood,
-                    size: 104,
+                    size: 102,
                     outfits: store.outfits,
                     sparkles: store.todayProgress >= 1,
                     bands: store.todayBands,
@@ -271,11 +287,58 @@ private struct ShareDayCard: View {
             Text("dewy")
                 .font(.display(17, .bold))
                 .foregroundStyle(Palette.aquaDeep)
-            Spacer(minLength: 0)
-            Text(Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                .font(.dewy(11.5, .bold))
-                .foregroundStyle(theme.inkSoft)
+            Spacer(minLength: 6)
+            PostmarkStamp(themeName: theme.displayName)
         }
+    }
+}
+
+/// Delicate hand-inked botanical postmark cancellation stamp for the Share Postcard footer.
+private struct PostmarkStamp: View {
+    var themeName: String
+
+    private var dateStamp: String {
+        Date.now.formatted(.dateTime.month(.abbreviated).day()).uppercased()
+    }
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Canvas { context, size in
+                for row in 0..<3 {
+                    let y = size.height * (0.25 + CGFloat(row) * 0.25)
+                    var wave = Path()
+                    wave.move(to: CGPoint(x: 0, y: y))
+                    wave.addQuadCurve(
+                        to: CGPoint(x: size.width * 0.5, y: y),
+                        control: CGPoint(x: size.width * 0.25, y: y - 2.2)
+                    )
+                    wave.addQuadCurve(
+                        to: CGPoint(x: size.width, y: y),
+                        control: CGPoint(x: size.width * 0.75, y: y + 2.2)
+                    )
+                    context.stroke(
+                        wave,
+                        with: .color(Ink.soft.opacity(0.45)),
+                        style: StrokeStyle(lineWidth: 0.9, lineCap: .round)
+                    )
+                }
+            }
+            .frame(width: 18, height: 14)
+
+            Text("\(dateStamp) · \(themeName.uppercased())")
+                .font(.dewy(9.5, .bold))
+                .tracking(0.7)
+                .foregroundStyle(Ink.soft)
+                .padding(.horizontal, 8)
+                .frame(height: 21)
+                .overlay {
+                    Capsule().stroke(
+                        Ink.soft.opacity(0.42),
+                        style: StrokeStyle(lineWidth: 0.9, dash: [2.5, 2])
+                    )
+                }
+        }
+        .rotationEffect(.degrees(-1.8))
     }
 }
 

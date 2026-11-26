@@ -933,15 +933,58 @@ private func drawWorldLandmarks(
 ) {
     switch theme {
     case .lagoon:
-        drawLagoonWorld(in: &context, layout: layout, palette: palette, time: t)
+        drawLagoonWorld(in: &context, layout: layout, palette: palette, phase: phase, time: t)
     case .peach:
         drawSeasideWorld(in: &context, layout: layout, palette: palette, phase: phase, time: t)
     case .matcha:
-        drawMeadowWorld(in: &context, layout: layout, palette: palette, time: t)
+        drawMeadowWorld(in: &context, layout: layout, palette: palette, phase: phase, time: t)
     case .lavender:
-        drawCloudlandWorld(in: &context, layout: layout, palette: palette, time: t)
+        drawCloudlandWorld(in: &context, layout: layout, palette: palette, phase: phase, time: t)
     case .midnight:
-        drawStarlightWorld(in: &context, layout: layout, palette: palette, time: t)
+        drawStarlightWorld(in: &context, layout: layout, palette: palette, phase: phase, time: t)
+    }
+}
+
+/// Whisper-soft Alto's Odyssey drifting gouache mist veil nestled between far
+/// mountain/cliff planes and the mid-ground shoreline for genuine aerial depth.
+private func drawHorizonMistVeil(
+    in context: inout GraphicsContext,
+    layout: WorldLayout,
+    palette: WorldPalette,
+    phase: SkyPhase,
+    time t: Double
+) {
+    let w = layout.size.width
+    let y = layout.horizon + 4
+    let mistColor: Color = switch phase {
+    case .dawn: Color(hex: 0xFFF3D6)
+    case .day: palette.horizonGlow
+    case .dusk: Color(hex: 0xF5D4E8)
+    case .night: Color(hex: 0x9EADDE)
+    }
+    let bandRect = CGRect(x: 0, y: y - 26, width: w, height: 30)
+    let veilGrad = Gradient(stops: [
+        .init(color: mistColor.opacity(0.0), location: 0.0),
+        .init(color: mistColor.opacity(palette.isNight ? 0.22 : 0.34), location: 0.58),
+        .init(color: mistColor.opacity(palette.isNight ? 0.14 : 0.20), location: 1.0)
+    ])
+    context.fill(
+        Path(bandRect),
+        with: .linearGradient(veilGrad, startPoint: CGPoint(x: 0, y: bandRect.minY), endPoint: CGPoint(x: 0, y: bandRect.maxY))
+    )
+
+    // Three slowly drifting horizontal gouache mist wisps.
+    for i in 0..<3 {
+        let seed = Double(i) + 19.0
+        let span = Double(w + 180)
+        let speed = 2.4 + Double(i) * 0.9
+        let rawX = (sceneNoise(seed, 1.3) * span + t * speed).truncatingRemainder(dividingBy: span)
+        let cx = CGFloat(rawX) - 90
+        let cy = y - 8 - CGFloat(i) * 5.5
+        let rx = CGFloat(66 + i * 18)
+        let ry: CGFloat = 7.5
+        let rect = CGRect(x: cx - rx, y: cy - ry, width: rx * 2, height: ry * 2)
+        context.fill(Path(ellipseIn: rect), with: .color(mistColor.opacity(palette.isNight ? 0.14 : 0.24)))
     }
 }
 
@@ -951,6 +994,7 @@ private func drawLagoonWorld(
     in context: inout GraphicsContext,
     layout: WorldLayout,
     palette: WorldPalette,
+    phase: SkyPhase,
     time t: Double
 ) {
     let w = layout.size.width
@@ -982,6 +1026,9 @@ private func drawLagoonWorld(
     midRidge.addQuadCurve(to: CGPoint(x: w * 0.50, y: y + 4), control: CGPoint(x: w * 0.43, y: y - 4))
     midRidge.closeSubpath()
     context.fill(midRidge, with: .color(palette.midLand.opacity(0.52)))
+
+    // Drifting horizon mist separating far lagoon atoll from foreground coral islet.
+    drawHorizonMistVeil(in: &context, layout: layout, palette: palette, phase: phase, time: t)
 
     // Left foreground coral-sand islet anchored cleanly clear of Dewy.
     var islet = Path()
@@ -1104,6 +1151,9 @@ private func drawSeasideWorld(
     rightHeadland.addLine(to: CGPoint(x: w + 4, y: y + 4))
     rightHeadland.closeSubpath()
     context.fill(rightHeadland, with: .color(palette.farLand.opacity(0.48)))
+
+    // Atmospheric coastal haze mist between far headlands and near terracotta cliff.
+    drawHorizonMistVeil(in: &context, layout: layout, palette: palette, phase: phase, time: t)
 
     // Left tiered terracotta-sienna coastal cliff headland (framed cleanly below headerSafeTop).
     var cliff = Path()
@@ -1305,6 +1355,7 @@ private func drawMeadowWorld(
     in context: inout GraphicsContext,
     layout: WorldLayout,
     palette: WorldPalette,
+    phase: SkyPhase,
     time t: Double
 ) {
     let w = layout.size.width
@@ -1327,6 +1378,9 @@ private func drawMeadowWorld(
     farHills.addLine(to: CGPoint(x: w + 4, y: y + 4))
     farHills.closeSubpath()
     context.fill(farHills, with: .color(palette.farLand.opacity(0.82)))
+
+    // Soft valley mist separating far pastoral ridge from sunlit mid hills.
+    drawHorizonMistVeil(in: &context, layout: layout, palette: palette, phase: phase, time: t)
 
     // Plane 2: Sunlit sage rolling mid hills.
     var midHills = Path()
@@ -1406,6 +1460,7 @@ private func drawCloudlandWorld(
     in context: inout GraphicsContext,
     layout: WorldLayout,
     palette: WorldPalette,
+    phase: SkyPhase,
     time t: Double
 ) {
     let w = layout.size.width
@@ -1413,6 +1468,7 @@ private func drawCloudlandWorld(
 
     // Layered pastel paper-cut cloud terraces across the horizon.
     drawCloudTerraceBand(in: &context, width: w, baseY: y - 10, amplitude: 22, puffs: 6, color: palette.farLand.opacity(0.75), highlight: palette.landHighlight.opacity(0.5))
+    drawHorizonMistVeil(in: &context, layout: layout, palette: palette, phase: phase, time: t)
     drawCloudTerraceBand(in: &context, width: w, baseY: y + 2, amplitude: 15, puffs: 7, color: palette.midLand.opacity(0.78), highlight: palette.landHighlight.opacity(0.65))
 
     // Left companion floating cloud arch pavilion (counter-phase ethereal bob).
@@ -1545,41 +1601,45 @@ private func drawStarlightWorld(
     in context: inout GraphicsContext,
     layout: WorldLayout,
     palette: WorldPalette,
+    phase: SkyPhase,
     time t: Double
 ) {
     let w = layout.size.width
     let y = layout.horizon + 5
 
-    // Far misty violet-indigo alpine mountain ridge.
+    // Far misty violet-indigo alpine mountain ridge (eased on right for generous crescent moon clearance).
     var farPeaks = Path()
     farPeaks.move(to: CGPoint(x: -4, y: y + 4))
-    farPeaks.addLine(to: CGPoint(x: w * 0.12, y: y - 40))
-    farPeaks.addLine(to: CGPoint(x: w * 0.28, y: y - 16))
-    farPeaks.addLine(to: CGPoint(x: w * 0.44, y: y - 24))
-    farPeaks.addLine(to: CGPoint(x: w * 0.62, y: y - 12))
-    farPeaks.addLine(to: CGPoint(x: w * 0.84, y: y - 42))
-    farPeaks.addLine(to: CGPoint(x: w + 4, y: y - 18))
+    farPeaks.addLine(to: CGPoint(x: w * 0.12, y: y - 38))
+    farPeaks.addLine(to: CGPoint(x: w * 0.28, y: y - 15))
+    farPeaks.addLine(to: CGPoint(x: w * 0.44, y: y - 22))
+    farPeaks.addLine(to: CGPoint(x: w * 0.63, y: y - 10))
+    farPeaks.addLine(to: CGPoint(x: w * 0.88, y: y - 30))
+    farPeaks.addLine(to: CGPoint(x: w + 4, y: y - 16))
     farPeaks.addLine(to: CGPoint(x: w + 4, y: y + 4))
     farPeaks.closeSubpath()
     context.fill(farPeaks, with: .color(palette.farLand.opacity(0.82)))
 
-    // Mid dark cobalt alpine ridge.
+    // Cool silver-indigo alpine mist drifting between far peaks and shoreline pines.
+    drawHorizonMistVeil(in: &context, layout: layout, palette: palette, phase: phase, time: t)
+
+    // Mid dark cobalt alpine ridge (gently eased under crescent moon pocket).
     var midPeaks = Path()
     midPeaks.move(to: CGPoint(x: -4, y: y + 4))
-    midPeaks.addLine(to: CGPoint(x: w * 0.06, y: y - 28))
+    midPeaks.addLine(to: CGPoint(x: w * 0.06, y: y - 26))
     midPeaks.addLine(to: CGPoint(x: w * 0.24, y: y - 8))
     midPeaks.addLine(to: CGPoint(x: w * 0.50, y: y + 2))
-    midPeaks.addLine(to: CGPoint(x: w * 0.74, y: y - 10))
-    midPeaks.addLine(to: CGPoint(x: w * 0.92, y: y - 30))
-    midPeaks.addLine(to: CGPoint(x: w + 4, y: y - 14))
+    midPeaks.addLine(to: CGPoint(x: w * 0.76, y: y - 7))
+    midPeaks.addLine(to: CGPoint(x: w * 0.93, y: y - 21))
+    midPeaks.addLine(to: CGPoint(x: w + 4, y: y - 12))
     midPeaks.addLine(to: CGPoint(x: w + 4, y: y + 4))
     midPeaks.closeSubpath()
     context.fill(midPeaks, with: .color(palette.midLand))
 
-    // Left & right evergreen pine forest silhouettes framing open center behind Dewy.
+    // Left & right evergreen pine silhouettes (right flank eased ~10pt lower for serene moon clearance).
     let pineSpecs: [(xFrac: CGFloat, h: CGFloat)] = [
-        (0.03, 36), (0.08, 44), (0.14, 32), (0.19, 25), (0.24, 18),
-        (0.77, 19), (0.82, 28), (0.88, 39), (0.94, 44), (0.98, 30)
+        (0.03, 35), (0.08, 42), (0.14, 30), (0.19, 24), (0.24, 18),
+        (0.79, 15), (0.85, 22), (0.91, 30), (0.96, 33), (0.99, 24)
     ]
     let sway = CGFloat(sin(t * 0.5)) * 0.8
     for pine in pineSpecs {
@@ -1713,27 +1773,53 @@ private func drawPondForegroundDetails(
     palette: WorldPalette,
     time t: Double
 ) {
-    guard theme == .matcha else { return }
     let w = layout.size.width
-    let y = layout.horizon + 12
-    let sway = CGFloat(sin(t * 1.1)) * 3.2
+    let yShore = layout.horizon + 12
+    let sway = CGFloat(sin(t * 1.1)) * 2.4
 
-    // Delicate swaying botanical reeds & cattails tucked cleanly at far edges.
-    let leftStems: [(x: CGFloat, h: CGFloat, lean: CGFloat)] = [
-        (w * 0.03, 28, -5), (w * 0.055, 34, 4), (w * 0.08, 22, 8)
+    // Ultra-delicate silhouetted shoreline reeds & sea-grass blades tucked strictly inside
+    // extreme outer margins (x < 0.052*w and x > 0.948*w) — zero overlap with decor or pads.
+    let reedColor: Color = switch theme {
+    case .lagoon: palette.accentB.opacity(palette.isNight ? 0.52 : 0.42)
+    case .peach: palette.nearLand.opacity(palette.isNight ? 0.48 : 0.36)
+    case .matcha: palette.accentA.opacity(palette.isNight ? 0.56 : 0.72)
+    case .lavender: palette.accentA.opacity(palette.isNight ? 0.44 : 0.34)
+    case .midnight: palette.nearLand.opacity(0.62)
+    }
+
+    let leftShore: [(x: CGFloat, h: CGFloat, lean: CGFloat)] = [
+        (w * 0.010, 26, 4), (w * 0.025, 34, 7), (w * 0.040, 21, 5)
     ]
-    let rightStems: [(x: CGFloat, h: CGFloat, lean: CGFloat)] = [
-        (w * 0.92, 24, -7), (w * 0.945, 34, -3), (w * 0.97, 26, 5)
+    let rightShore: [(x: CGFloat, h: CGFloat, lean: CGFloat)] = [
+        (w * 0.960, 22, -5), (w * 0.975, 34, -7), (w * 0.990, 25, -4)
     ]
 
-    for stem in leftStems + rightStems {
-        var reed = Path()
-        reed.move(to: CGPoint(x: stem.x, y: y))
-        reed.addQuadCurve(
-            to: CGPoint(x: stem.x + stem.lean + sway, y: y - stem.h),
-            control: CGPoint(x: stem.x + stem.lean * 0.3, y: y - stem.h * 0.55)
+    for stem in leftShore + rightShore {
+        var blade = Path()
+        blade.move(to: CGPoint(x: stem.x, y: yShore))
+        blade.addQuadCurve(
+            to: CGPoint(x: stem.x + stem.lean + sway, y: yShore - stem.h),
+            control: CGPoint(x: stem.x + stem.lean * 0.35, y: yShore - stem.h * 0.55)
         )
-        context.stroke(reed, with: .color(palette.accentA), style: StrokeStyle(lineWidth: 2.0, lineCap: .round))
+        context.stroke(blade, with: .color(reedColor), style: StrokeStyle(lineWidth: theme == .matcha ? 2.0 : 1.5, lineCap: .round))
+    }
+
+    // Whisper-soft lower outer corner framing grass blades (strictly x < 0.045*w / x > 0.955*w, well below floating decor).
+    let bottomY = layout.size.height - 6
+    if bottomY > layout.horizon + 210 {
+        let lowerBlades: [(x: CGFloat, h: CGFloat, lean: CGFloat)] = [
+            (w * 0.008, 36, 9), (w * 0.024, 26, 7),
+            (w * 0.976, 26, -7), (w * 0.992, 36, -9)
+        ]
+        for bladeSpec in lowerBlades {
+            var grass = Path()
+            grass.move(to: CGPoint(x: bladeSpec.x, y: bottomY))
+            grass.addQuadCurve(
+                to: CGPoint(x: bladeSpec.x + bladeSpec.lean + sway * 0.7, y: bottomY - bladeSpec.h),
+                control: CGPoint(x: bladeSpec.x + bladeSpec.lean * 0.3, y: bottomY - bladeSpec.h * 0.55)
+            )
+            context.stroke(grass, with: .color(reedColor.opacity(0.72)), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+        }
     }
 }
 

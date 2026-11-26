@@ -10,6 +10,8 @@ struct FriendView: View {
     var animated: Bool = true
     var celebrateTrigger: Int = 0
     var isNight: Bool = false
+    /// Additional phase offset in seconds so paired companions never breathe or blink in unison.
+    var phaseOffset: Double = 0
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var celebrateStart: Date?
@@ -48,8 +50,8 @@ struct FriendView: View {
     }
 
     private func friendCanvas(time rawTime: Double, joy: Double) -> some View {
-        let phase = FriendArt.phaseOffset(for: friend)
-        let t = rawTime + phase
+        let totalPhase = FriendArt.phaseOffset(for: friend) + phaseOffset
+        let t = rawTime + totalPhase
         return Canvas { context, canvasSize in
             let u = min(canvasSize.width, canvasSize.height) / 100.0
             let ox = (canvasSize.width - 100 * u) * 0.5
@@ -79,8 +81,9 @@ struct FriendView: View {
                 }
             }
 
-            // Species-specific gentle breathing & rhythm transform.
-            let blink = FriendArt.blinkOpenness(time: t, live: isLive)
+            // Species-specific gentle breathing & rhythm transform with per-companion staggered blink cadence.
+            let blinkPeriod = 3.9 + abs(totalPhase * 0.37).truncatingRemainder(dividingBy: 1.1)
+            let blink = FriendArt.blinkOpenness(time: t, period: blinkPeriod, live: isLive)
             let state = FriendAnim(time: t, breath: breath, blink: blink, joy: joy, isNight: isNight)
 
             context.drawLayer { charCtx in
@@ -221,12 +224,19 @@ private enum FriendArt {
         }
     }
 
-    static func blinkOpenness(time: Double, live: Bool) -> CGFloat {
+    static func blinkOpenness(time: Double, period: Double = 4.2, live: Bool) -> CGFloat {
         guard live else { return 1 }
-        let cycle = time.truncatingRemainder(dividingBy: 4.2)
+        let cycle = time.truncatingRemainder(dividingBy: period)
         guard cycle < 0.17 else { return 1 }
         let shut = sin((cycle / 0.17) * .pi)
         return max(0.06, CGFloat(1 - shut))
+    }
+
+    /// Brief asynchronous double-beat ear twitch (~every 4.5s) for tactile living charm.
+    private static func twitchPulse(time: Double, period: Double = 4.5, offset: Double = 0) -> Double {
+        let cycle = (time + offset).truncatingRemainder(dividingBy: period)
+        guard cycle >= 0 && cycle < 0.26 else { return 0 }
+        return sin((cycle / 0.26) * .pi * 2) * sin((cycle / 0.26) * .pi)
     }
 
     static func draw(
@@ -344,12 +354,15 @@ private enum FriendArt {
         y: CGFloat,
         radius: CGFloat = 4.5,
         color: Color = blush,
+        joy: Double = 0,
         in context: inout GraphicsContext,
         p: (CGFloat, CGFloat) -> CGPoint,
         u: CGFloat
     ) {
-        context.fill(oval(lx, y, radius, radius * 0.65, p: p, u: u), with: .color(color.opacity(0.55)))
-        context.fill(oval(rx, y, radius, radius * 0.65, p: p, u: u), with: .color(color.opacity(0.55)))
+        let bloomR = radius * (1 + CGFloat(joy) * 0.24)
+        let alpha = min(0.84, 0.55 + joy * 0.26)
+        context.fill(oval(lx, y, bloomR, bloomR * 0.66, p: p, u: u), with: .color(color.opacity(alpha)))
+        context.fill(oval(rx, y, bloomR, bloomR * 0.66, p: p, u: u), with: .color(color.opacity(alpha)))
     }
 
     // MARK: 1. Mochi — Curled Ginger-Cream Tabby Cat
@@ -365,7 +378,7 @@ private enum FriendArt {
         let gingerDeep = Color(hex: 0xC86B3B)
         let bibCream = Color(hex: 0xFFF4E4)
         let tailWag = CGFloat(sin(anim.time * (2.6 + anim.joy * 6)) * (5.5 + anim.joy * 4))
-        let earFlick = CGFloat(max(0, sin(anim.time * 1.7)) > 0.94 ? 2.5 : 0)
+        let earFlick = CGFloat(twitchPulse(time: anim.time, period: 4.5, offset: 0.4) * 3.4)
         let bob = CGFloat(anim.breath * 1.1)
 
         // Curled striped tail sweeping up on the right.
@@ -468,7 +481,7 @@ private enum FriendArt {
                 context.stroke(w, with: .color(ink.opacity(0.68)), style: stroke(u, width: 1.3))
             }
         }
-        drawCheeks(lx: 34, rx: 66, y: 57 + bob, in: &context, p: p, u: u)
+        drawCheeks(lx: 34, rx: 66, y: 57 + bob, joy: anim.joy, in: &context, p: p, u: u)
         drawEye(cx: 40, cy: 50 + bob, anim: anim, in: &context, p: p, u: u)
         drawEye(cx: 60, cy: 50 + bob, anim: anim, in: &context, p: p, u: u)
 
@@ -498,7 +511,8 @@ private enum FriendArt {
         let lavMid = Color(hex: 0xD2C0F0)
         let earPink = Color(hex: 0xF7B8CC)
         let bob = CGFloat(anim.breath * 1.2)
-        let earSwing = CGFloat(sin(anim.time * (2.5 + anim.joy * 6) - 0.5) * (3.2 + anim.joy * 3))
+        let earTwitch = CGFloat(twitchPulse(time: anim.time, period: 4.7, offset: 1.5) * 3.8)
+        let earSwing = CGFloat(sin(anim.time * (2.5 + anim.joy * 6) - 0.5) * (3.2 + anim.joy * 3)) + earTwitch
         let noseTwitch = CGFloat(sin(anim.time * 7.5) > 0.72 ? -0.9 : 0)
 
         // Fluffy cotton tail peeking behind left hip.
@@ -566,7 +580,7 @@ private enum FriendArt {
         }
 
         // Sweet hare face.
-        drawCheeks(lx: 38, rx: 62, y: 56 + bob, radius: 4.0, in: &context, p: p, u: u)
+        drawCheeks(lx: 38, rx: 62, y: 56 + bob, radius: 4.0, joy: anim.joy, in: &context, p: p, u: u)
         drawEye(cx: 42.5, cy: 50 + bob, rx: 2.9, ry: 3.4, anim: anim, in: &context, p: p, u: u)
         drawEye(cx: 57.5, cy: 50 + bob, rx: 2.9, ry: 3.4, anim: anim, in: &context, p: p, u: u)
 
@@ -644,7 +658,7 @@ private enum FriendArt {
         }
 
         // Wide joyful pond-frog smile & rosy cheeks.
-        drawCheeks(lx: 28, rx: 72, y: 63 + bob, radius: 5.0, in: &context, p: p, u: u)
+        drawCheeks(lx: 28, rx: 72, y: 63 + bob, radius: 5.0, joy: anim.joy, in: &context, p: p, u: u)
         var smile = Path()
         smile.move(to: p(35, 61 + bob))
         smile.addQuadCurve(to: p(65, 61 + bob), control: p(50, 69.5 + bob))
@@ -709,11 +723,16 @@ private enum FriendArt {
         context.fill(tail, with: .color(Color(hex: 0xFFC7D8).opacity(0.92)))
         context.stroke(tail, with: .color(ink.opacity(0.78)), style: stroke(u, width: 1.7))
 
-        // Six feathery external coral gill fronds (3 left, 3 right) waving like underwater currents!
+        // Six feathery external coral gill fronds (3 left, 3 right) waving with staggered underwater phase lag!
         let angles: [Double] = [-38, -8, 22]
         for side in [CGFloat(-1), 1] {
+            let sideShift: Double = side < 0 ? 0.0 : 1.35
             for (i, baseDeg) in angles.enumerated() {
-                let wave = sin(anim.time * (3.0 + anim.joy * 7) + Double(i) * 0.9 + Double(side)) * (7 + anim.joy * 6)
+                let speed = 2.8 + anim.joy * 6.5
+                let phase = Double(i) * 1.05 + sideShift
+                let primary = sin(anim.time * speed + phase) * (7.2 + anim.joy * 6.0)
+                let harmonic = sin(anim.time * speed * 1.65 - phase * 0.7) * 2.2
+                let wave = primary + harmonic
                 context.drawLayer { gillCtx in
                     let root = p(50 + side * 20, 44 + CGFloat(i) * 4.5 + bob)
                     gillCtx.translateBy(x: root.x, y: root.y)
@@ -758,7 +777,7 @@ private enum FriendArt {
         }
 
         // Wide serene axolotl smile & wide-set sweet ink eyes.
-        drawCheeks(lx: 33, rx: 67, y: 55 + bob, color: gillCoral, in: &context, p: p, u: u)
+        drawCheeks(lx: 33, rx: 67, y: 55 + bob, color: gillCoral, joy: anim.joy, in: &context, p: p, u: u)
         drawEye(cx: 37.5, cy: 48.5 + bob, rx: 3.0, ry: 3.3, anim: anim, in: &context, p: p, u: u)
         drawEye(cx: 62.5, cy: 48.5 + bob, rx: 3.0, ry: 3.3, anim: anim, in: &context, p: p, u: u)
         var smile = Path()
@@ -848,7 +867,7 @@ private enum FriendArt {
             mouth.addQuadCurve(to: p(54, 55.6 + bob), control: p(52, 57.5 + bob))
             ctx.stroke(mouth, with: .color(ink), style: stroke(u, width: 1.65))
 
-            drawCheeks(lx: 32, rx: 68, y: 52 + bob, in: &ctx, p: p, u: u)
+            drawCheeks(lx: 32, rx: 68, y: 52 + bob, joy: anim.joy, in: &ctx, p: p, u: u)
             drawEye(cx: 38.5, cy: 44 + bob, rx: 2.8, ry: 3.1, anim: anim, in: &ctx, p: p, u: u)
             drawEye(cx: 61.5, cy: 44 + bob, rx: 2.8, ry: 3.1, anim: anim, in: &ctx, p: p, u: u)
         }
@@ -929,7 +948,7 @@ private enum FriendArt {
             ctx.stroke(tuft, with: .color(slateMid), style: stroke(u, width: 2.8))
 
             // Rosy cheeks, expressive eyes, and sunny marigold diamond beak.
-            drawCheeks(lx: 36, rx: 64, y: 50, radius: 4.0, in: &ctx, p: p, u: u)
+            drawCheeks(lx: 36, rx: 64, y: 50, radius: 4.0, joy: anim.joy, in: &ctx, p: p, u: u)
             drawEye(cx: 40, cy: 44.5, rx: 2.9, ry: 3.3, anim: anim, in: &ctx, p: p, u: u)
             drawEye(cx: 60, cy: 44.5, rx: 2.9, ry: 3.3, anim: anim, in: &ctx, p: p, u: u)
 
@@ -996,7 +1015,8 @@ private enum FriendArt {
             context.stroke(paw, with: .color(ink.opacity(0.86)), style: stroke(u, width: 1.5))
         }
 
-        // Tall dramatic triangular fox ears with charcoal tips.
+        // Tall dramatic triangular fox ears with charcoal tips & alert woodland ear twitch!
+        let foxEarTwitch = CGFloat(twitchPulse(time: anim.time, period: 4.4, offset: 2.1) * 3.6)
         var earL = Path()
         earL.move(to: p(28, 43 + bob))
         earL.addLine(to: p(22, 15 + bob))
@@ -1005,11 +1025,11 @@ private enum FriendArt {
 
         var earR = Path()
         earR.move(to: p(68, 43 + bob))
-        earR.addLine(to: p(74, 15 + bob))
+        earR.addLine(to: p(74 + foxEarTwitch, 15 + bob + foxEarTwitch * 0.45))
         earR.addLine(to: p(53, 32 + bob))
         earR.closeSubpath()
 
-        for (ear, tipX) in [(earL, CGFloat(22)), (earR, CGFloat(74))] {
+        for (ear, tipX) in [(earL, CGFloat(22)), (earR, CGFloat(74) + foxEarTwitch)] {
             context.fill(ear, with: .color(rustMid))
             context.drawLayer { clipped in
                 clipped.clip(to: ear)
@@ -1046,7 +1066,7 @@ private enum FriendArt {
         // Clever eyes, pointed dark nose & gentle fox smile.
         drawEye(cx: 38, cy: 46 + bob, rx: 2.8, ry: 3.1, anim: anim, in: &context, p: p, u: u)
         drawEye(cx: 58, cy: 46 + bob, rx: 2.8, ry: 3.1, anim: anim, in: &context, p: p, u: u)
-        drawCheeks(lx: 33, rx: 63, y: 52 + bob, radius: 3.5, in: &context, p: p, u: u)
+        drawCheeks(lx: 33, rx: 63, y: 52 + bob, radius: 3.5, joy: anim.joy, in: &context, p: p, u: u)
         let nose = oval(48, 55.5 + bob, 3.2, 2.3, p: p, u: u)
         context.fill(nose, with: .color(sockDark))
         var smile = Path()
@@ -1130,7 +1150,7 @@ private enum FriendArt {
         context.stroke(body, with: .color(ink.opacity(0.86)), style: stroke(u, width: 1.9))
 
         // Rosy peach cheeks, bright eyes & tiny tangerine diamond beak.
-        drawCheeks(lx: 35.5, rx: 64.5, y: 55.5 - bounce, radius: 3.8, color: Color(hex: 0xF78D78), in: &context, p: p, u: u)
+        drawCheeks(lx: 35.5, rx: 64.5, y: 55.5 - bounce, radius: 3.8, color: Color(hex: 0xF78D78), joy: anim.joy, in: &context, p: p, u: u)
         drawEye(cx: 40.5, cy: 49.5 - bounce, rx: 2.9, ry: 3.2, anim: anim, in: &context, p: p, u: u)
         drawEye(cx: 59.5, cy: 49.5 - bounce, rx: 2.9, ry: 3.2, anim: anim, in: &context, p: p, u: u)
 
@@ -1159,10 +1179,12 @@ private enum FriendArt {
         let bambooLight = Color(hex: 0x9CD99C)
         let bob = CGFloat(anim.breath * 1.0)
         let munch = CGFloat(sin(anim.time * (3.5 + anim.joy * 6)) * 1.8)
+        let nibbleNod = CGFloat(max(0, sin(anim.time * 3.5)) * 1.1)
+        let headY = bob + nibbleNod
 
         // Round smoky-charcoal panda ears.
         for ex in [CGFloat(29), 71] {
-            let ear = oval(ex, 31 + bob, 9.5, 9.5, p: p, u: u)
+            let ear = oval(ex, 31 + headY, 9.5, 9.5, p: p, u: u)
             context.fill(ear, with: .color(charcoal))
             context.stroke(ear, with: .color(ink), style: stroke(u, width: 1.6))
         }
@@ -1170,10 +1192,10 @@ private enum FriendArt {
         // Chubby seated rice-paper panda body + head.
         var body = Path()
         body.move(to: p(24, 79))
-        body.addCurve(to: p(25, 49 + bob), control1: p(19, 68), control2: p(21, 58 + bob))
-        body.addCurve(to: p(50, 28 + bob), control1: p(27, 34 + bob), control2: p(37, 28 + bob))
-        body.addCurve(to: p(75, 49 + bob), control1: p(63, 28 + bob), control2: p(73, 34 + bob))
-        body.addCurve(to: p(76, 79), control1: p(79, 58 + bob), control2: p(81, 68))
+        body.addCurve(to: p(25, 49 + headY), control1: p(19, 68), control2: p(21, 58 + headY))
+        body.addCurve(to: p(50, 28 + headY), control1: p(27, 34 + headY), control2: p(37, 28 + headY))
+        body.addCurve(to: p(75, 49 + headY), control1: p(63, 28 + headY), control2: p(73, 34 + headY))
+        body.addCurve(to: p(76, 79), control1: p(79, 58 + headY), control2: p(81, 68))
         body.addQuadCurve(to: p(24, 79), control: p(50, 88))
         body.closeSubpath()
 
@@ -1201,7 +1223,7 @@ private enum FriendArt {
         // Tilted charcoal eye patches with bright soulful eyes inside!
         for side in [CGFloat(-1), 1] {
             context.drawLayer { patchCtx in
-                let c = p(50 + side * 12, 47.5 + bob)
+                let c = p(50 + side * 12, 47.5 + headY)
                 patchCtx.translateBy(x: c.x, y: c.y)
                 patchCtx.rotate(by: .degrees(Double(side) * 18))
                 let patch = Path(ellipseIn: CGRect(x: -7.5 * u, y: -5.8 * u, width: 15 * u, height: 11.6 * u))
@@ -1209,23 +1231,23 @@ private enum FriendArt {
             }
             if anim.isBeaming {
                 var arc = Path()
-                arc.move(to: p(50 + side * 12 - 3.6, 48 + bob))
-                arc.addQuadCurve(to: p(50 + side * 12 + 3.6, 48 + bob), control: p(50 + side * 12, 43.5 + bob))
+                arc.move(to: p(50 + side * 12 - 3.6, 48 + headY))
+                arc.addQuadCurve(to: p(50 + side * 12 + 3.6, 48 + headY), control: p(50 + side * 12, 43.5 + headY))
                 context.stroke(arc, with: .color(cream), style: stroke(u, width: 2.0))
             } else if anim.blink >= 0.25 {
                 let cx = 50 + side * 11.5
-                let cy = 47 + bob
+                let cy = 47 + headY
                 context.fill(oval(cx, cy, 2.4, 2.7 * anim.blink, p: p, u: u), with: .color(cream))
                 context.fill(oval(cx, cy, 1.3, 1.5 * anim.blink, p: p, u: u), with: .color(ink))
                 context.fill(oval(cx - 0.6, cy - 0.8, 0.7, 0.7, p: p, u: u), with: .color(cream))
             }
         }
 
-        drawCheeks(lx: 31, rx: 69, y: 54 + bob, radius: 4.0, in: &context, p: p, u: u)
-        context.fill(oval(50, 52.5 + bob, 3.8, 2.6, p: p, u: u), with: .color(charcoal))
+        drawCheeks(lx: 31, rx: 69, y: 54 + headY, radius: 4.0, joy: anim.joy, in: &context, p: p, u: u)
+        context.fill(oval(50, 52.5 + headY, 3.8, 2.6, p: p, u: u), with: .color(charcoal))
         var mouth = Path()
-        mouth.move(to: p(46, 57 + bob))
-        mouth.addQuadCurve(to: p(54, 57 + bob), control: p(50, 60.5 + bob))
+        mouth.move(to: p(46, 57 + headY))
+        mouth.addQuadCurve(to: p(54, 57 + headY), control: p(50, 60.5 + headY))
         context.stroke(mouth, with: .color(ink), style: stroke(u, width: 1.6))
 
         // Slender fresh sage bamboo sprig with crisp warm-ink contour & veined leaves popping on parchment!
@@ -1373,7 +1395,8 @@ private enum FriendArt {
 
         // Gentle pony eye, rosy cheek & tiny smiling muzzle.
         drawEye(cx: 35.5, cy: 38.5 + bob, rx: 2.7, ry: 3.1, anim: anim, in: &context, p: p, u: u)
-        context.fill(oval(33, 43.5 + bob, 3.6, 2.3, p: p, u: u), with: .color(blush.opacity(0.58)))
+        let bloom = 1 + CGFloat(anim.joy) * 0.24
+        context.fill(oval(33, 43.5 + bob, 3.6 * bloom, 2.3 * bloom, p: p, u: u), with: .color(blush.opacity(min(0.84, 0.58 + anim.joy * 0.26))))
         var smile = Path()
         smile.move(to: p(23, 43.5 + bob))
         smile.addQuadCurve(to: p(28.5, 43.5 + bob), control: p(26, 46 + bob))
@@ -1468,7 +1491,8 @@ private enum FriendArt {
 
         // Bright dino eye, rosy cheek & happy snout smile.
         drawEye(cx: 35.5, cy: 41.5 + bob, rx: 3.1, ry: 3.4, anim: anim, in: &context, p: p, u: u)
-        context.fill(oval(40, 47 + bob, 4.0, 2.6, p: p, u: u), with: .color(blush.opacity(0.55)))
+        let bloom = 1 + CGFloat(anim.joy) * 0.24
+        context.fill(oval(40, 47 + bob, 4.0 * bloom, 2.6 * bloom, p: p, u: u), with: .color(blush.opacity(min(0.84, 0.55 + anim.joy * 0.26))))
         var smile = Path()
         smile.move(to: p(19.5, 47 + bob))
         smile.addQuadCurve(to: p(31.5, 48 + bob), control: p(25.5, 51 + bob))
@@ -1544,7 +1568,7 @@ private enum FriendArt {
         context.stroke(dome, with: .color(ink.opacity(0.86)), style: stroke(u, width: 1.9))
 
         // Low-set expressive eyes, rosy blush washes & sweet curled 'o' mouth!
-        drawCheeks(lx: 33, rx: 67, y: 55 + floatY, radius: 4.2, color: Color(hex: 0xF78BA8), in: &context, p: p, u: u)
+        drawCheeks(lx: 33, rx: 67, y: 55 + floatY, radius: 4.2, color: Color(hex: 0xF78BA8), joy: anim.joy, in: &context, p: p, u: u)
         drawEye(cx: 40, cy: 49.5 + floatY, rx: 3.1, ry: 3.6, anim: anim, in: &context, p: p, u: u)
         drawEye(cx: 60, cy: 49.5 + floatY, rx: 3.1, ry: 3.6, anim: anim, in: &context, p: p, u: u)
 

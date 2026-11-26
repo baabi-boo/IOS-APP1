@@ -177,6 +177,8 @@ struct MascotView: View {
     /// Width of the whole figure in points.
     var size: CGFloat = 220
     var bounceTrigger: Int = 0
+    /// Fires a blissful sip-gulp delight face and an internal burst of effervescent fizz bubbles.
+    var sipTrigger: Int = 0
     /// Wardrobe items to wear.
     var outfits: [Outfit] = []
     /// Little twinkles around Dewy (always on when the goal is met).
@@ -196,6 +198,7 @@ struct MascotView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var level: Double = 0
     @State private var waveStart: Date?
+    @State private var sipStart: Date?
 
     private var height: CGFloat { size * DewyGeometry.canvas.height / DewyGeometry.canvas.width }
 
@@ -222,11 +225,15 @@ struct MascotView: View {
             if animated {
                 TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: !isLive)) { timeline in
                     let now = timeline.date
-                    figure(time: isLive ? now.timeIntervalSinceReferenceDate : 0.6, wave: waveAmount(at: now))
+                    let t = isLive ? now.timeIntervalSinceReferenceDate : 0.6
+                    let wave = isLive ? waveAmount(at: now) : 0
+                    let gulp = isLive ? gulpAmount(at: now) : 0
+                    let sipP = isLive ? sipProgress(at: now) : 0
+                    figure(time: t, wave: wave, gulp: gulp, sipProgress: sipP)
                 }
             } else {
                 // Decorative and widget mascots are a single still frame: no timeline at all.
-                figure(time: 0.6, wave: 0)
+                figure(time: 0.6, wave: 0, gulp: 0, sipProgress: 0)
             }
         }
         .frame(width: size, height: height)
@@ -244,11 +251,14 @@ struct MascotView: View {
         .onChange(of: bounceTrigger) {
             waveStart = .now
         }
+        .onChange(of: sipTrigger) {
+            sipStart = .now
+        }
         .accessibilityElement()
         .accessibilityLabel("Dewy is \(mood.rawValue), \(Int(progress * 100)) percent of today's goal")
     }
 
-    private func figure(time t: Double, wave: Double) -> some View {
+    private func figure(time t: Double, wave: Double, gulp: Double, sipProgress: Double) -> some View {
         let u = size / DewyGeometry.canvas.width
         let tilt = isLive ? (slosh?.angle ?? 0) : 0
         let chop = isLive ? (slosh?.energy ?? 0) : 0
@@ -280,7 +290,9 @@ struct MascotView: View {
                 bands: resolvedBands,
                 time: t,
                 tilt: tilt,
-                chop: chop + wave * 0.6,
+                chop: chop + wave * 0.6 + gulp * 0.52,
+                gulp: gulp,
+                sipProgress: sipProgress,
                 isNight: isNight
             )
             .clipShape(DewyCanvasShape(tucksCrown: tucksCrown))
@@ -292,6 +304,8 @@ struct MascotView: View {
                 time: t,
                 blinks: isLive && (!LaunchOptions.isDemo || LaunchOptions.screenshot == "celebrate"),
                 hidesEyes: outfits.contains(.sunglasses),
+                gulp: gulp,
+                sipProgress: sipProgress,
                 isNight: isNight
             )
 
@@ -321,6 +335,29 @@ struct MascotView: View {
         let rise = min(elapsed / 0.18, 1)
         let fall = min(max((1.6 - elapsed) / 0.35, 0), 1)
         return rise * fall
+    }
+
+    /// 0…1 blissful 0.85s sip-gulp envelope (0.14s rise, 0.42s radiant hold, 0.29s ease-back).
+    private func gulpAmount(at now: Date) -> Double {
+        guard let sipStart else { return 0 }
+        let elapsed = now.timeIntervalSince(sipStart)
+        guard elapsed >= 0, elapsed < 0.85 else { return 0 }
+        if elapsed < 0.14 {
+            return sin((elapsed / 0.14) * (.pi / 2))
+        }
+        if elapsed < 0.56 {
+            return 1.0
+        }
+        let tail = (elapsed - 0.56) / 0.29
+        return 0.5 * (1.0 + cos(tail * .pi))
+    }
+
+    /// 0…1 normalized elapsed progress across the 0.85s sip window for fizz rise & mouth morph.
+    private func sipProgress(at now: Date) -> Double {
+        guard let sipStart else { return 0 }
+        let elapsed = now.timeIntervalSince(sipStart)
+        guard elapsed >= 0, elapsed < 0.85 else { return 0 }
+        return elapsed / 0.85
     }
 }
 
@@ -562,6 +599,8 @@ private struct MascotLiquid: View, Animatable {
     var time: Double
     var tilt: Double
     var chop: Double
+    var gulp: Double
+    var sipProgress: Double
     var isNight: Bool
 
     var animatableData: Double {
@@ -578,6 +617,9 @@ private struct MascotLiquid: View, Animatable {
             drawLiquid(in: &context, p: p, u: u)
             drawCaustics(in: &context, p: p, u: u)
             drawBubbles(in: &context, p: p, u: u)
+            if gulp > 0.02 {
+                drawSipFizz(in: &context, p: p, u: u)
+            }
         }
         .allowsHitTesting(false)
     }
@@ -627,46 +669,58 @@ private struct MascotLiquid: View, Animatable {
     private func drawLiquid(in context: inout GraphicsContext, p: (CGFloat, CGFloat) -> CGPoint, u: CGFloat) {
         guard !bands.isEmpty else { return }
         let surface = bands.firstIndex { $0.upTo >= level - 0.0005 } ?? (bands.count - 1)
-        let amp = CGFloat(4.2 + chop * 6.8)
+        let amp = CGFloat(4.2 + chop * 6.8 + gulp * 2.4)
         let foamTint = isNight ? Color(hex: 0xE6EEFF) : Color(hex: 0xFFFBF2)
 
         // Translucent back meniscus adds painterly glass-vessel depth.
         context.fill(
-            wavePath(level: level + 0.015, amplitude: amp * 0.85, phase: time * 1.6 + 2.3, leans: true, p: p, closed: true),
-            with: .color(bands[surface].color.blended(with: foamTint, by: 0.48).opacity(0.72))
+            wavePath(level: level + 0.016, amplitude: amp * 0.85, phase: time * 1.6 + 2.3, leans: true, p: p, closed: true),
+            with: .color(bands[surface].color.blended(with: foamTint, by: 0.48).opacity(0.74))
         )
 
         for index in stride(from: surface, through: 0, by: -1) {
             let isSurface = index == surface
             let top = isSurface ? level : bands[index].upTo
             guard top > 0.001 else { continue }
-            let amplitude: CGFloat = isSurface ? amp : 2.1
+            let amplitude: CGFloat = isSurface ? amp : 2.2
             let phase = isSurface ? time * 2.15 + 0.4 : time * 0.55 + Double(index) * 1.85
             let rawColor = bands[index].color
             let pigment = isNight ? rawColor.blended(with: Color(hex: 0x39448A), by: 0.16) : rawColor
             let fillPath = wavePath(level: top, amplitude: amplitude, phase: phase, leans: isSurface, p: p, closed: true)
             let topY = surfaceY(level: top, x: 100, amplitude: 0, phase: 0, leans: false)
 
+            // Rich per-drink watercolor depth: sunlit top wash, vibrant core, translucent deeper base.
             context.fill(fillPath, with: .linearGradient(
-                Gradient(colors: [
-                    pigment.blended(with: foamTint, by: 0.24),
-                    pigment,
-                    pigment.blended(with: Storybook.ink, by: 0.09)
+                Gradient(stops: [
+                    .init(color: pigment.blended(with: foamTint, by: 0.28), location: 0),
+                    .init(color: pigment, location: 0.42),
+                    .init(color: pigment.blended(with: Storybook.ink, by: 0.14), location: 1)
                 ]),
                 startPoint: p(0, topY),
                 endPoint: p(0, 222)
             ))
 
-            // Hand-painted creamy meniscus shimmer band along each layer's crest.
+            // Subtle luminous sunlit refraction sheen glowing along the left porcelain wall.
+            context.fill(fillPath, with: .linearGradient(
+                Gradient(colors: [
+                    pigment.blended(with: foamTint, by: 0.58).opacity(isNight ? 0.18 : 0.30),
+                    Color.clear
+                ]),
+                startPoint: p(34, topY + 24),
+                endPoint: p(88, topY + 24)
+            ))
+
+            // Hand-painted hue-tailored creamy meniscus foam ribbon along each layer's crest.
+            let crestWidth: CGFloat = isSurface ? (5.8 + CGFloat(gulp) * 1.6) : 3.4
             context.stroke(
                 wavePath(level: top - 0.011, amplitude: amplitude, phase: phase, leans: isSurface, p: p, closed: false),
-                with: .color(pigment.blended(with: foamTint, by: 0.6).opacity(0.88)),
-                style: StrokeStyle(lineWidth: (isSurface ? 5.6 : 3.2) * u, lineCap: .round)
+                with: .color(pigment.blended(with: foamTint, by: 0.64).opacity(0.9)),
+                style: StrokeStyle(lineWidth: crestWidth * u, lineCap: .round)
             )
             context.stroke(
                 wavePath(level: top, amplitude: amplitude, phase: phase, leans: isSurface, p: p, closed: false),
-                with: .color(foamTint.opacity(isSurface ? 0.86 : 0.48)),
-                style: StrokeStyle(lineWidth: 1.7 * u, lineCap: .round)
+                with: .color(foamTint.opacity(isSurface ? (0.86 + gulp * 0.10) : 0.52)),
+                style: StrokeStyle(lineWidth: 1.8 * u, lineCap: .round)
             )
         }
     }
@@ -724,6 +778,43 @@ private struct MascotLiquid: View, Animatable {
         }
     }
 
+    /// Lively celebratory burst of 12 rising pearlescent fizz bubbles triggered on every sip.
+    private func drawSipFizz(in context: inout GraphicsContext, p: (CGFloat, CGFloat) -> CGPoint, u: CGFloat) {
+        let surface = Double(DewyGeometry.bodyBottom - CGFloat(level) * (DewyGeometry.bodyBottom - DewyGeometry.bodyTop))
+        let column = Double(DewyGeometry.bodyBottom) - surface
+        guard column > 14 else { return }
+
+        let pearl = isNight ? Color(hex: 0xEEF4FF) : Color(hex: 0xFFFDF8)
+        for index in 0..<12 {
+            let seed = Double(index) + 13.7
+            let delay = 0.22 * fract(sin(seed * 41.31) * 18421.7)
+            let localT = min(max((sipProgress - delay) / max(0.25, 1.0 - delay), 0), 1)
+            guard localT > 0.01 && localT < 0.98 else { continue }
+
+            let eased = 1.0 - pow(1.0 - localT, 1.7)
+            let xBase = 48.0 + 104.0 * fract(sin(seed * 19.73) * 35123.4)
+            let wobble = sin(localT * .pi * 3.0 + seed) * 3.8
+            let startY = Double(DewyGeometry.bodyBottom) - 6.0 - 18.0 * fract(sin(seed * 63.17) * 9143.2)
+            let travelDist = max(14.0, (startY - surface - 5.0) * (0.72 + 0.28 * fract(sin(seed * 27.9) * 14123.0)))
+            let y = startY - eased * travelDist
+            guard y > surface + 2.5 else { continue }
+
+            let baseR = 1.6 + 2.5 * fract(sin(seed * 91.5) * 11213.9)
+            let scale = 0.75 + 0.35 * sin(localT * .pi)
+            let r = CGFloat(baseR * scale) * u
+            let c = p(CGFloat(xBase + wobble), CGFloat(y))
+            let rect = CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)
+            let alpha = gulp * sin(localT * .pi)
+
+            context.opacity = min(1, alpha * 1.15)
+            context.fill(Path(ellipseIn: rect), with: .color(pearl.opacity(0.42)))
+            context.stroke(Path(ellipseIn: rect), with: .color(pearl.opacity(0.92)), lineWidth: 1.05 * u)
+            let glint = CGRect(x: c.x - r * 0.44, y: c.y - r * 0.46, width: r * 0.44, height: r * 0.44)
+            context.fill(Path(ellipseIn: glint), with: .color(.white.opacity(0.96)))
+            context.opacity = 1
+        }
+    }
+
     private func fract(_ value: Double) -> Double { value - floor(value) }
 }
 
@@ -736,7 +827,11 @@ private struct MascotFace: View {
     var time: Double
     var blinks: Bool
     var hidesEyes: Bool
+    var gulp: Double
+    var sipProgress: Double
     var isNight: Bool
+
+    private var isSipping: Bool { gulp > 0.18 }
 
     var body: some View {
         Canvas { context, size in
@@ -781,19 +876,24 @@ private struct MascotFace: View {
         oval: (CGFloat, CGFloat, CGFloat, CGFloat) -> Path,
         u: CGFloat
     ) {
-        let blushOuter = mood == .ecstatic ? Color(hex: 0xF57D96) : Color(hex: 0xF797A7)
-        let blushAlpha: Double = mood == .thirsty ? 0.36 : (mood == .ecstatic ? 0.64 : 0.52)
+        let bloom = CGFloat(gulp)
+        let blushOuter = (mood == .ecstatic || isSipping) ? Color(hex: 0xF57D96) : Color(hex: 0xF797A7)
+        let baseAlpha: Double = mood == .thirsty ? 0.36 : (mood == .ecstatic ? 0.64 : 0.52)
+        let blushAlpha = min(0.74, baseAlpha + gulp * 0.24)
+        let rx: CGFloat = 14.5 + bloom * 3.0
+        let ry: CGFloat = 8.8 + bloom * 1.9
 
         context.drawLayer { layer in
             layer.addFilter(.blur(radius: 3.4 * u))
-            layer.fill(oval(54, 154, 14.5, 8.8), with: .color(blushOuter.opacity(blushAlpha)))
-            layer.fill(oval(146, 154, 14.5, 8.8), with: .color(blushOuter.opacity(blushAlpha)))
+            layer.fill(oval(54, 154, rx, ry), with: .color(blushOuter.opacity(blushAlpha)))
+            layer.fill(oval(146, 154, rx, ry), with: .color(blushOuter.opacity(blushAlpha)))
         }
 
-        // Delicate picture-book blush chalk hatches on joyful moods.
-        if mood == .happy || mood == .ecstatic {
+        // Delicate picture-book blush chalk hatches on joyful moods or blissful sip-gulp.
+        if mood == .happy || mood == .ecstatic || isSipping {
             let stroke = StrokeStyle(lineWidth: 1.6 * u, lineCap: .round)
-            let tint = Color(hex: 0xD95B7A).opacity(mood == .ecstatic ? 0.52 : 0.34)
+            let alpha = isSipping ? max(0.46, gulp * 0.56) : (mood == .ecstatic ? 0.52 : 0.34)
+            let tint = Color(hex: 0xD95B7A).opacity(alpha)
             for cx in [CGFloat(53), 147] {
                 for dx in [CGFloat(-4), 2] {
                     var tick = Path()
@@ -814,6 +914,14 @@ private struct MascotFace: View {
     ) {
         let ey: CGFloat = 133
         let xs: [CGFloat] = [75, 125]
+
+        // Radiant blissful closed-arc eyes while savoring a sip, overriding even thirsty/okay!
+        if isSipping {
+            for (index, ex) in xs.enumerated() {
+                drawBlissSipEye(in: &context, cx: ex, cy: ey + 1.5, isLeft: index == 0, p: p, u: u)
+            }
+            return
+        }
 
         for (index, ex) in xs.enumerated() {
             let isLeft = index == 0
@@ -876,6 +984,32 @@ private struct MascotFace: View {
                 }
             }
         }
+    }
+
+    /// Warm happy curved closed-arc eyes with subtle upturned lash flourish during sip-gulp delight.
+    private func drawBlissSipEye(
+        in context: inout GraphicsContext,
+        cx: CGFloat,
+        cy: CGFloat,
+        isLeft: Bool,
+        p: (CGFloat, CGFloat) -> CGPoint,
+        u: CGFloat
+    ) {
+        var arc = Path()
+        arc.move(to: p(cx - 11.2, cy + 3.2))
+        arc.addCurve(
+            to: p(cx + 11.2, cy + 3.2),
+            control1: p(cx - 6.0, cy - 8.2),
+            control2: p(cx + 6.0, cy - 8.2)
+        )
+        context.stroke(arc, with: .color(Storybook.ink), style: StrokeStyle(lineWidth: 4.2 * u, lineCap: .round))
+
+        // Tiny warm outer smile crease curl for extra storybook expression.
+        let sign: CGFloat = isLeft ? -1 : 1
+        var lash = Path()
+        lash.move(to: p(cx + sign * 10.2, cy + 2.6))
+        lash.addLine(to: p(cx + sign * 13.4, cy + 0.6))
+        context.stroke(lash, with: .color(Storybook.ink.opacity(0.75)), style: StrokeStyle(lineWidth: 2.2 * u, lineCap: .round))
     }
 
     private func drawStorybookEye(
@@ -993,6 +1127,17 @@ private struct MascotFace: View {
         let browStyle = StrokeStyle(lineWidth: 2.8 * u, lineCap: .round)
         let browColor = Storybook.ink.opacity(0.76)
 
+        if isSipping {
+            // Relaxed joyful raised eyebrows during sip-gulp (clears thirsty worry drop).
+            for (outer, inner) in [(CGFloat(63), CGFloat(82)), (137, 118)] {
+                var brow = Path()
+                brow.move(to: p(outer, 111.5))
+                brow.addQuadCurve(to: p(inner, 109.5), control: p((outer + inner) * 0.5, 105.5))
+                context.stroke(brow, with: .color(Storybook.ink.opacity(0.62)), style: StrokeStyle(lineWidth: 2.4 * u, lineCap: .round))
+            }
+            return
+        }
+
         switch mood {
         case .thirsty:
             for (outer, inner) in [(CGFloat(62), CGFloat(82)), (138, 118)] {
@@ -1044,6 +1189,43 @@ private struct MascotFace: View {
         oval: (CGFloat, CGFloat, CGFloat, CGFloat) -> Path,
         u: CGFloat
     ) {
+        // Delighted rounded "o"-to-grin gulp mouth while savoring a sip!
+        if isSipping {
+            if sipProgress < 0.34 {
+                let gulpMouth = oval(100, 156, 6.2, 7.6)
+                context.fill(gulpMouth, with: .color(Color(hex: 0x622943)))
+                context.drawLayer { layer in
+                    layer.clip(to: gulpMouth)
+                    layer.fill(oval(100, 161.5, 4.8, 3.6), with: .color(Color(hex: 0xF7879C)))
+                }
+                context.stroke(
+                    gulpMouth,
+                    with: .color(Storybook.ink.opacity(0.88)),
+                    style: StrokeStyle(lineWidth: 2.0 * u, lineCap: .round, lineJoin: .round)
+                )
+            } else {
+                let half: CGFloat = 9.8
+                let depth: CGFloat = 13.0
+                var grin = Path()
+                grin.move(to: p(100 - half, 150))
+                grin.addQuadCurve(to: p(100 + half, 150), control: p(100, 148.5))
+                grin.addQuadCurve(to: p(100, 150 + depth), control: p(100 + half - 0.5, 150 + depth))
+                grin.addQuadCurve(to: p(100 - half, 150), control: p(100 - half + 0.5, 150 + depth))
+                grin.closeSubpath()
+                context.fill(grin, with: .color(Color(hex: 0x622943)))
+                context.drawLayer { layer in
+                    layer.clip(to: grin)
+                    layer.fill(oval(100, 150 + depth * 0.88, half * 0.74, depth * 0.38), with: .color(Color(hex: 0xF7879C)))
+                }
+                context.stroke(
+                    grin,
+                    with: .color(Storybook.ink.opacity(0.86)),
+                    style: StrokeStyle(lineWidth: 1.9 * u, lineCap: .round, lineJoin: .round)
+                )
+            }
+            return
+        }
+
         switch mood {
         case .thirsty:
             var mouth = Path()

@@ -199,9 +199,12 @@ struct DrinkPickerSheet: View {
     private var factRow: some View {
         HStack(spacing: 6) {
             PickerFactChip(text: "\(Int(kind.hydration * 100))% hydrating", tint: kind.deep)
-            PickerFactChip(text: "counts \(store.format(amount * kind.hydration))", tint: kind.deep)
+            PickerFactChip(text: "= \(store.format(amount * kind.hydration))", tint: kind.deep)
             if kind.caffeinePerML > 0 {
-                PickerFactChip(text: "\(Int((amount * kind.caffeinePerML).rounded())) mg caffeine", tint: Palette.lilac)
+                PickerFactChip(
+                    text: "\(Int((amount * kind.caffeinePerML).rounded())) mg caff",
+                    tint: Color(hex: 0x5E4894)
+                )
             }
             Spacer(minLength: 0)
         }
@@ -316,11 +319,15 @@ private struct PickerFactChip: View {
             .monospacedDigit()
             .foregroundStyle(tint)
             .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .padding(.horizontal, 10)
+            .fixedSize(horizontal: true, vertical: false)
+            .padding(.horizontal, 9)
             .frame(height: 26)
-            .background(Palette.paper, in: Capsule())
-            .overlay(Capsule().stroke(tint.opacity(0.24), lineWidth: 1))
+            .background {
+                Capsule()
+                    .fill(Palette.paper)
+                    .overlay(Capsule().fill(tint.opacity(0.07)))
+                    .overlay(Capsule().stroke(tint.opacity(0.24), lineWidth: 1))
+            }
     }
 }
 
