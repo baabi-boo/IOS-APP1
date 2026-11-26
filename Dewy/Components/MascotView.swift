@@ -130,7 +130,7 @@ struct MascotView: View {
         return bands.map { LiquidBand(color: $0.color, upTo: visualLevel($0.upTo)) }
     }
 
-    private var isLive: Bool { animated && !reduceMotion }
+    private var isLive: Bool { animated && !reduceMotion && !LaunchOptions.freezesMotion }
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: !isLive)) { timeline in

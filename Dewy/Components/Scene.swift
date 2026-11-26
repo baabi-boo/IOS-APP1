@@ -7,6 +7,37 @@ private func noise(_ seed: Double, _ salt: Double) -> Double {
     fract(sin(seed * 12.9898 + salt * 78.233) * 43758.5453)
 }
 
+// MARK: - Time of day
+
+/// The sky follows the real time of day: a warm dawn, bright day, rosy dusk and a starry night.
+enum SkyPhase {
+    case dawn, day, dusk, night
+
+    static func at(_ date: Date) -> SkyPhase {
+        if LaunchOptions.isDemo { return .day }
+        switch Calendar.current.component(.hour, from: date) {
+        case 5..<8: return .dawn
+        case 8..<17: return .day
+        case 17..<20: return .dusk
+        default: return .night
+        }
+    }
+
+    /// A wash laid over the whole scene.
+    var wash: LinearGradient? {
+        switch self {
+        case .day:
+            return nil
+        case .dawn:
+            return LinearGradient(colors: [Color(hex: 0xFFB8C8).opacity(0.12), Color(hex: 0xFFC9A0).opacity(0.42)], startPoint: .top, endPoint: .bottom)
+        case .dusk:
+            return LinearGradient(colors: [Color(hex: 0x5B4BD6).opacity(0.38), Color(hex: 0xFF7E86).opacity(0.42), Color(hex: 0xFFB27A).opacity(0.3)], startPoint: .top, endPoint: .bottom)
+        case .night:
+            return LinearGradient(colors: [Color(hex: 0x070B33).opacity(0.78), Color(hex: 0x1B2370).opacity(0.62)], startPoint: .top, endPoint: .bottom)
+        }
+    }
+}
+
 // MARK: - World scene
 
 /// The living backdrop of every screen: the world's sky, its sun or moon, drifting clouds,
@@ -22,9 +53,12 @@ struct WorldScene: View {
     @Environment(\.dewyTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    private var isLive: Bool { animated && !reduceMotion && !LaunchOptions.freezesMotion }
+
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
+            let phase = theme.isDark ? SkyPhase.day : SkyPhase.at(.now)
             ZStack(alignment: .topLeading) {
                 theme.skyGradient
 
@@ -40,10 +74,25 @@ struct WorldScene: View {
                     endRadius: 260
                 )
 
-                TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !animated || reduceMotion)) { timeline in
-                    let t = animated && !reduceMotion ? timeline.date.timeIntervalSinceReferenceDate : 40
+                // Clouds and glints drift slowly, so 20 fps looks smooth and saves battery.
+                TimelineView(.animation(minimumInterval: 1.0 / 20.0, paused: !isLive)) { timeline in
+                    let t = isLive ? timeline.date.timeIntervalSinceReferenceDate : 40
                     Canvas { context, canvasSize in
                         draw(in: &context, size: canvasSize, time: t)
+                    }
+                }
+
+                if let wash = phase.wash {
+                    wash
+                }
+                if phase == .night {
+                    // The worlds keep their own moon and stars after dark.
+                    TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: !isLive)) { timeline in
+                        let t = isLive ? timeline.date.timeIntervalSinceReferenceDate : 40
+                        Canvas { context, canvasSize in
+                            drawStars(in: &context, size: canvasSize, time: t)
+                            drawMoon(in: &context, center: CGPoint(x: canvasSize.width * sunPosition.x, y: sunPosition.y))
+                        }
                     }
                 }
             }
@@ -319,10 +368,13 @@ struct LilyPad: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var splashes: [Date] = []
 
+    private var isLive: Bool { animated && !reduceMotion && !LaunchOptions.freezesMotion }
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: (!animated || reduceMotion) && splashes.isEmpty)) { timeline in
+        // Resting ripples barely move; splashes get the full frame rate.
+        TimelineView(.animation(minimumInterval: splashes.isEmpty ? 1.0 / 12.0 : 1.0 / 60.0, paused: !isLive && splashes.isEmpty)) { timeline in
             let now = timeline.date
-            let t = animated && !reduceMotion ? now.timeIntervalSinceReferenceDate : 0
+            let t = isLive ? now.timeIntervalSinceReferenceDate : 0
             Canvas { context, size in
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)
                 let rx = width / 2
@@ -379,6 +431,10 @@ struct LilyPad: View {
         .frame(width: width * 1.9, height: width * 0.5)
         .onChange(of: rippleTrigger) {
             splashes = splashes.filter { Date.now.timeIntervalSince($0) < 2 } + [Date.now]
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(2))
+                splashes = splashes.filter { Date.now.timeIntervalSince($0) < 1.9 }
+            }
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)

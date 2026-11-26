@@ -8,6 +8,8 @@ OUT=docs/screenshots
 RAW=docs/raw
 BUNDLE=com.dewyapp.Dewy
 mkdir -p "$OUT" "$RAW"
+# Start from a clean folder so renamed shots never linger.
+rm -f "$OUT"/*.png
 
 echo "▸ $(xcodebuild -version | head -1)"
 
@@ -99,14 +101,16 @@ shoot 01-today       -screenshot today
 shoot 02-add-drink   -screenshot add
 shoot 03-insights    -screenshot insights
 shoot 04-garden      -screenshot garden
-shoot 05-paywall     -screenshot paywall
-shoot 06-settings    -screenshot settings
-shoot 07-welcome     -screenshot onboarding -step 0
-shoot 08-goal        -screenshot onboarding -step 5
-shoot 09-peach       -screenshot today -theme peach
-shoot 10-matcha      -screenshot garden -theme matcha -premium YES
-shoot 11-lavender    -screenshot insights -theme lavender -premium YES
-shoot 12-midnight    -screenshot today -theme midnight
+shoot 05-challenges  -screenshot challenges
+shoot 06-paywall     -screenshot paywall
+shoot 07-settings    -screenshot settings
+shoot 08-welcome     -screenshot onboarding -step 0
+shoot 09-goal        -screenshot onboarding -step 5
+shoot 10-share       -screenshot share
+shoot 11-sunset      -screenshot today -theme peach
+shoot 12-meadow      -screenshot garden -theme matcha -premium YES
+shoot 13-dreamy      -screenshot insights -theme lavender -premium YES
+shoot 14-midnight    -screenshot today -theme midnight
 echo "▸ Screenshots took ${SECONDS}s"
 
 # A short screen recording of Dewy reaching the daily goal (converted to a GIF later).

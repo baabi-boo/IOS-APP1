@@ -119,7 +119,7 @@ enum AppTab: String, CaseIterable, Identifiable {
     static var initial: AppTab {
         switch LaunchOptions.screenshot {
         case "insights": .insights
-        case "garden": .garden
+        case "garden", "challenges": .garden
         case "settings": .settings
         default: .today
         }

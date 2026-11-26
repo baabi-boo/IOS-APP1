@@ -283,6 +283,7 @@ struct AmountSlider: View {
     var step: Double
     var tint: Color
     var lip: Color
+    var unitName = "milliliters"
 
     @Environment(\.dewyTheme) private var theme
     @State private var isDragging = false
@@ -331,7 +332,7 @@ struct AmountSlider: View {
         .frame(height: 44)
         .accessibilityElement()
         .accessibilityLabel("Amount")
-        .accessibilityValue("\(Int(value)) milliliters")
+        .accessibilityValue("\(Int(value)) \(unitName)")
         .accessibilityAdjustableAction { direction in
             switch direction {
             case .increment: value = min(value + step * 5, range.upperBound)

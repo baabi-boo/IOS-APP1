@@ -25,37 +25,36 @@ struct SettingsView: View {
     ]
 
     var body: some View {
-        ZStack {
-            HeroBackdrop()
-
-            ScrollView {
-                VStack(spacing: 0) {
-                    header
-                        .padding(.horizontal, 22)
-                        .floatIn(appeared, index: 0)
-                    premiumCard
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
-                        .padding(.bottom, 30)
-                        .floatIn(appeared, index: 1)
-                    VStack(spacing: 18) {
-                        goalCard.floatIn(appeared, index: 2)
-                        remindersCard.floatIn(appeared, index: 3)
-                        themeCard.floatIn(appeared, index: 4)
-                        profileCard.floatIn(appeared, index: 5)
-                        dataCard.floatIn(appeared, index: 6)
-                        footer
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 26)
+        ScrollView {
+            VStack(spacing: 0) {
+                header
+                    .padding(.horizontal, 22)
+                    .padding(.top, 6)
                     .padding(.bottom, 30)
-                    .canvasSheet()
+                    .floatIn(appeared, index: 0)
+                    .background(alignment: .top) {
+                        SkyHeaderBackground(height: 300, sunY: 40)
+                    }
+                VStack(spacing: 18) {
+                    if !purchases.isPremium {
+                        premiumCard.floatIn(appeared, index: 1)
+                    }
+                    goalCard.floatIn(appeared, index: 2)
+                    worldsCard.floatIn(appeared, index: 3)
+                    remindersCard.floatIn(appeared, index: 4)
+                    feelCard.floatIn(appeared, index: 5)
+                    profileCard.floatIn(appeared, index: 6)
+                    dataCard.floatIn(appeared, index: 7)
+                    footer
                 }
-                .padding(.top, 6)
+                .padding(.horizontal, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 30)
+                .canvasSheet()
             }
-            .scrollIndicators(.hidden)
-            .scrollDismissesKeyboard(.interactively)
         }
+        .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
         .onAppear { appeared = true }
         .sheet(isPresented: $showPaywall) { PaywallView() }
         .onChange(of: reminderSignature) {
@@ -102,86 +101,114 @@ struct SettingsView: View {
     // MARK: Header
 
     private var header: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 2) {
-                CapsLabel(text: "Make it yours", color: theme.onHeroSoft, size: 12)
-                Text("Settings")
-                    .font(.dewy(32, .black))
-                    .foregroundStyle(.white)
+        VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    CapsLabel(text: "Make it yours", color: theme.onHeroSoft, size: 12)
+                    Text("Me")
+                        .font(.display(34))
+                        .foregroundStyle(.white)
+                }
+                Spacer()
+                if purchases.isPremium {
+                    HStack(spacing: 5) {
+                        Image(systemName: "crown.fill").font(.system(size: 13, weight: .heavy))
+                        Text("Dewy+")
+                    }
+                    .font(.display(16))
+                    .foregroundStyle(Palette.ink)
+                    .padding(.horizontal, 13)
+                    .frame(height: 36)
+                    .background(Palette.gold, in: Capsule())
+                }
             }
-            Spacer()
-            MascotView(progress: store.todayProgress, mood: store.mood, size: 50, bands: store.todayBands, animated: false)
+
+            HStack(spacing: 16) {
+                MascotView(progress: store.todayProgress, mood: store.mood, size: 92, bands: store.todayBands, animated: false, showsShadow: false)
+                    .frame(width: 110, height: 110)
+                    .background(Color.white.opacity(0.22), in: Circle())
+                    .overlay(Circle().strokeBorder(Color.white.opacity(0.5), lineWidth: 3))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(store.profile.name.isEmpty ? "Friend of Dewy" : store.profile.name)
+                        .font(.display(28))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    HStack(spacing: 6) {
+                        profilePill(symbol: "flame.fill", text: "\(store.currentStreak) days")
+                        profilePill(symbol: "drop.fill", text: store.formatLiters(store.totalEffective))
+                    }
+                }
+                Spacer(minLength: 0)
+            }
         }
+    }
+
+    private func profilePill(symbol: String, text: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: symbol).font(.system(size: 12, weight: .heavy))
+            Text(text).font(.display(15))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 11)
+        .frame(height: 32)
+        .background(Color.white.opacity(0.22), in: Capsule())
     }
 
     // MARK: Premium
 
-    @ViewBuilder
     private var premiumCard: some View {
-        let tile = theme.isDark ? theme.heroLight : Color(hex: 0x1E2340)
-        if purchases.isPremium {
+        Button {
+            Haptics.tap()
+            showPaywall = true
+        } label: {
             HStack(spacing: 14) {
-                MascotView(progress: 1, mood: .ecstatic, size: 50, accessory: .crown, backdrop: .tile, animated: false)
-                    .padding(.top, 10)
-                VStack(alignment: .leading, spacing: 3) {
-                    CapsLabel(text: "Dewy+", color: Palette.sunshine, size: 12)
-                    Text("Everything is unlocked")
-                        .font(.dewy(19, .black))
-                        .foregroundStyle(.white)
-                    Text("Thank you for supporting a tiny indie app 💙")
-                        .font(.dewy(13, .semibold))
-                        .foregroundStyle(Color.white.opacity(0.75))
+                MascotView(progress: 1.0, mood: .ecstatic, size: 76, accessory: .crown, bands: Self.rainbow, backdrop: .tile, animated: false, showsShadow: false)
+                    .frame(width: 80, height: 92)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 2) {
+                        Text("Dewy")
+                        Text("+").foregroundStyle(Color(hex: 0xFFE27A))
+                    }
+                    .font(.display(26))
+                    .foregroundStyle(.white)
+                    Text("Every world, every drink, 30-day insights and custom reminders.")
+                        .font(.dewy(13.5, .bold))
+                        .foregroundStyle(Color.white.opacity(0.9))
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 15, weight: .black))
+                    .foregroundStyle(.white)
+                    .frame(width: 34, height: 34)
+                    .background(Color.white.opacity(0.24), in: Circle())
             }
-            .padding(18)
-            .background(tile, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .shadow(color: Color.black.opacity(0.2), radius: 16, x: 0, y: 10)
-        } else {
-            Button {
-                Haptics.tap()
-                showPaywall = true
-            } label: {
-                HStack(spacing: 14) {
-                    MascotView(progress: 0.9, mood: .ecstatic, size: 54, accessory: .crown, backdrop: .tile, animated: false)
-                        .padding(.top, 12)
-                    VStack(alignment: .leading, spacing: 4) {
-                        CapsLabel(text: "Dewy+", color: Palette.sunshine, size: 12)
-                        Text("Unlock everything")
-                            .font(.dewy(20, .black))
-                            .foregroundStyle(.white)
-                        Text("Themes, all drinks & 30-day insights")
-                            .font(.dewy(13, .semibold))
-                            .foregroundStyle(Color.white.opacity(0.75))
-                            .multilineTextAlignment(.leading)
-                    }
-                    Spacer(minLength: 0)
-                    Text("TRY")
-                        .font(.dewy(14, .black))
-                        .tracking(1)
-                        .foregroundStyle(Color(hex: 0x1E2340))
-                        .padding(.horizontal, 14)
-                        .frame(height: 36)
-                        .background(Palette.sunshine, in: Capsule())
-                }
-                .padding(18)
-                .background {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(tile)
-                        .overlay(alignment: .topTrailing) {
-                            Circle()
-                                .fill(Color.white.opacity(0.06))
-                                .frame(width: 160, height: 160)
-                                .offset(x: 50, y: -70)
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                }
-                .shimmer()
-                .shadow(color: Color.black.opacity(0.22), radius: 18, x: 0, y: 10)
-            }
-            .buttonStyle(SquishyButtonStyle(scale: 0.97))
+            .padding(16)
+        }
+        .buttonStyle(CandyButtonStyle(
+            fill: Color(hex: 0x8B5CF6),
+            lip: Color(hex: 0x6236D9),
+            shape: AnyShape(RoundedRectangle(cornerRadius: 28, style: .continuous)),
+            depth: 5
+        ))
+        .background {
+            // A soft sunset glow behind the card.
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0xFF8FB1).opacity(0.5), Color(hex: 0x8B5CF6).opacity(0.0)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .blur(radius: 18)
+                .offset(y: 8)
         }
     }
+
+    static let rainbow: [LiquidBand] = [
+        LiquidBand(color: Color(hex: 0x4DB4FF), upTo: 0.24),
+        LiquidBand(color: Color(hex: 0xFFAE3D), upTo: 0.44),
+        LiquidBand(color: Color(hex: 0x8CCF63), upTo: 0.62),
+        LiquidBand(color: Color(hex: 0xFF7DB0), upTo: 0.8),
+        LiquidBand(color: Color(hex: 0x3FD3DE), upTo: 1)
+    ]
 
     // MARK: Goal
 
@@ -194,12 +221,14 @@ struct SettingsView: View {
                     store.profile.dailyGoal = max(500, store.profile.dailyGoal - store.profile.unit.step)
                 }
                 Spacer()
-                VStack(spacing: 0) {
+                VStack(spacing: -2) {
                     Text(store.format(store.profile.dailyGoal, withUnit: false))
-                        .font(.dewy(44, .black))
+                        .font(.display(46))
                         .foregroundStyle(theme.ink)
                         .contentTransition(.numericText(value: store.profile.dailyGoal))
-                    CapsLabel(text: store.profile.unit.label + " per day", color: theme.inkSoft, size: 12)
+                    Text(store.profile.unit.label + " per day")
+                        .font(.display(14, .medium))
+                        .foregroundStyle(theme.inkSoft)
                 }
                 Spacer()
                 roundButton("plus") {
@@ -215,11 +244,11 @@ struct SettingsView: View {
                         Image(systemName: "sparkles")
                         Text("Use recommended \(store.format(recommended))")
                     }
-                    .font(.dewy(14, .heavy))
-                    .foregroundStyle(theme.accent)
+                    .font(.display(15))
+                    .foregroundStyle(theme.link)
                     .frame(maxWidth: .infinity)
                     .frame(height: 42)
-                    .background(theme.accent.opacity(0.12), in: Capsule())
+                    .background(theme.accentSoft, in: Capsule())
                 }
                 .buttonStyle(SquishyButtonStyle())
             }
@@ -234,12 +263,42 @@ struct SettingsView: View {
         } label: {
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .black))
-                .foregroundStyle(.white)
+                .foregroundStyle(theme.onAccent)
                 .frame(width: 50, height: 50)
-                .background(theme.accent, in: Circle())
-                .shadow(color: theme.accent.opacity(0.35), radius: 8, x: 0, y: 4)
         }
-        .buttonStyle(SquishyButtonStyle(scale: 0.85))
+        .buttonStyle(CandyButtonStyle(fill: theme.accent, lip: theme.accentDeep, shape: AnyShape(Circle()), depth: 4))
+    }
+
+    // MARK: Worlds
+
+    private var worldsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            SettingsLabel(icon: "globe.americas.fill", tint: Color(hex: 0x2FB4F0), title: "Dewy's world", subtitle: theme.tagline)
+            ScrollView(.horizontal) {
+                HStack(spacing: 10) {
+                    ForEach(AppTheme.allCases) { option in
+                        let locked = option.isPremium && !purchases.isPremium
+                        Button {
+                            if locked {
+                                Haptics.warning()
+                                showPaywall = true
+                            } else {
+                                Haptics.select()
+                                withAnimation(.smooth(duration: 0.5)) { store.profile.theme = option }
+                            }
+                        } label: {
+                            WorldSwatch(world: option, isSelected: store.theme == option, isLocked: locked)
+                        }
+                        .buttonStyle(SquishyButtonStyle())
+                    }
+                }
+                .padding(.vertical, 4)
+                .padding(.horizontal, 2)
+            }
+            .scrollIndicators(.hidden)
+            .scrollClipDisabled()
+        }
+        .dewyCard()
     }
 
     // MARK: Reminders
@@ -275,7 +334,7 @@ struct SettingsView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            Divider().overlay(theme.line)
+            Rectangle().fill(theme.line).frame(height: 1.5)
 
             timeRow(icon: "sun.max.fill", tint: Palette.tangerine, title: "Wake up", minutes: binding(\.wakeMinutes))
             timeRow(icon: "moon.stars.fill", tint: Palette.grape, title: "Bedtime", minutes: binding(\.sleepMinutes))
@@ -310,27 +369,28 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: Theme
+    // MARK: Feel
 
-    private var themeCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SettingsLabel(icon: "paintpalette.fill", tint: Color(hex: 0xFF5C93), title: "Theme", subtitle: "Pick Dewy's color world")
-            HStack(spacing: 0) {
-                ForEach(AppTheme.allCases) { option in
-                    let locked = option.isPremium && !purchases.isPremium
-                    Button {
-                        if locked {
-                            Haptics.warning()
-                            showPaywall = true
-                        } else {
+    private var feelCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Toggle(isOn: binding(\.soundsOn)) {
+                SettingsLabel(icon: "speaker.wave.2.fill", tint: Color(hex: 0x22B8C9), title: "Sounds", subtitle: "Bloops, splashes and a goal chime")
+            }
+            .tint(theme.accent)
+            Toggle(isOn: binding(\.hapticsOn)) {
+                SettingsLabel(icon: "hand.tap.fill", tint: Color(hex: 0xFF8A4C), title: "Haptics", subtitle: "Feel every sip")
+            }
+            .tint(theme.accent)
+            Rectangle().fill(theme.line).frame(height: 1.5)
+            VStack(alignment: .leading, spacing: 10) {
+                SettingsLabel(icon: "bolt.fill", tint: Color(hex: 0x9C6ADE), title: "Caffeine budget", subtitle: "Dewy keeps an eye on it for you")
+                HStack(spacing: 8) {
+                    ForEach([200.0, 300, 400], id: \.self) { limit in
+                        ChipButton(title: "\(Int(limit)) mg", isSelected: store.profile.caffeineLimit == limit, tint: Color(hex: 0x9C6ADE), tintDeep: Color(hex: 0x7A48C0)) {
                             Haptics.select()
-                            withAnimation(.smooth(duration: 0.5)) { store.profile.theme = option }
+                            withAnimation(.spring) { store.profile.caffeineLimit = limit }
                         }
-                    } label: {
-                        ThemeSwatch(theme: option, isSelected: store.theme == option, isLocked: locked)
                     }
-                    .buttonStyle(SquishyButtonStyle())
-                    .frame(maxWidth: .infinity)
                 }
             }
         }
@@ -346,12 +406,12 @@ struct SettingsView: View {
                 Spacer()
                 TextField("Your name", text: binding(\.name))
                     .multilineTextAlignment(.trailing)
-                    .font(.dewy(16, .semibold))
+                    .font(.display(17, .medium))
                     .foregroundStyle(theme.ink)
                     .submitLabel(.done)
                     .frame(maxWidth: 160)
             }
-            Divider().overlay(theme.line)
+            Rectangle().fill(theme.line).frame(height: 1.5)
             HStack {
                 SettingsLabel(icon: "ruler.fill", tint: Palette.mint, title: "Units")
                 Spacer()
@@ -364,22 +424,22 @@ struct SettingsView: View {
                     }
                 }
             }
-            Divider().overlay(theme.line)
+            Rectangle().fill(theme.line).frame(height: 1.5)
             HStack {
-                SettingsLabel(icon: "figure.walk", tint: Palette.tangerine, title: "Activity")
+                SettingsLabel(icon: store.profile.activity.symbol, tint: store.profile.activity.tint, title: "Activity")
                 Spacer()
                 Menu {
                     Picker("Activity", selection: binding(\.activity)) {
                         ForEach(ActivityLevel.allCases) { level in
-                            Text("\(level.emoji) \(level.title)").tag(level)
+                            Label(level.title, systemImage: level.symbol).tag(level)
                         }
                     }
                 } label: {
                     HStack(spacing: 4) {
-                        Text("\(store.profile.activity.emoji) \(store.profile.activity.title)")
+                        Text(store.profile.activity.title)
                         Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .bold))
                     }
-                    .font(.dewy(15, .semibold))
+                    .font(.display(16, .medium))
                     .foregroundStyle(theme.ink)
                 }
             }
@@ -394,11 +454,11 @@ struct SettingsView: View {
             dataRow(icon: "arrow.counterclockwise", title: "Clear today's log", tint: Palette.sky) {
                 confirmClear = true
             }
-            Divider().overlay(theme.line).padding(.vertical, 6)
+            Rectangle().fill(theme.line).frame(height: 1.5).padding(.vertical, 8)
             dataRow(icon: "arrow.clockwise", title: "Restore purchases", tint: Palette.grape) {
                 Task { await purchases.restore() }
             }
-            Divider().overlay(theme.line).padding(.vertical, 6)
+            Rectangle().fill(theme.line).frame(height: 1.5).padding(.vertical, 8)
             dataRow(icon: "trash.fill", title: "Erase everything", tint: Palette.berry) {
                 confirmErase = true
             }
@@ -409,16 +469,16 @@ struct SettingsView: View {
     private func dataRow(icon: String, title: String, tint: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                IconTile(systemImage: icon, color: tint, size: 34)
+                IconTile(systemImage: icon, color: tint, size: 36)
                 Text(title)
-                    .font(.dewy(16, .heavy))
+                    .font(.display(17, .medium))
                     .foregroundStyle(tint == Palette.berry ? Palette.berry : theme.ink)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 13, weight: .black))
                     .foregroundStyle(theme.inkSoft.opacity(0.6))
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 2)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -426,11 +486,11 @@ struct SettingsView: View {
 
     private var footer: some View {
         VStack(spacing: 6) {
-            MascotView(progress: 0.6, mood: .happy, size: 40, backdrop: .light, animated: false)
-            Text("Made with 💧 for tiny sips")
-                .font(.dewy(14, .heavy))
+            MascotView(progress: 0.6, mood: .happy, size: 56, backdrop: .light, animated: false, showsShadow: false)
+            Text("Made with love for tiny sips")
+                .font(.display(15, .medium))
                 .foregroundStyle(theme.inkSoft)
-            Text("Dewy 1.1")
+            Text("Dewy 2.0")
                 .font(.dewy(12, .bold))
                 .foregroundStyle(theme.inkSoft.opacity(0.7))
         }
@@ -449,14 +509,14 @@ struct SettingsLabel: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            IconTile(systemImage: icon, color: tint, size: 36)
+            IconTile(systemImage: icon, color: tint, size: 38)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.dewy(16, .heavy))
+                    .font(.display(17))
                     .foregroundStyle(theme.ink)
                 if let subtitle {
                     Text(subtitle)
-                        .font(.dewy(12, .semibold))
+                        .font(.dewy(12.5, .semibold))
                         .foregroundStyle(theme.inkSoft)
                 }
             }
@@ -464,49 +524,56 @@ struct SettingsLabel: View {
     }
 }
 
-struct ThemeSwatch: View {
+/// A tiny postcard of a world: its sky, its water and a little Dewy.
+struct WorldSwatch: View {
     @Environment(\.dewyTheme) private var current
-    var theme: AppTheme
+    var world: AppTheme
     var isSelected: Bool
     var isLocked: Bool
 
     var body: some View {
         VStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .fill(LinearGradient(colors: [theme.hero, theme.heroDeep], startPoint: .top, endPoint: .bottom))
-                DropletShape()
+            ZStack(alignment: .bottom) {
+                world.skyGradient
+                RadialGradient(colors: [world.sunGlow.opacity(0.9), world.sunGlow.opacity(0)], center: UnitPoint(x: 0.8, y: 0.15), startRadius: 0, endRadius: 50)
+                VStack(spacing: 0) {
+                    Rectangle().fill(world.seaGlint).frame(height: 3)
+                    world.seaGradient
+                }
+                .frame(height: 34)
+                DewyShape()
                     .fill(Color.white)
-                    .frame(width: 20, height: 25)
-                    .offset(y: 1)
-                DropletShape()
-                    .fill(theme.water)
-                    .frame(width: 20, height: 25)
-                    .mask {
-                        Rectangle()
-                            .frame(width: 20, height: 13)
-                            .offset(y: 6)
+                    .frame(width: 26, height: 33)
+                    .overlay {
+                        DewyShape()
+                            .fill(world.water)
+                            .mask(alignment: .bottom) { Rectangle().frame(height: 18) }
                     }
-                    .offset(y: 1)
+                    .padding(.bottom, 16)
+            }
+            .frame(width: 72, height: 96)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 23, style: .continuous)
+                    .strokeBorder(isSelected ? current.ink : Color.clear, lineWidth: 3)
+                    .padding(-4)
+            }
+            .overlay(alignment: .topTrailing) {
                 if isLocked {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 9, weight: .black))
                         .foregroundStyle(.white)
                         .frame(width: 20, height: 20)
-                        .background(Color(hex: 0x1E2340), in: Circle())
-                        .overlay(Circle().strokeBorder(current.card, lineWidth: 2))
-                        .offset(x: 19, y: 19)
+                        .background(Palette.ink.opacity(0.75), in: Circle())
+                        .padding(5)
                 }
             }
-            .frame(width: 54, height: 54)
-            .padding(4)
-            .overlay(Circle().strokeBorder(isSelected ? current.ink : Color.clear, lineWidth: 3))
-            .scaleEffect(isSelected ? 1.05 : 1)
-            .shadow(color: theme.hero.opacity(0.35), radius: 6, x: 0, y: 4)
-            Text(theme.displayName)
-                .font(.dewy(12, isSelected ? .black : .bold))
+            .shadow(color: world.sky[0].opacity(0.3), radius: 8, x: 0, y: 5)
+            Text(world.displayName)
+                .font(.display(14, isSelected ? .semibold : .medium))
                 .foregroundStyle(isSelected ? current.ink : current.inkSoft)
         }
+        .padding(.top, 4)
     }
 }
 

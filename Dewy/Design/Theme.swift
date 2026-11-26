@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import CoreText
 
 // MARK: - Color helpers
@@ -10,6 +11,22 @@ extension Color {
         let green = Double((hex >> 8) & 0xFF) / 255
         let blue = Double(hex & 0xFF) / 255
         self.init(.sRGB, red: red, green: green, blue: blue, opacity: opacity)
+    }
+
+    /// Blends this color toward `other` by `amount` (0…1). Works on iOS 17, unlike `mix(with:by:)`.
+    func blended(with other: Color, by amount: Double) -> Color {
+        var r1: CGFloat = 0, g1: CGFloat = 0, b1: CGFloat = 0, a1: CGFloat = 0
+        var r2: CGFloat = 0, g2: CGFloat = 0, b2: CGFloat = 0, a2: CGFloat = 0
+        UIColor(self).getRed(&r1, green: &g1, blue: &b1, alpha: &a1)
+        UIColor(other).getRed(&r2, green: &g2, blue: &b2, alpha: &a2)
+        let t = CGFloat(min(max(amount, 0), 1))
+        return Color(
+            .sRGB,
+            red: Double(r1 + (r2 - r1) * t),
+            green: Double(g1 + (g2 - g1) * t),
+            blue: Double(b1 + (b2 - b1) * t),
+            opacity: Double(a1 + (a2 - a1) * t)
+        )
     }
 }
 

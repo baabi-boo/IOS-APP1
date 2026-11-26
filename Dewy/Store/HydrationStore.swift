@@ -362,6 +362,9 @@ enum LaunchOptions {
     /// Pass `-screenshot <screen>` to launch straight into a demo screen.
     static var screenshot: String? { UserDefaults.standard.string(forKey: "screenshot") }
     static var isDemo: Bool { screenshot != nil }
+    /// Still screenshots freeze ambient motion so every capture is crisp and identical,
+    /// and CI simulators (which render on the CPU) stay responsive.
+    static var freezesMotion: Bool { isDemo && screenshot != "celebrate" }
     static var theme: AppTheme? { UserDefaults.standard.string(forKey: "theme").flatMap(AppTheme.init(rawValue:)) }
     static var forcePremium: Bool { UserDefaults.standard.bool(forKey: "premium") }
     static var onboardingStep: Int? {

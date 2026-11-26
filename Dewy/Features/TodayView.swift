@@ -14,6 +14,7 @@ struct TodayView: View {
     @State private var toast: DrinkEntry?
     @State private var toastTask: Task<Void, Never>?
     @State private var appeared = false
+    @State private var showGoalBanner = false
 
     private let quickKinds: [DrinkKind] = [.water, .tea, .coffee, .juice, .sparkling, .matcha, .lemonade, .smoothie]
 
@@ -36,6 +37,13 @@ struct TodayView: View {
 
             ConfettiView(trigger: celebrate)
                 .ignoresSafeArea()
+
+            if showGoalBanner {
+                GoalBanner(goal: store.format(store.goal), streak: store.currentStreak)
+                    .padding(.horizontal, 24)
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+                    .zIndex(2)
+            }
         }
         .overlay(alignment: .top) {
             if let toast {
@@ -61,6 +69,12 @@ struct TodayView: View {
         }
         .onAppear {
             appeared = true
+            if LaunchOptions.screenshot == "share" {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.8))
+                    showShare = true
+                }
+            }
             if LaunchOptions.screenshot == "paywall" {
                 Task { @MainActor in
                     try? await Task.sleep(for: .seconds(0.8))
@@ -367,6 +381,12 @@ struct TodayView: View {
             celebrate += 1
             Haptics.success()
             SoundFX.play(.goal, volume: 0.6)
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.5))
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) { showGoalBanner = true }
+                try? await Task.sleep(for: .seconds(3.2))
+                withAnimation(.easeInOut(duration: 0.35)) { showGoalBanner = false }
+            }
         }
         guard let entry else { return }
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
@@ -391,6 +411,49 @@ struct TodayView: View {
 }
 
 // MARK: - Pieces
+
+/// The moment you reach your goal: Dewy celebrates and a new flower is planted.
+struct GoalBanner: View {
+    @Environment(\.dewyTheme) private var theme
+    var goal: String
+    var streak: Int
+
+    var body: some View {
+        VStack(spacing: 6) {
+            MascotView(progress: 1.1, mood: .ecstatic, size: 120, accessory: .sparkles, showsShadow: false)
+            Text("Goal smashed!")
+                .font(.display(32))
+                .foregroundStyle(theme.ink)
+            Text("You drank your \(goal) today.")
+                .font(.dewy(15, .bold))
+                .foregroundStyle(theme.inkSoft)
+            HStack(spacing: 8) {
+                bannerPill(symbol: "camera.macro", text: "+1 flower", tint: Palette.berry)
+                bannerPill(symbol: "flame.fill", text: "\(streak) day streak", tint: Color(hex: 0xFF7A3D))
+            }
+            .padding(.top, 6)
+        }
+        .padding(.vertical, 22)
+        .padding(.horizontal, 26)
+        .background {
+            RoundedRectangle(cornerRadius: 34, style: .continuous)
+                .fill(theme.card)
+                .shadow(color: Color.black.opacity(0.22), radius: 30, x: 0, y: 16)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func bannerPill(symbol: String, text: String, tint: Color) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: symbol).font(.system(size: 12, weight: .heavy))
+            Text(text).font(.display(15))
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 12)
+        .frame(height: 32)
+        .background(tint.opacity(0.13), in: Capsule())
+    }
+}
 
 /// A drink tile in the quick-add row: one tap logs the drink's usual serving.
 struct QuickDrinkTile: View {
