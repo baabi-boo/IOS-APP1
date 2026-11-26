@@ -2,6 +2,9 @@ import Foundation
 
 /// Deterministic sample data used for previews and App Store screenshots.
 enum DemoData {
+    /// Dew Drops shown in screenshots.
+    static let balance = 345
+
     private struct Generator {
         var state: UInt64
         mutating func next() -> Double {
@@ -74,7 +77,20 @@ enum DemoData {
             challenges[kind.rawValue] = calendar.date(byAdding: .day, value: -daysAgo, to: today)
         }
 
+        // Mira's collection. The store sets `spentDrops` so the balance always reads the same.
+        var collection = CollectionState()
+        collection.friends = [.cat, .bunny, .frog, .penguin]
+        collection.outfits = [.beanie, .flowercrown, .sunglasses, .scarf, .partyhat]
+        collection.decor = [.flowers, .duck, .lantern]
+        collection.companions = [.cat, .bunny]
+        collection.placed = [.flowers, .duck]
+        if LaunchOptions.screenshot == "wardrobe" {
+            collection.wearing = [.head: .beanie, .neck: .scarf]
+        } else {
+            collection.wearing = [.head: .flowercrown]
+        }
+
         let onboarded = LaunchOptions.screenshot != "onboarding"
-        return AppData(profile: profile, entries: entries, hasOnboarded: onboarded, challenges: challenges)
+        return AppData(profile: profile, entries: entries, hasOnboarded: onboarded, challenges: challenges, collection: collection)
     }
 }

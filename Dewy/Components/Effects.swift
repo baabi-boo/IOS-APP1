@@ -16,8 +16,9 @@ private struct ConfettiPiece {
     let speed: Double
     let spin: Double
     let drift: Double
-    let isDroplet: Bool
     let color: Color
+    let shade: Color
+    let size: CGFloat
     /// The piece's outline, centered on the origin so it can be rotated in place.
     let path: Path
 
@@ -25,17 +26,17 @@ private struct ConfettiPiece {
         func random(_ salt: Double) -> Double {
             noise(Double(seed), salt)
         }
-        angle = -Double.pi * (0.1 + 0.8 * random(1))
-        speed = 420 + 520 * random(2)
-        spin = (random(3) - 0.5) * 14
+        angle = -Double.pi * (0.08 + 0.84 * random(1))
+        speed = 420 + 560 * random(2)
+        spin = (random(3) - 0.5) * 12
         drift = (random(5) - 0.5) * 60
-        let s = CGFloat(8 + 8 * random(4))
-        let kind = seed % 5
-        isDroplet = kind == 3
+        let s = CGFloat(10 + 9 * random(4))
+        size = s
         color = Palette.confetti[seed % Palette.confetti.count]
-        switch kind {
+        shade = color.blended(with: Color(hex: 0x6B3F5A), by: 0.22)
+        switch seed % 5 {
         case 0:
-            path = Path(roundedRect: CGRect(x: -s / 2, y: -s * 0.3, width: s, height: s * 0.6), cornerRadius: 2)
+            path = Path(roundedRect: CGRect(x: -s / 2, y: -s * 0.32, width: s, height: s * 0.64), cornerRadius: s * 0.3)
         case 1:
             path = Path(ellipseIn: CGRect(x: -s / 2, y: -s / 2, width: s, height: s))
         case 2:
@@ -43,19 +44,19 @@ private struct ConfettiPiece {
         case 3:
             path = DewyShape().path(in: CGRect(x: -s * 0.5, y: -s * 0.65, width: s, height: s * 1.3))
         default:
-            path = SparkleShape().path(in: CGRect(x: -s * 0.7, y: -s * 0.7, width: s * 1.4, height: s * 1.4))
+            path = SparkleShape().path(in: CGRect(x: -s * 0.75, y: -s * 0.75, width: s * 1.5, height: s * 1.5))
         }
     }
 }
 
-/// A joyful burst of confetti, hearts and droplets. Fires whenever `trigger` changes.
+/// A joyful burst of clay confetti: chunky hearts, droplets, sparkles and pills, each with
+/// a little shadow side and a highlight so they read as tiny toys. Fires whenever `trigger` changes.
 struct ConfettiView: View {
     var trigger: Int
     var origin: UnitPoint = UnitPoint(x: 0.5, y: 0.32)
 
-    @Environment(\.dewyTheme) private var theme
     @State private var start: Date?
-    private let pieces = (0..<80).map(ConfettiPiece.init(seed:))
+    private let pieces = (0..<70).map(ConfettiPiece.init(seed:))
     private let duration: Double = 3.2
 
     var body: some View {
@@ -76,110 +77,94 @@ struct ConfettiView: View {
         }
     }
 
-    /// Every piece fades together, so opacity is set once and pieces are plain
-    /// transformed paths (no per-piece layers, which is much cheaper to render).
     private func draw(in context: inout GraphicsContext, size: CGSize, time t: Double) {
         guard t >= 0, t < duration else { return }
         let gravity: Double = 980
-        let ox: Double = Double(size.width) * Double(origin.x)
-        let oy: Double = Double(size.height) * Double(origin.y)
-        let fade: Double = (duration - t) / 0.8
-        context.opacity = max(0, min(1, fade))
+        let ox = Double(size.width) * Double(origin.x)
+        let oy = Double(size.height) * Double(origin.y)
+        context.opacity = max(0, min(1, (duration - t) / 0.8))
         for piece in pieces {
-            let vx: Double = cos(piece.angle) * piece.speed * 0.75
-            let vy: Double = sin(piece.angle) * piece.speed
-            let sway: Double = piece.drift * sin(t * 3)
-            let px: Double = ox + vx * t * 0.9 + sway
-            let fall: Double = 0.5 * gravity * t * t
-            let py: Double = oy + vy * t + fall
-            let spin: Double = piece.spin * t
-            let transform = CGAffineTransform(translationX: CGFloat(px), y: CGFloat(py)).rotated(by: CGFloat(spin))
-            let color: Color = piece.isDroplet ? theme.water : piece.color
-            context.fill(piece.path.applying(transform), with: .color(color))
+            let vx = cos(piece.angle) * piece.speed * 0.75
+            let vy = sin(piece.angle) * piece.speed
+            // Air drag makes the pieces float down instead of dropping like stones.
+            let drag = 1 - min(t * 0.25, 0.6)
+            let px = ox + vx * t * 0.9 * drag + piece.drift * sin(t * 3)
+            let py = oy + vy * t * drag + 0.5 * gravity * t * t * 0.7
+            let transform = CGAffineTransform(translationX: CGFloat(px), y: CGFloat(py)).rotated(by: CGFloat(piece.spin * t))
+            let shaped = piece.path.applying(transform)
+            context.fill(shaped.applying(CGAffineTransform(translationX: 0, y: 1.5)), with: .color(piece.shade))
+            context.fill(shaped, with: .color(piece.color))
+            let r = piece.size * 0.14
+            let glint = Path(ellipseIn: CGRect(x: -piece.size * 0.22 - r, y: -piece.size * 0.18 - r, width: r * 2, height: r * 1.6)).applying(transform)
+            context.fill(glint, with: .color(.white.opacity(0.8)))
         }
     }
 }
 
-// MARK: - Garden flora
+// MARK: - Bubbles
 
-/// A five-petal flower in the house style: two-tone petals, a glossy center, a leafy stem.
-struct FlowerView: View {
-    var color: Color
-    var size: CGFloat
-    var sway: Double = 0
+/// Soap-bubble spheres that rise and wobble, used behind celebrations.
+struct BubbleField: View {
+    var count = 14
+    var animated = true
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack {
-            // Stem and leaves
-            Capsule()
-                .fill(Palette.leafDeep)
-                .frame(width: size * 0.09, height: size * 0.52)
-                .offset(y: size * 0.27)
-            Ellipse()
-                .fill(Palette.leaf)
-                .frame(width: size * 0.3, height: size * 0.15)
-                .rotationEffect(.degrees(-30))
-                .offset(x: size * 0.15, y: size * 0.34)
-            Ellipse()
-                .fill(Color(hex: 0x7ED46F))
-                .frame(width: size * 0.24, height: size * 0.12)
-                .rotationEffect(.degrees(28))
-                .offset(x: -size * 0.12, y: size * 0.42)
-
-            // Bloom
-            ZStack {
-                ForEach(0..<5, id: \.self) { index in
-                    Ellipse()
-                        .fill(color)
-                        .frame(width: size * 0.34, height: size * 0.46)
-                        .overlay(alignment: .top) {
-                            Ellipse()
-                                .fill(Color.white.opacity(0.28))
-                                .frame(width: size * 0.16, height: size * 0.2)
-                                .padding(.top, size * 0.04)
-                        }
-                        .offset(y: -size * 0.17)
-                        .rotationEffect(.degrees(Double(index) * 72))
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !animated || reduceMotion)) { timeline in
+            let t = animated && !reduceMotion ? timeline.date.timeIntervalSinceReferenceDate : 10
+            Canvas { context, size in
+                for index in 0..<count {
+                    let seed = Double(index)
+                    let r = CGFloat(8 + noise(seed, 1) * 22)
+                    let speed = 18 + noise(seed, 2) * 30
+                    let span = Double(size.height + r * 4)
+                    let y = size.height + r * 2 - CGFloat((t * speed + noise(seed, 3) * span).truncatingRemainder(dividingBy: span))
+                    let x = CGFloat(noise(seed, 4)) * size.width + CGFloat(sin(t * 1.2 + seed)) * 10
+                    let rect = CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)
+                    context.fill(Path(ellipseIn: rect), with: .radialGradient(
+                        Gradient(colors: [.white.opacity(0.05), Palette.aquaLight.opacity(0.25), .white.opacity(0.6)]),
+                        center: CGPoint(x: rect.midX, y: rect.midY), startRadius: 0, endRadius: r
+                    ))
+                    context.fill(Path(ellipseIn: CGRect(x: x - r * 0.55, y: y - r * 0.6, width: r * 0.45, height: r * 0.32)), with: .color(.white.opacity(0.85)))
                 }
-                Circle()
-                    .fill(Palette.sunshine)
-                    .frame(width: size * 0.28, height: size * 0.28)
-                    .overlay(Circle().strokeBorder(Color(hex: 0xFFA41F), lineWidth: size * 0.03))
-                Circle()
-                    .fill(Color.white.opacity(0.8))
-                    .frame(width: size * 0.08, height: size * 0.08)
-                    .offset(x: -size * 0.045, y: -size * 0.045)
             }
-            .offset(y: -size * 0.08)
         }
-        .frame(width: size, height: size * 1.2)
-        .rotationEffect(.degrees(sway), anchor: .bottom)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
-/// A freshly sprouted seedling.
-struct SproutView: View {
-    var size: CGFloat
-    var sway: Double = 0
+// MARK: - Rolling number
+
+/// A number that counts up digit by digit, with a tiny tick for each step.
+struct RollingNumber: View {
+    var value: Int
+    var font: Font = .display(34, .bold)
+    var color: Color = Ink.primary
+    /// Start counting after this delay.
+    var delay: Double = 0.4
+
+    @State private var shown = 0
 
     var body: some View {
-        ZStack {
-            Capsule()
-                .fill(Palette.leafDeep)
-                .frame(width: size * 0.08, height: size * 0.36)
-                .offset(y: size * 0.32)
-            Ellipse()
-                .fill(Palette.leaf)
-                .frame(width: size * 0.32, height: size * 0.17)
-                .rotationEffect(.degrees(-28))
-                .offset(x: -size * 0.13, y: size * 0.1)
-            Ellipse()
-                .fill(Color(hex: 0x8EDB6E))
-                .frame(width: size * 0.32, height: size * 0.17)
-                .rotationEffect(.degrees(28))
-                .offset(x: size * 0.13, y: size * 0.06)
-        }
-        .frame(width: size, height: size * 1.2)
-        .rotationEffect(.degrees(sway), anchor: .bottom)
+        Text("+\(shown)")
+            .font(font)
+            .foregroundStyle(color)
+            .contentTransition(.numericText(value: Double(shown)))
+            .monospacedDigit()
+            .task(id: value) {
+                shown = 0
+                guard value > 0 else { return }
+                try? await Task.sleep(for: .seconds(delay))
+                let steps = min(value, 18)
+                for step in 1...steps {
+                    try? await Task.sleep(for: .milliseconds(55))
+                    withAnimation(.snappy(duration: 0.12)) {
+                        shown = Int((Double(value) * Double(step) / Double(steps)).rounded())
+                    }
+                    if step.isMultiple(of: 2) { Haptics.tick() }
+                }
+            }
     }
 }

@@ -99,21 +99,22 @@ shoot() {
 launch warm-up -screenshot today
 
 SECONDS=0
-shoot 01-today       -screenshot today
+shoot 01-today       -screenshot today -phase day
 shoot 02-add-drink   -screenshot add
-shoot 03-insights    -screenshot insights
-shoot 04-garden      -screenshot garden
-shoot 05-challenges  -screenshot challenges
-shoot 06-paywall     -screenshot paywall
-shoot 07-settings    -screenshot settings
-shoot 08-welcome     -screenshot onboarding -step 0
-shoot 09-goal        -screenshot onboarding -step 5
-shoot 10-share       -screenshot share
-shoot 11-sunset      -screenshot today -theme peach
-shoot 12-meadow      -screenshot garden -theme matcha -premium YES
-shoot 13-dreamy      -screenshot insights -theme lavender -premium YES
-shoot 14-midnight    -screenshot today -theme midnight
-shoot 15-widgets     -screenshot widgets
+shoot 03-journey     -screenshot journey
+shoot 04-friends     -screenshot friends
+shoot 05-wardrobe    -screenshot wardrobe
+shoot 06-insights    -screenshot insights
+shoot 07-paywall     -screenshot paywall
+shoot 08-me          -screenshot me
+shoot 09-welcome     -screenshot onboarding -step 0
+shoot 10-goal        -screenshot onboarding -step 5
+shoot 11-share       -screenshot share
+shoot 12-dusk        -screenshot today -theme peach -phase dusk -premium YES
+shoot 13-night       -screenshot today -theme midnight -phase night -premium YES
+shoot 14-challenges  -screenshot challenges
+shoot 15-widgets     -screenshot widgets -premium YES
+shoot 16-worlds      -screenshot places -theme lavender -premium YES
 echo "▸ Screenshots took ${SECONDS}s"
 
 # A short screen recording of Dewy reaching the daily goal (converted to a GIF later).
@@ -121,7 +122,7 @@ xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
 xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$RAW/celebrate.mp4" >/dev/null 2>&1 &
 REC=$!
 sleep 2
-xcrun simctl launch "$UDID" "$BUNDLE" -screenshot celebrate >/dev/null
+xcrun simctl launch "$UDID" "$BUNDLE" -screenshot celebrate -phase day >/dev/null
 sleep 24
 kill -INT "$REC"
 wait "$REC" || true

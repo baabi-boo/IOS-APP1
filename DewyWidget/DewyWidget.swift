@@ -9,6 +9,7 @@ struct DewyWidgetBundle: WidgetBundle {
 
     var body: some Widget {
         DewyHomeWidget()
+        DewyLiveActivity()
     }
 }
 
