@@ -115,12 +115,12 @@ struct ClayWorld: View {
                 .frame(width: width)
                 .rotationEffect(.degrees(isMoon ? sin(t * 0.5) * 4 : t.truncatingRemainder(dividingBy: 360) * 3))
                 .shadow(color: phase.sunGlow.opacity(0.9), radius: 18)
-                .position(x: size.width * 0.84, y: y)
+                .position(x: size.width * 0.76, y: y)
         } else {
             Circle()
                 .fill(LinearGradient(colors: [Color(hex: 0xFFF3B8), Palette.butter], startPoint: .top, endPoint: .bottom))
                 .frame(width: width * 0.7)
-                .position(x: size.width * 0.84, y: y)
+                .position(x: size.width * 0.76, y: y)
         }
     }
 
@@ -188,10 +188,10 @@ struct ClayWorld: View {
             ForEach(Array(floating.enumerated()), id: \.element) { index, item in
                 let bob = CGFloat(sin(t * 1.4 + Double(index) * 2)) * 2.5
                 let sway = CGFloat(sin(t * 0.3 + Double(index))) * 10
-                let xFactor: CGFloat = index == 0 ? 0.78 : 0.2
+                let xFactor: CGFloat = index == 0 ? 0.88 : 0.12
                 let xPos = size.width * xFactor + sway
-                let yPos = horizon + 110 + bob
-                art(item.imageName, width: 50, at: CGPoint(x: xPos, y: yPos), anchorBottom: true)
+                let yPos = horizon + 150 + bob
+                art(item.imageName, width: 48, at: CGPoint(x: xPos, y: yPos), anchorBottom: true)
             }
         }
     }
@@ -245,7 +245,7 @@ struct ClayWorld: View {
         context.stroke(lip, with: .color(phase.glint.opacity(0.85)), lineWidth: 4)
 
         // Reflection of the sun or moon.
-        let cx = w * 0.84
+        let cx = w * 0.76
         for row in 0..<5 {
             let y = top + 12 + CGFloat(row) * 13
             let shimmer = 0.85 + 0.15 * sin(t * 1.4 + Double(row))

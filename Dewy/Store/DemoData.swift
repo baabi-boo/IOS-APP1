@@ -80,14 +80,14 @@ enum DemoData {
         // Mira's collection. The store sets `spentDrops` so the balance always reads the same.
         var collection = CollectionState()
         collection.friends = [.cat, .bunny, .frog, .penguin]
-        collection.outfits = [.beanie, .flowercrown, .sunglasses, .scarf, .partyhat]
+        collection.outfits = [.beanie, .strawhat, .flowercrown, .sunglasses, .scarf, .partyhat]
         collection.decor = [.flowers, .duck, .lantern]
         collection.companions = [.cat, .bunny]
         collection.placed = [.flowers, .duck]
         if LaunchOptions.screenshot == "wardrobe" {
             collection.wearing = [.head: .beanie, .neck: .scarf]
         } else {
-            collection.wearing = [.head: .flowercrown]
+            collection.wearing = [.head: .strawhat]
         }
 
         let onboarded = LaunchOptions.screenshot != "onboarding"

@@ -123,7 +123,7 @@ xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$RAW/celebrate.mp4" >/
 REC=$!
 sleep 2
 xcrun simctl launch "$UDID" "$BUNDLE" -screenshot celebrate -phase day >/dev/null
-sleep 24
+sleep 34
 kill -INT "$REC"
 wait "$REC" || true
 echo "  🎬 celebrate.mp4"

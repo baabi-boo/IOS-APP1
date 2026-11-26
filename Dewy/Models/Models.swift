@@ -694,7 +694,7 @@ enum Outfit: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .beanie: (102, 42, 104, -4)
         case .crown: (106, 26, 72, 8)
-        case .flowercrown: (102, 52, 112, -3)
+        case .flowercrown: (102, 46, 114, -4)
         case .bow: (142, 58, 64, 18)
         case .sunglasses: (100, 134, 124, 0)
         case .partyhat: (108, 14, 58, 10)
@@ -703,7 +703,7 @@ enum Outfit: String, CaseIterable, Codable, Identifiable {
         case .strawhat: (100, 46, 150, -5)
         case .wizardhat: (108, 24, 104, 8)
         case .chefhat: (102, 26, 84, 0)
-        case .scarf: (102, 198, 134, 0)
+        case .scarf: (102, 214, 122, 0)
         case .bowtie: (100, 182, 52, 0)
         case .leafhat: (102, 46, 118, 6)
         }

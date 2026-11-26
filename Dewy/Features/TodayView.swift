@@ -47,7 +47,7 @@ struct TodayView: View {
     // Fixed hero metrics keep Dewy's lily pad lined up with the pond.
     private let headerHeight: CGFloat = 112
     private let stageHeight: CGFloat = 262
-    private let amountHeight: CGFloat = 138
+    private let amountHeight: CGFloat = 124
     private let mascotSize: CGFloat = 196
     private let padWidth: CGFloat = 164
     private var mascotHeight: CGFloat { mascotSize * DewyGeometry.canvas.height / DewyGeometry.canvas.width }
@@ -150,7 +150,7 @@ struct TodayView: View {
                 .floatIn(appeared, index: 2)
         }
         .padding(.top, 6)
-        .padding(.bottom, 30)
+        .padding(.bottom, 18)
         .background(alignment: .top) {
             VStack(spacing: 0) {
                 phase.sky[0].frame(height: 800)

@@ -92,8 +92,15 @@ struct DrinkPickerSheet: View {
         .padding(.top, 14)
         .padding(.bottom, 6)
         .background {
-            LinearGradient(colors: [theme.canvas.opacity(0), theme.canvas, theme.canvas], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
+            LinearGradient(
+                stops: [
+                    .init(color: theme.canvas.opacity(0), location: 0),
+                    .init(color: theme.canvas, location: 0.22),
+                    .init(color: theme.canvas, location: 1)
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+            .ignoresSafeArea()
         }
         .animation(.smooth(duration: 0.3), value: kind)
     }

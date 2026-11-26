@@ -600,15 +600,47 @@ private struct WorldCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // A live, still preview of the world in its own sky.
-            ClayWorld(horizon: 78, animated: false)
-                .environment(\.dewyTheme, world)
-                .frame(height: 118)
-                .overlay(alignment: .bottom) {
-                    MascotView(progress: 0.7, mood: .happy, size: 44, animated: false, showsShadow: false)
-                        .offset(y: -10)
+            // A cleanly framed preview of the world in its own sky.
+            GeometryReader { proxy in
+                let w = proxy.size.width
+                let h = proxy.size.height
+                let previewPhase = world.phase()
+                ZStack(alignment: .bottom) {
+                    previewPhase.gradient
+                    RadialGradient(
+                        colors: [previewPhase.sunGlow.opacity(previewPhase.isNight ? 0.45 : 0.85), .clear],
+                        center: UnitPoint(x: 0.84, y: 0.18),
+                        startRadius: 0, endRadius: 90
+                    )
+                    // Pond strip along the bottom third.
+                    LinearGradient(colors: previewPhase.pond, startPoint: .top, endPoint: .bottom)
+                        .frame(height: h * 0.34)
+                        .overlay(alignment: .top) {
+                            previewPhase.glint.opacity(0.8).frame(height: 2.5)
+                        }
+                    if Art.exists("prop-cloud-2") {
+                        Image("prop-cloud-2")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 68)
+                            .opacity(previewPhase.isNight ? 0.55 : 0.9)
+                            .position(x: w * 0.78, y: h * 0.32)
+                    }
+                    HStack(alignment: .bottom, spacing: 6) {
+                        ForEach(world.landmarks, id: \.self) { landmark in
+                            ArtImage(name: landmark, size: world == .matcha ? 96 : 74)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: world == .lavender ? .trailing : .leading)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, h * 0.24)
+
+                    MascotView(progress: 0.7, mood: .happy, size: 46, animated: false, showsShadow: false)
+                        .padding(.bottom, 8)
                 }
-                .clipped()
+            }
+            .frame(height: 124)
+            .clipped()
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
