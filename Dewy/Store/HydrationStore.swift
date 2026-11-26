@@ -8,6 +8,8 @@ final class HydrationStore {
     var profile: UserProfile
     var entries: [DrinkEntry]
     var hasOnboarded: Bool
+    /// Joined challenges and the day each one started.
+    var challenges: [String: Date]
 
     private let persistence: Persistence?
     private let calendar = Calendar.current
@@ -18,6 +20,7 @@ final class HydrationStore {
             profile = demo.profile
             entries = demo.entries
             hasOnboarded = demo.hasOnboarded
+            challenges = demo.challenges
             persistence = nil
         } else {
             let persistence = Persistence()
@@ -25,6 +28,7 @@ final class HydrationStore {
             profile = data.profile
             entries = data.entries
             hasOnboarded = data.hasOnboarded
+            challenges = data.challenges
             self.persistence = persistence
         }
     }
@@ -45,6 +49,13 @@ final class HydrationStore {
     var todayProgress: Double { todayTotal / goal }
 
     var mood: DewyMood { DewyMood(progress: todayProgress) }
+
+    var todayCaffeine: Double { entries(on: .now).reduce(0) { $0 + $1.caffeine } }
+
+    var todaySugar: Double { entries(on: .now).reduce(0) { $0 + $1.sugar } }
+
+    /// How much is left to drink today.
+    var todayRemaining: Double { max(goal - todayTotal, 0) }
 
     /// Today's drinks as stacked liquid layers for Dewy, oldest at the bottom.
     var todayBands: [LiquidBand] {
@@ -110,12 +121,13 @@ final class HydrationStore {
         entries = []
         profile = UserProfile()
         hasOnboarded = false
+        challenges = [:]
         save()
         ReminderScheduler.reschedule(for: profile)
     }
 
     func save() {
-        persistence?.save(AppData(profile: profile, entries: entries, hasOnboarded: hasOnboarded))
+        persistence?.save(AppData(profile: profile, entries: entries, hasOnboarded: hasOnboarded, challenges: challenges))
     }
 
     // MARK: Stats
@@ -212,6 +224,60 @@ final class HydrationStore {
             buckets[calendar.component(.hour, from: entry.date), default: 0] += entry.amount / Double(days)
         }
         return buckets
+    }
+
+    /// Average caffeine per day over the last `days` days (days with any drinks).
+    func averageCaffeine(days: Int) -> Double {
+        let totals = (0..<days).compactMap { offset -> Double? in
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: .now) else { return nil }
+            let list = entries(on: day)
+            return list.isEmpty ? nil : list.reduce(0) { $0 + $1.caffeine }
+        }
+        guard !totals.isEmpty else { return 0 }
+        return totals.reduce(0, +) / Double(totals.count)
+    }
+
+    /// Progress of the last seven days, oldest first, as fractions of the goal.
+    func weekProgress() -> [DayTotal] {
+        dailyTotals(days: 7).map { DayTotal(date: $0.date, amount: $0.amount / goal) }
+    }
+
+    // MARK: Challenges
+
+    func isJoined(_ challenge: ChallengeKind) -> Bool {
+        challenges[challenge.rawValue] != nil
+    }
+
+    func join(_ challenge: ChallengeKind) {
+        challenges[challenge.rawValue] = calendar.startOfDay(for: .now)
+        save()
+    }
+
+    func leave(_ challenge: ChallengeKind) {
+        challenges[challenge.rawValue] = nil
+        save()
+    }
+
+    /// Walks the days since the challenge started: every finished day must pass its rule,
+    /// and today counts as soon as it passes.
+    func progress(of challenge: ChallengeKind) -> ChallengeProgress {
+        guard let start = challenges[challenge.rawValue] else {
+            return ChallengeProgress(state: .notStarted, daysDone: 0, total: challenge.days)
+        }
+        let today = calendar.startOfDay(for: .now)
+        var day = calendar.startOfDay(for: start)
+        var done = 0
+        while day <= today && done < challenge.days {
+            let passes = challenge.passes(entries(on: day), goal: goal)
+            if passes {
+                done += 1
+            } else if day < today {
+                return ChallengeProgress(state: .failed, daysDone: done, total: challenge.days)
+            }
+            guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
+            day = next
+        }
+        return ChallengeProgress(state: done >= challenge.days ? .completed : .active, daysDone: done, total: challenge.days)
     }
 
     // MARK: Achievements

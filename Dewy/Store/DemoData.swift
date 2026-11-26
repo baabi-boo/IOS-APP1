@@ -23,7 +23,7 @@ enum DemoData {
 
         var entries: [DrinkEntry] = []
         let today = calendar.startOfDay(for: now)
-        let weighted: [DrinkKind] = [.water, .water, .water, .water, .water, .tea, .tea, .coffee, .coffee, .sparkling, .juice, .milk]
+        let weighted: [DrinkKind] = [.water, .water, .water, .water, .water, .tea, .tea, .coffee, .coffee, .sparkling, .juice, .milk, .matcha, .lemonade, .coconut]
 
         // History: ~6 weeks, mostly successful days and a 9-day streak.
         for offset in 1...45 {
@@ -42,8 +42,11 @@ enum DemoData {
             }
             var remaining = profile.dailyGoal * factor
             var minute = 7 * 60 + Int(random.next() * 60)
+            var first = true
             while remaining > 60 {
-                let kind = weighted[Int(random.next() * Double(weighted.count)) % weighted.count]
+                // Mira starts every day with a glass of water.
+                let kind: DrinkKind = first ? .water : weighted[Int(random.next() * Double(weighted.count)) % weighted.count]
+                first = false
                 let amount = min(remaining / kind.hydration, [200.0, 250, 330, 400, 500][Int(random.next() * 5) % 5])
                 if let date = calendar.date(byAdding: .minute, value: minute, to: day) {
                     entries.append(DrinkEntry(date: date, amount: amount.rounded(), kind: kind))
@@ -66,7 +69,12 @@ enum DemoData {
             }
         }
 
+        var challenges: [String: Date] = [:]
+        for (kind, daysAgo) in [(ChallengeKind.morningGlass, 4), (.perfectWeek, 5), (.sodaFree, 6)] {
+            challenges[kind.rawValue] = calendar.date(byAdding: .day, value: -daysAgo, to: today)
+        }
+
         let onboarded = LaunchOptions.screenshot != "onboarding"
-        return AppData(profile: profile, entries: entries, hasOnboarded: onboarded)
+        return AppData(profile: profile, entries: entries, hasOnboarded: onboarded, challenges: challenges)
     }
 }

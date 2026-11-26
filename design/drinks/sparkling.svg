@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E4EFF8"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#EEF2F7"/><stop offset=".5" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C9D2DE"/>
+    </linearGradient>
+  </defs><ellipse cx="32" cy="58.5" rx="12" ry="2.6" fill="#1B2350" opacity=".12"/>
+      <clipPath id="c-sp"><path d="M21,9 H43 L41,53 Q40.8,57 37,57 H27 Q23.2,57 23,53 Z"/></clipPath>
+      <path d="M21,9 H43 L41,53 Q40.8,57 37,57 H27 Q23.2,57 23,53 Z" fill="url(#glass)"/>
+      <g clip-path="url(#c-sp)">
+        <rect x="18" y="20" width="30" height="40" fill="#3FD3DE"/>
+        <rect x="18" y="20" width="30" height="3.5" fill="#8DEAF0"/>
+        <path d="M37,20 H42 L40,58 H35 Z" fill="#18AEBB" opacity=".35"/>
+      </g>
+      <g fill="#fff"><circle cx="30" cy="44" r="2.2"/><circle cx="35" cy="35" r="1.7"/><circle cx="29" cy="29" r="1.4"/><circle cx="34" cy="49" r="1.3"/></g>
+      <circle cx="42" cy="11" r="8" fill="#B8E35A"/><circle cx="42" cy="11" r="5.8" fill="#DDF59A"/>
+      <path d="M42,11 L42,5.4 M42,11 L47,8.4 M42,11 L47,13.6 M42,11 L37,13.6 M42,11 L37,8.4 M42,11 L42,16.6" stroke="#B8E35A" stroke-width="1.2"/>
+      <rect x="25" y="14" width="3" height="36" rx="1.5" fill="#fff" opacity=".85"/></svg>

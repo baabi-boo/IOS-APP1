@@ -3,33 +3,34 @@ import SwiftUI
 struct TodayView: View {
     @Environment(HydrationStore.self) private var store
     @Environment(PurchaseManager.self) private var purchases
+    @Environment(AppRouter.self) private var router
     @Environment(\.dewyTheme) private var theme
 
-    @State private var showPicker = false
     @State private var showPaywall = false
+    @State private var showShare = false
     @State private var bounce = 0
+    @State private var ripple = 0
     @State private var celebrate = 0
     @State private var toast: DrinkEntry?
     @State private var toastTask: Task<Void, Never>?
     @State private var appeared = false
 
-    private let quickKinds: [DrinkKind] = [.water, .tea, .coffee, .juice, .sparkling, .smoothie, .milk, .soda]
+    private let quickKinds: [DrinkKind] = [.water, .tea, .coffee, .juice, .sparkling, .matcha, .lemonade, .smoothie]
+
+    // Fixed hero metrics keep Dewy's lily pad lined up with the horizon of the scene.
+    private let headerHeight: CGFloat = 72
+    private let stageHeight: CGFloat = 250
+    private let amountHeight: CGFloat = 132
+    private let mascotSize: CGFloat = 200
 
     var body: some View {
         ZStack {
-            HeroBackdrop()
-
             ScrollView {
                 VStack(spacing: 0) {
-                    header
-                        .padding(.horizontal, 22)
-                        .floatIn(appeared, index: 0)
                     hero
-                        .floatIn(appeared, index: 1)
                     sheet
-                        .floatIn(appeared, index: 2)
+                        .floatIn(appeared, index: 3)
                 }
-                .padding(.top, 6)
             }
             .scrollIndicators(.hidden)
 
@@ -41,29 +42,29 @@ struct TodayView: View {
                 ToastView(entry: toast, label: store.format(toast.amount)) {
                     undo(toast)
                 }
-                .padding(.top, 4)
+                .padding(.top, 6)
                 .transition(.move(edge: .top).combined(with: .opacity).combined(with: .scale(scale: 0.9)))
-            }
-        }
-        .sheet(isPresented: $showPicker) {
-            DrinkPickerSheet { kind, amount in
-                add(kind, amount: amount)
             }
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
         }
+        .sheet(isPresented: $showShare) {
+            ShareDaySheet()
+        }
+        .task(id: router.queuedDrink) {
+            guard let queued = router.queuedDrink else { return }
+            // Give the drink sheet a moment to slide away so the pour is visible.
+            try? await Task.sleep(for: .seconds(0.45))
+            router.queuedDrink = nil
+            add(queued.kind, amount: queued.amount)
+        }
         .onAppear {
             appeared = true
-            if LaunchOptions.screenshot == "add" || LaunchOptions.screenshot == "paywall" {
-                // Demo screenshots: present the sheet once the screen is on display.
+            if LaunchOptions.screenshot == "paywall" {
                 Task { @MainActor in
                     try? await Task.sleep(for: .seconds(0.8))
-                    if LaunchOptions.screenshot == "add" {
-                        showPicker = true
-                    } else {
-                        showPaywall = true
-                    }
+                    showPaywall = true
                 }
             }
             if LaunchOptions.screenshot == "celebrate" {
@@ -78,98 +79,120 @@ struct TodayView: View {
         }
     }
 
-    // MARK: Header
+    // MARK: Hero
 
     private var greeting: String {
         let hour = LaunchOptions.isDemo ? 14 : Calendar.current.component(.hour, from: .now)
+        let name = store.profile.name.isEmpty ? "" : ", \(store.profile.name)"
         switch hour {
-        case 5..<12: return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<22: return "Good evening"
-        default: return "Hello, night owl"
+        case 5..<12: return "Morning\(name)"
+        case 12..<17: return "Hi\(name)"
+        case 17..<22: return "Evening\(name)"
+        default: return "Hey night owl"
+        }
+    }
+
+    private var hero: some View {
+        VStack(spacing: 0) {
+            header
+                .frame(height: headerHeight)
+                .padding(.horizontal, 22)
+                .floatIn(appeared, index: 0)
+            stage
+                .frame(height: stageHeight)
+                .floatIn(appeared, index: 1)
+            amount
+                .frame(height: amountHeight, alignment: .top)
+                .floatIn(appeared, index: 2)
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 30)
+        .background(alignment: .top) {
+            // The sea starts behind Dewy's lower half, so the lily pad floats on it.
+            SkyHeaderBackground(height: 4 + headerHeight + stageHeight + amountHeight + 30 + 60, horizon: 4 + headerHeight + 150, sunY: 40)
         }
     }
 
     private var header: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 3) {
-                CapsLabel(
-                    text: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()),
-                    color: theme.onHeroSoft,
-                    size: 12
-                )
-                Text(store.profile.name.isEmpty ? greeting : "\(greeting), \(store.profile.name)")
-                    .font(.dewy(27, .black))
-                    .foregroundStyle(theme.onHero)
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                CapsLabel(text: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()), color: theme.onHeroSoft, size: 12)
+                Text(greeting)
+                    .font(.display(31))
+                    .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
-            Spacer(minLength: 12)
+            Spacer(minLength: 8)
+            CircleIconButton(systemImage: "square.and.arrow.up", size: 42, onHero: true) {
+                Haptics.tap()
+                showShare = true
+            }
+            .accessibilityLabel("Share your day")
             StreakPill(days: store.currentStreak)
         }
     }
 
-    // MARK: Hero
-
-    private var hero: some View {
-        VStack(spacing: 10) {
-            ZStack {
-                HaloRings(diameter: 330)
-                MascotView(
-                    progress: store.todayProgress,
-                    mood: store.mood,
-                    size: 196,
-                    bounceTrigger: bounce,
-                    bands: store.todayBands
-                )
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    bounce += 1
-                    Haptics.tap()
-                }
+    private var stage: some View {
+        ZStack(alignment: .top) {
+            // Dewy's feet rest at 93% of the figure's height, right on the pad.
+            let mascotHeight = mascotSize * DewyGeometry.canvas.height / DewyGeometry.canvas.width
+            LilyPad(width: 150, rippleTrigger: ripple)
+                .offset(y: mascotHeight * 0.935 - 150 * 0.25 + 6)
+            MascotView(
+                progress: store.todayProgress,
+                mood: store.mood,
+                size: mascotSize,
+                bounceTrigger: bounce,
+                bands: store.todayBands
+            )
+            .contentShape(Rectangle())
+            .onTapGesture {
+                bounce += 1
+                Haptics.tap()
+                SoundFX.play(.pop, volume: 0.3)
             }
-            .frame(height: 290)
-            .frame(maxWidth: .infinity)
-            .overlay(alignment: .topTrailing) {
-                SpeechBubble(text: store.mood.line())
-                    .padding(.trailing, 20)
-                    .padding(.top, 22)
-            }
+        }
+        .frame(maxWidth: .infinity)
+        .overlay(alignment: .topTrailing) {
+            SpeechBubble(text: store.mood.line())
+                .padding(.trailing, 18)
+                .padding(.top, 4)
+        }
+    }
 
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
+    private var amount: some View {
+        VStack(spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
                 Text(store.format(store.todayTotal, withUnit: false))
-                    .font(.dewy(66, .black))
-                    .foregroundStyle(theme.onHero)
+                    .font(.display(68))
+                    .foregroundStyle(.white)
                     .contentTransition(.numericText(value: store.displayValue(store.todayTotal)))
                 Text(store.profile.unit.label)
-                    .font(.dewy(24, .heavy))
+                    .font(.display(24))
                     .foregroundStyle(theme.onHeroSoft)
             }
-            .shadow(color: theme.heroDeep.opacity(0.4), radius: 0, x: 0, y: 3)
+            .shadow(color: theme.sea[1].opacity(0.45), radius: 0, x: 0, y: 3)
             .animation(.spring(response: 0.5, dampingFraction: 0.8), value: store.todayTotal)
 
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Text("\(Int((store.todayProgress * 100).rounded()))%")
-                    .font(.dewy(15, .black))
-                    .foregroundStyle(theme.heroDeep)
+                    .font(.display(16))
+                    .foregroundStyle(theme.isDark ? Palette.ink : theme.accent)
                     .contentTransition(.numericText())
-                    .padding(.horizontal, 11)
+                    .padding(.horizontal, 10)
                     .frame(height: 28)
                     .background(Color.white, in: Capsule())
                 Text("of your \(store.format(store.goal)) goal")
-                    .font(.dewy(16, .heavy))
-                    .foregroundStyle(theme.onHero)
+                    .font(.display(17, .medium))
+                    .foregroundStyle(.white)
             }
-            .padding(4)
-            .padding(.trailing, 10)
-            .background(Color.white.opacity(0.2), in: Capsule())
             .animation(.spring, value: store.todayTotal)
 
             DrinkStripe(bands: store.todayBands)
-                .frame(width: 230, height: 10)
+                .frame(width: 236, height: 12)
                 .padding(.top, 6)
         }
-        .padding(.bottom, 30)
     }
 
     // MARK: Sheet
@@ -177,40 +200,29 @@ struct TodayView: View {
     private var sheet: some View {
         VStack(spacing: 26) {
             quickAdd
+            summary
             logSection
             tipCard
         }
-        .padding(.top, 26)
+        .padding(.top, 24)
         .padding(.bottom, 30)
         .frame(maxWidth: .infinity)
         .canvasSheet()
     }
 
     private var quickAdd: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                CapsLabel(text: "Quick add", color: theme.inkSoft, size: 13)
-                Spacer()
-                Button {
-                    Haptics.tap()
-                    showPicker = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Text("All drinks")
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .black))
-                    }
-                    .font(.dewy(14, .heavy))
-                    .foregroundStyle(theme.accent)
-                }
+        VStack(alignment: .leading, spacing: 8) {
+            SectionHeader(title: "Quick sips", trailing: "All drinks") {
+                Haptics.tap()
+                router.showAddDrink = true
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
 
             ScrollView(.horizontal) {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     ForEach(quickKinds) { kind in
                         let locked = kind.isPremium && !purchases.isPremium
-                        QuickDrinkButton(kind: kind, amount: store.format(kind.defaultAmount), isLocked: locked) {
+                        QuickDrinkTile(kind: kind, amount: store.format(kind.defaultAmount), isLocked: locked) {
                             if locked {
                                 Haptics.warning()
                                 showPaywall = true
@@ -221,14 +233,38 @@ struct TodayView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.vertical, 8)
+                .padding(.vertical, 6)
             }
             .scrollIndicators(.hidden)
             .scrollClipDisabled()
         }
     }
 
-    // MARK: Log
+    private var summary: some View {
+        HStack(spacing: 10) {
+            SummaryTile(
+                symbol: "drop.fill",
+                tint: theme.water,
+                value: store.todayRemaining > 0 ? store.format(store.todayRemaining) : "Done!",
+                label: store.todayRemaining > 0 ? "to go" : "goal met"
+            )
+            SummaryTile(
+                symbol: "bolt.fill",
+                tint: Color(hex: 0xB07CF0),
+                value: "\(Int(store.todayCaffeine.rounded())) mg",
+                label: "caffeine",
+                progress: store.todayCaffeine / max(store.profile.caffeineLimit, 1)
+            )
+            SummaryTile(
+                symbol: "cube.fill",
+                tint: Color(hex: 0xFF8FB1),
+                value: "\(Int(store.todaySugar.rounded())) g",
+                label: "sugar",
+                progress: store.todaySugar / 50
+            )
+        }
+        .padding(.horizontal, 20)
+    }
 
     private var logSection: some View {
         let entries = Array(store.todayEntries.prefix(8))
@@ -237,12 +273,12 @@ struct TodayView: View {
 
             if entries.isEmpty {
                 HStack(spacing: 14) {
-                    MascotView(progress: 0, mood: .thirsty, size: 50, backdrop: .light, animated: false)
+                    MascotView(progress: 0, mood: .thirsty, size: 56, backdrop: .light, animated: false, showsShadow: false)
                     VStack(alignment: .leading, spacing: 3) {
                         Text("No sips yet")
-                            .font(.dewy(17, .heavy))
+                            .font(.display(18))
                             .foregroundStyle(theme.ink)
-                        Text("Tap a cup above and watch Dewy fill up!")
+                        Text("Tap a drink above and watch Dewy fill up!")
                             .font(.dewy(14, .semibold))
                             .foregroundStyle(theme.inkSoft)
                     }
@@ -252,24 +288,24 @@ struct TodayView: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
-                        EntryRow(
-                            entry: entry,
-                            amount: store.format(entry.amount),
-                            effective: store.format(entry.effective),
-                            isFirst: index == 0,
-                            isLast: index == entries.count - 1
-                        )
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                withAnimation(.spring) { store.delete(entry) }
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+                        EntryRow(entry: entry, amount: store.format(entry.amount), effective: store.format(entry.effective))
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    withAnimation(.spring) { store.delete(entry) }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
                             }
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .top).combined(with: .opacity),
+                                removal: .opacity.combined(with: .scale(scale: 0.9))
+                            ))
+                        if index < entries.count - 1 {
+                            Rectangle()
+                                .fill(theme.line)
+                                .frame(height: 1.5)
+                                .padding(.leading, 62)
                         }
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .top).combined(with: .opacity),
-                            removal: .opacity.combined(with: .scale(scale: 0.9))
-                        ))
                     }
                 }
                 .dewyCard(padding: 14)
@@ -283,13 +319,13 @@ struct TodayView: View {
             Image(systemName: "lightbulb.max.fill")
                 .font(.system(size: 20, weight: .heavy))
                 .foregroundStyle(Palette.sunshine)
-                .frame(width: 44, height: 44)
-                .background(Color(hex: 0x1E2340), in: Circle())
+                .frame(width: 46, height: 46)
+                .background(Palette.ink, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
             VStack(alignment: .leading, spacing: 4) {
-                CapsLabel(text: "Daily dew tip", color: Color(hex: 0x1E2340).opacity(0.6), size: 12)
+                CapsLabel(text: "Daily dew tip", color: Palette.ink.opacity(0.55), size: 11)
                 Text(HydrationTips.tip())
-                    .font(.dewy(16, .heavy))
-                    .foregroundStyle(Color(hex: 0x1E2340))
+                    .font(.display(17, .medium))
+                    .foregroundStyle(Palette.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
@@ -297,16 +333,20 @@ struct TodayView: View {
         .padding(18)
         .background {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Palette.sunshine)
+                .fill(Color(hex: 0xFFD45C))
                 .overlay(alignment: .bottomTrailing) {
-                    Image(systemName: "drop.fill")
-                        .font(.system(size: 90, weight: .black))
-                        .foregroundStyle(Color.white.opacity(0.28))
-                        .rotationEffect(.degrees(-18))
-                        .offset(x: 18, y: 22)
+                    DewyShape()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(width: 70, height: 88)
+                        .rotationEffect(.degrees(-14))
+                        .offset(x: 14, y: 26)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .shadow(color: Palette.sunshine.opacity(0.4), radius: 14, x: 0, y: 8)
+                .background {
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .fill(Color(hex: 0xF2B52E))
+                        .offset(y: 5)
+                }
         }
         .padding(.horizontal, 20)
     }
@@ -320,10 +360,13 @@ struct TodayView: View {
             entry = store.add(kind, amount: amount)
         }
         bounce += 1
+        ripple += 1
         Haptics.splash()
+        SoundFX.play(.pour)
         if wasBelowGoal && store.todayProgress >= 1 {
             celebrate += 1
             Haptics.success()
+            SoundFX.play(.goal, volume: 0.6)
         }
         guard let entry else { return }
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
@@ -349,8 +392,8 @@ struct TodayView: View {
 
 // MARK: - Pieces
 
-/// A cup button in the quick-add row: one tap logs the drink's usual serving.
-struct QuickDrinkButton: View {
+/// A drink tile in the quick-add row: one tap logs the drink's usual serving.
+struct QuickDrinkTile: View {
     @Environment(\.dewyTheme) private var theme
     var kind: DrinkKind
     var amount: String
@@ -359,45 +402,72 @@ struct QuickDrinkButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                DrinkVessel(kind: kind, fill: 0.74, width: 36)
-                    .frame(height: 46)
-                VStack(spacing: 1) {
-                    Text(kind.name.uppercased())
-                        .font(.dewy(11, .black))
-                        .tracking(0.6)
-                        .foregroundStyle(theme.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    Text(amount)
-                        .font(.dewy(13, .bold))
-                        .foregroundStyle(theme.inkSoft)
-                }
+            VStack(spacing: 2) {
+                DrinkIcon(kind: kind, size: 58)
+                Text(kind.name)
+                    .font(.display(14))
+                    .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(amount)
+                    .font(.dewy(12, .bold))
+                    .foregroundStyle(Palette.ink.opacity(0.5))
             }
-            .frame(width: 80)
-            .padding(.vertical, 14)
-            .background(theme.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .shadow(color: theme.shadow, radius: 12, x: 0, y: 6)
+            .frame(width: 84, height: 108)
             .overlay(alignment: .topTrailing) {
                 Image(systemName: isLocked ? "lock.fill" : "plus")
                     .font(.system(size: isLocked ? 9 : 11, weight: .black))
                     .foregroundStyle(.white)
-                    .frame(width: 22, height: 22)
-                    .background(isLocked ? Color(hex: 0x1E2340) : kind.color, in: Circle())
-                    .overlay(Circle().strokeBorder(theme.card, lineWidth: 2.5))
-                    .offset(x: 4, y: -4)
+                    .frame(width: 21, height: 21)
+                    .background(isLocked ? Palette.ink.opacity(0.75) : kind.color, in: Circle())
+                    .padding(7)
             }
-            .opacity(isLocked ? 0.8 : 1)
+            .opacity(isLocked ? 0.82 : 1)
         }
-        .buttonStyle(SquishyButtonStyle())
-        .accessibilityLabel("Add \(amount) of \(kind.name)")
+        .buttonStyle(CandyButtonStyle(fill: kind.light, lip: kind.color.opacity(0.32), shape: AnyShape(RoundedRectangle(cornerRadius: 24, style: .continuous)), depth: 4))
+        .accessibilityLabel(isLocked ? "\(kind.name), Dewy+ only" : "Add \(amount) of \(kind.name)")
+    }
+}
+
+/// A small stat card in the summary row.
+struct SummaryTile: View {
+    @Environment(\.dewyTheme) private var theme
+    var symbol: String
+    var tint: Color
+    var value: String
+    var label: String
+    var progress: Double?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            IconTile(systemImage: symbol, color: tint, size: 30)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value)
+                    .font(.display(18))
+                    .foregroundStyle(theme.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .contentTransition(.numericText())
+                Text(label)
+                    .font(.dewy(12, .bold))
+                    .foregroundStyle(theme.inkSoft)
+            }
+            if let progress {
+                ProgressCapsule(progress: progress, tint: tint)
+                    .frame(height: 6)
+            } else {
+                Spacer().frame(height: 6)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dewyCard(padding: 14, radius: 22)
     }
 }
 
 /// A slim capsule striped with today's drink colors.
 struct DrinkStripe: View {
     var bands: [LiquidBand]
-    var track: Color = Color.white.opacity(0.24)
+    var track: Color = Color.white.opacity(0.3)
 
     var body: some View {
         GeometryReader { proxy in
@@ -420,26 +490,52 @@ struct DrinkStripe: View {
     }
 }
 
+/// The streak counter: a little flame on a white pill.
 struct StreakPill: View {
-    @Environment(\.dewyTheme) private var theme
     var days: Int
 
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "flame.fill")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(Palette.flame)
-                .symbolEffect(.bounce, value: days)
+        HStack(spacing: 5) {
+            FlameGlyph()
+                .frame(width: 20, height: 24)
             Text("\(days)")
-                .font(.dewy(18, .black))
-                .foregroundStyle(Color(hex: 0x1E2340))
+                .font(.display(20))
+                .foregroundStyle(Palette.ink)
                 .contentTransition(.numericText(value: Double(days)))
         }
-        .padding(.horizontal, 15)
+        .padding(.leading, 11)
+        .padding(.trailing, 14)
         .frame(height: 42)
         .background(Color.white, in: Capsule())
         .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(days) day streak")
+    }
+}
+
+/// Dewy's illustrated flame, used for streaks.
+struct FlameGlyph: View {
+    var body: some View {
+        Canvas { context, size in
+            let w = size.width, h = size.height
+            func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x / 22 * w, y: y / 24 * h) }
+            var outer = Path()
+            outer.move(to: p(11, 1))
+            outer.addCurve(to: p(20, 15.5), control1: p(14, 6), control2: p(20, 9))
+            outer.addCurve(to: p(2, 15.5), control1: p(20, 26), control2: p(2, 26))
+            outer.addCurve(to: p(6.5, 6), control1: p(2, 11), control2: p(5, 9))
+            outer.addCurve(to: p(10, 9), control1: p(8, 8.5), control2: p(9, 9))
+            outer.addCurve(to: p(11, 1), control1: p(10, 6), control2: p(10, 3.5))
+            outer.closeSubpath()
+            context.fill(outer, with: .linearGradient(Gradient(colors: [Color(hex: 0xFF9F43), Color(hex: 0xFF5A3D)]), startPoint: p(11, 1), endPoint: p(11, 24)))
+            var inner = Path()
+            inner.move(to: p(11, 10))
+            inner.addCurve(to: p(16, 17.5), control1: p(13, 13), control2: p(16, 14.5))
+            inner.addCurve(to: p(6, 17.5), control1: p(16, 23.5), control2: p(6, 23.5))
+            inner.addCurve(to: p(11, 10), control1: p(6, 15), control2: p(8, 13.5))
+            inner.closeSubpath()
+            context.fill(inner, with: .color(Color(hex: 0xFFD23F)))
+        }
     }
 }
 
@@ -448,20 +544,20 @@ struct SpeechBubble: View {
 
     var body: some View {
         Text(text)
-            .font(.dewy(13, .heavy))
-            .foregroundStyle(Color(hex: 0x1E2340))
+            .font(.display(15, .medium))
+            .foregroundStyle(Palette.ink)
             .multilineTextAlignment(.center)
-            .frame(maxWidth: 112)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
+            .frame(maxWidth: 116)
+            .padding(.horizontal, 13)
+            .padding(.vertical, 10)
             .background {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(Color.white)
                     .overlay(alignment: .bottomLeading) {
                         Circle()
                             .fill(Color.white)
-                            .frame(width: 12, height: 12)
-                            .offset(x: 6, y: 9)
+                            .frame(width: 14, height: 14)
+                            .offset(x: 4, y: 9)
                     }
                     .shadow(color: Color.black.opacity(0.12), radius: 10, x: 0, y: 5)
             }
@@ -483,12 +579,6 @@ struct ProgressCapsule: View {
                 Capsule()
                     .fill(tint ?? theme.accent)
                     .frame(width: max(proxy.size.height, proxy.size.width * min(max(progress, 0), 1)))
-                    .overlay(alignment: .trailing) {
-                        Circle()
-                            .fill(.white)
-                            .frame(width: proxy.size.height * 0.45, height: proxy.size.height * 0.45)
-                            .padding(.trailing, proxy.size.height * 0.28)
-                    }
             }
         }
         .animation(.spring(response: 0.8, dampingFraction: 0.7), value: progress)
@@ -500,79 +590,65 @@ struct EntryRow: View {
     var entry: DrinkEntry
     var amount: String
     var effective: String
-    var isFirst: Bool
-    var isLast: Bool
+
+    private var detail: String {
+        if entry.caffeine >= 1 {
+            return "\(entry.date.formatted(date: .omitted, time: .shortened)) · \(Int(entry.caffeine.rounded())) mg caffeine"
+        }
+        if entry.kind.hydration < 1 {
+            return "\(entry.date.formatted(date: .omitted, time: .shortened)) · counts \(effective)"
+        }
+        return entry.date.formatted(date: .omitted, time: .shortened)
+    }
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(entry.date.formatted(date: .omitted, time: .shortened))
-                .font(.dewy(13, .heavy))
-                .foregroundStyle(theme.inkSoft)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .frame(width: 62, alignment: .trailing)
-
-            ZStack {
-                VStack(spacing: 0) {
-                    Rectangle()
-                        .fill(isFirst ? Color.clear : theme.line)
-                        .frame(width: 3)
-                    Rectangle()
-                        .fill(isLast ? Color.clear : theme.line)
-                        .frame(width: 3)
-                }
-                Circle()
-                    .fill(entry.kind.color)
-                    .frame(width: 14, height: 14)
-                    .overlay(Circle().strokeBorder(theme.card, lineWidth: 3))
-            }
-            .frame(width: 16)
-
-            DrinkVessel(kind: entry.kind, fill: 0.72, width: 26)
-
+            DrinkBadge(kind: entry.kind, size: 48)
             VStack(alignment: .leading, spacing: 1) {
                 Text(entry.kind.name)
-                    .font(.dewy(16, .heavy))
+                    .font(.display(17))
                     .foregroundStyle(theme.ink)
-                if entry.kind.hydration < 1 {
-                    Text("≈ \(effective) hydration")
-                        .font(.dewy(11, .semibold))
-                        .foregroundStyle(theme.inkSoft)
-                }
+                Text(detail)
+                    .font(.dewy(12.5, .semibold))
+                    .foregroundStyle(theme.inkSoft)
+                    .lineLimit(1)
             }
             Spacer(minLength: 4)
             Text("+\(amount)")
-                .font(.dewy(15, .black))
-                .foregroundStyle(entry.kind.color)
+                .font(.display(17))
+                .foregroundStyle(theme.isDark ? entry.kind.color : entry.kind.deep)
         }
-        .frame(height: 60)
+        .padding(.vertical, 8)
         .contentShape(Rectangle())
     }
 }
 
 struct ToastView: View {
+    @Environment(\.dewyTheme) private var theme
     var entry: DrinkEntry
     var label: String
     var onUndo: () -> Void
 
     var body: some View {
         HStack(spacing: 10) {
-            Circle()
-                .fill(entry.kind.color)
-                .frame(width: 12, height: 12)
+            DrinkIcon(kind: entry.kind, size: 30)
             Text("Added \(label) \(entry.kind.name.lowercased())")
-                .font(.dewy(15, .heavy))
-                .foregroundStyle(.white)
+                .font(.display(16, .medium))
+                .foregroundStyle(Palette.ink)
             Button(action: onUndo) {
-                Text("UNDO")
-                    .font(.dewy(14, .black))
-                    .tracking(0.8)
-                    .foregroundStyle(Palette.sunshine)
+                Text("Undo")
+                    .font(.display(15))
+                    .foregroundStyle(theme.isDark ? Color(hex: 0x5B4BE0) : theme.accent)
+                    .padding(.horizontal, 12)
+                    .frame(height: 30)
+                    .background(theme.isDark ? Color(hex: 0xEEE8FF) : theme.accentSoft, in: Capsule())
             }
+            .buttonStyle(SquishyButtonStyle())
         }
-        .padding(.horizontal, 18)
-        .frame(height: 48)
-        .background(Color(hex: 0x1E2340), in: Capsule())
-        .shadow(color: Color.black.opacity(0.25), radius: 14, x: 0, y: 8)
+        .padding(.leading, 12)
+        .padding(.trailing, 8)
+        .frame(height: 50)
+        .background(Color.white, in: Capsule())
+        .shadow(color: Color.black.opacity(0.18), radius: 16, x: 0, y: 8)
     }
 }

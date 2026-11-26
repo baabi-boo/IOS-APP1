@@ -102,47 +102,6 @@ struct WaveEdgeShape: Shape {
     }
 }
 
-/// A friendly tapered tumbler glass.
-struct TumblerShape: Shape {
-    var taper: CGFloat = 0.14
-
-    func path(in rect: CGRect) -> Path {
-        let inset = rect.width * taper
-        let radius = rect.width * 0.16
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX - inset, y: rect.maxY - radius))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.maxX - inset - radius, y: rect.maxY),
-            control: CGPoint(x: rect.maxX - inset - radius * 0.1, y: rect.maxY)
-        )
-        path.addLine(to: CGPoint(x: rect.minX + inset + radius, y: rect.maxY))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.minX + inset, y: rect.maxY - radius),
-            control: CGPoint(x: rect.minX + inset + radius * 0.1, y: rect.maxY)
-        )
-        path.closeSubpath()
-        return path
-    }
-}
-
-/// A straight-sided mug body with a soft round bottom.
-struct MugShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        let radius = rect.width * 0.28
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
-        path.addQuadCurve(to: CGPoint(x: rect.maxX - radius, y: rect.maxY), control: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX + radius, y: rect.maxY))
-        path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY - radius), control: CGPoint(x: rect.minX, y: rect.maxY))
-        path.closeSubpath()
-        return path
-    }
-}
-
 /// A rounded heart, used for sparkles and confetti.
 struct HeartShape: Shape {
     func path(in rect: CGRect) -> Path {
@@ -229,65 +188,15 @@ struct HillShape: Shape {
 
 // MARK: - Drink vessels
 
-enum VesselStyle {
-    case glass, mug, straw
-}
-
-/// A flat, colorful cup for a drink: a glass, a mug with a handle or a tumbler with a straw.
+/// Legacy name for the illustrated drink, kept so older call sites keep working.
 struct DrinkVessel: View {
-    @Environment(\.dewyTheme) private var theme
     var kind: DrinkKind
     var fill: Double = 0.72
     var width: CGFloat = 40
     var onHero = false
     var wavePhase: Double = 0.8
 
-    private var height: CGFloat { width * 1.25 }
-
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            switch kind.vessel {
-            case .glass:
-                cup(TumblerShape(taper: 0.13), width: width, height: height)
-            case .straw:
-                Capsule()
-                    .fill(kind.strawColor)
-                    .frame(width: width * 0.1, height: height * 0.46)
-                    .rotationEffect(.degrees(14))
-                    .offset(x: width * 0.56, y: 0)
-                cup(TumblerShape(taper: 0.13), width: width * 0.86, height: height * 0.8)
-                    .offset(x: width * 0.07, y: height * 0.2)
-            case .mug:
-                Circle()
-                    .strokeBorder(kind.color, lineWidth: width * 0.1)
-                    .frame(width: width * 0.4, height: width * 0.4)
-                    .offset(x: width * 0.6, y: height * 0.4)
-                cup(MugShape(), width: width * 0.8, height: height * 0.74)
-                    .offset(x: 0, y: height * 0.26)
-            }
-        }
-        .frame(width: width, height: height, alignment: .topLeading)
-    }
-
-    private func cup<S: Shape>(_ shape: S, width w: CGFloat, height h: CGFloat) -> some View {
-        ZStack {
-            shape.fill(onHero ? Color.white.opacity(0.35) : theme.well)
-            WaveShape(level: fill, phase: wavePhase, amplitude: h * 0.035, frequency: 1)
-                .fill(kind.color)
-                .clipShape(shape)
-            if kind == .sparkling {
-                ForEach(0..<3, id: \.self) { index in
-                    Circle()
-                        .fill(Color.white.opacity(0.8))
-                        .frame(width: w * 0.1, height: w * 0.1)
-                        .offset(x: w * (CGFloat(index) * 0.17 - 0.1), y: h * (0.32 - CGFloat(index % 2) * 0.16))
-                }
-            }
-            Capsule()
-                .fill(Color.white.opacity(0.5))
-                .frame(width: w * 0.09, height: h * 0.36)
-                .offset(x: -w * 0.24, y: -h * 0.04)
-        }
-        .frame(width: w, height: h)
+        DrinkIcon(kind: kind, size: width * 1.25)
     }
 }

@@ -4,12 +4,18 @@ import SwiftUI
 struct DewyApp: App {
     @State private var store = HydrationStore()
     @State private var purchases = PurchaseManager()
+    @State private var router = AppRouter()
+
+    init() {
+        FontRegistry.registerFonts()
+    }
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(store)
                 .environment(purchases)
+                .environment(router)
         }
     }
 }
@@ -43,7 +49,9 @@ struct RootView: View {
             let marker = FileManager.default.temporaryDirectory.appendingPathComponent("dewy-ready")
             try? Data().write(to: marker)
         }
+        .onAppear(perform: applyFeedbackSettings)
         .onChange(of: store.profile) {
+            applyFeedbackSettings()
             store.save()
         }
         .onChange(of: scenePhase) {
@@ -52,9 +60,38 @@ struct RootView: View {
             }
         }
     }
+
+    private func applyFeedbackSettings() {
+        Haptics.isEnabled = store.profile.hapticsOn
+        SoundFX.isEnabled = store.profile.soundsOn
+    }
 }
 
-// MARK: - Tabs
+// MARK: - Routing
+
+/// A drink picked in the drink sheet, waiting for the Today screen to pour it into Dewy.
+struct QueuedDrink: Equatable {
+    var id = UUID()
+    var kind: DrinkKind
+    var amount: Double
+}
+
+/// App-wide navigation state, so the tab bar's add button works from every tab.
+@MainActor
+@Observable
+final class AppRouter {
+    var tab: AppTab = .initial
+    var showAddDrink = false
+    var queuedDrink: QueuedDrink?
+
+    /// Sends a drink to the Today screen, switching tabs so you can watch Dewy fill up.
+    func log(_ kind: DrinkKind, amount: Double) {
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+            tab = .today
+        }
+        queuedDrink = QueuedDrink(kind: kind, amount: amount)
+    }
+}
 
 enum AppTab: String, CaseIterable, Identifiable {
     case today, insights, garden, settings
@@ -66,7 +103,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         case .today: "Today"
         case .insights: "Insights"
         case .garden: "Garden"
-        case .settings: "Settings"
+        case .settings: "Me"
         }
     }
 
@@ -75,7 +112,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         case .today: "drop.fill"
         case .insights: "chart.bar.fill"
         case .garden: "leaf.fill"
-        case .settings: "gearshape.fill"
+        case .settings: "person.fill"
         }
     }
 
@@ -89,96 +126,141 @@ enum AppTab: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Main tabs
+
 struct MainTabView: View {
     @Environment(\.dewyTheme) private var theme
-    @State private var tab: AppTab = .initial
+    @Environment(AppRouter.self) private var router
 
     var body: some View {
+        @Bindable var router = router
         ZStack {
             theme.canvas.ignoresSafeArea()
 
             Group {
-                switch tab {
+                switch router.tab {
                 case .today: TodayView()
                 case .insights: InsightsView()
                 case .garden: GardenView()
                 case .settings: SettingsView()
                 }
             }
-            .id(tab)
+            .id(router.tab)
             .transition(.asymmetric(
                 insertion: .opacity.combined(with: .offset(y: 14)),
                 removal: .opacity
             ))
 
-            // Paint the status bar in the screen's hero color, so the white clock stays
-            // readable when the light content scrolls up underneath it.
+            // Paint the status bar in the sky's top color, so the white clock stays
+            // readable when light content scrolls up underneath it.
             GeometryReader { proxy in
                 VStack(spacing: 0) {
-                    (tab == .garden ? theme.sky[0] : theme.hero)
-                        .frame(height: proxy.safeAreaInsets.top)
+                    theme.sky[0].frame(height: proxy.safeAreaInsets.top)
                     Spacer(minLength: 0)
                 }
             }
             .ignoresSafeArea()
             .allowsHitTesting(false)
-            .animation(.smooth(duration: 0.4), value: tab)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            FloatingTabBar(selection: $tab)
-                .padding(.horizontal, 22)
-                .padding(.bottom, 6)
+            FloatingTabBar()
+                .padding(.horizontal, 20)
+                .padding(.bottom, 4)
+        }
+        .sheet(isPresented: $router.showAddDrink) {
+            DrinkPickerSheet { kind, amount in
+                router.log(kind, amount: amount)
+            }
+        }
+        .onAppear {
+            guard LaunchOptions.screenshot == "add" else { return }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.8))
+                router.showAddDrink = true
+            }
         }
     }
 }
 
+/// The floating tab bar, with a raised candy "+" in the middle for logging a drink.
 struct FloatingTabBar: View {
-    @Binding var selection: AppTab
     @Environment(\.dewyTheme) private var theme
+    @Environment(AppRouter.self) private var router
     @Namespace private var namespace
 
     var body: some View {
-        HStack(spacing: 4) {
-            ForEach(AppTab.allCases) { item in
-                let isSelected = item == selection
-                Button {
-                    guard !isSelected else { return }
-                    Haptics.select()
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) {
-                        selection = item
-                    }
-                } label: {
-                    HStack(spacing: 7) {
-                        Image(systemName: item.icon)
-                            .font(.system(size: 17, weight: .heavy))
-                            .symbolEffect(.bounce, value: isSelected)
-                        if isSelected {
-                            Text(item.title)
-                                .font(.dewy(15, .heavy))
-                                .lineLimit(1)
-                                .fixedSize()
-                                .transition(.opacity.combined(with: .scale(scale: 0.6, anchor: .leading)))
-                        }
-                    }
-                    .foregroundStyle(isSelected ? Color.white : theme.inkSoft)
-                    .frame(maxWidth: isSelected ? .infinity : 56)
-                    .frame(height: 52)
+        HStack(spacing: 0) {
+            tabButton(.today)
+            tabButton(.insights)
+            addButton
+            tabButton(.garden)
+            tabButton(.settings)
+        }
+        .padding(.horizontal, 8)
+        .frame(height: 68)
+        .background {
+            Capsule()
+                .fill(theme.card)
+                .shadow(color: theme.isDark ? Color.black.opacity(0.45) : theme.sky[0].opacity(0.16), radius: 22, x: 0, y: 10)
+        }
+    }
+
+    private func tabButton(_ item: AppTab) -> some View {
+        let isSelected = router.tab == item
+        return Button {
+            guard !isSelected else { return }
+            Haptics.select()
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
+                router.tab = item
+            }
+        } label: {
+            VStack(spacing: 3) {
+                Image(systemName: item.icon)
+                    .font(.system(size: 19, weight: .heavy))
+                    .symbolEffect(.bounce, value: isSelected)
+                    .frame(width: 46, height: 30)
                     .background {
                         if isSelected {
                             Capsule()
-                                .fill(theme.isDark ? theme.heroLight : theme.hero)
-                                .shadow(color: theme.hero.opacity(0.45), radius: 10, x: 0, y: 5)
-                                .matchedGeometryEffect(id: "pill", in: namespace)
+                                .fill(theme.accentSoft)
+                                .matchedGeometryEffect(id: "tab", in: namespace)
                         }
                     }
-                    .contentShape(Capsule())
-                }
-                .buttonStyle(SquishyButtonStyle(scale: 0.9))
-                .accessibilityLabel(item.title)
+                    .foregroundStyle(isSelected ? theme.link : theme.inkSoft.opacity(0.75))
+                Text(item.title)
+                    .font(.dewy(10.5, .heavy))
+                    .foregroundStyle(isSelected ? theme.ink : theme.inkSoft.opacity(0.8))
             }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
-        .padding(6)
-        .background(theme.card, in: Capsule())
-        .shadow(color: Color.black.opacity(theme.isDark ? 0.4 : 0.12), radius: 22, x: 0, y: 10)
+        .buttonStyle(SquishyButtonStyle(scale: 0.88))
+        .accessibilityLabel(item.title)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var addButton: some View {
+        Button {
+            Haptics.tap()
+            SoundFX.play(.pop, volume: 0.35)
+            router.showAddDrink = true
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 26, weight: .black))
+                .foregroundStyle(theme.onAccent)
+                .frame(width: 60, height: 60)
+                .contentShape(Circle())
+        }
+        .buttonStyle(CandyButtonStyle(fill: theme.accent, lip: theme.accentDeep, shape: AnyShape(Circle()), depth: 5))
+        .background {
+            Circle()
+                .fill(theme.card)
+                .frame(width: 74, height: 74)
+                .offset(y: 2)
+        }
+        .shadow(color: theme.accent.opacity(0.4), radius: 12, x: 0, y: 8)
+        .offset(y: -18)
+        .frame(width: 76)
+        .accessibilityLabel("Add a drink")
     }
 }
