@@ -337,9 +337,10 @@ struct InsightsView: View {
                         .foregroundStyle(share.kind.color)
                     }
                     .chartLegend(.hidden)
+                    let topPercent: Int = Int(((top?.share ?? 0) * 100).rounded())
                     VStack(spacing: 0) {
                         DrinkIcon(kind: top?.kind ?? .water, size: 46)
-                        Text("\(Int(((top?.share ?? 0) * 100).rounded()))%")
+                        Text("\(topPercent)%")
                             .font(.display(17))
                             .foregroundStyle(theme.ink)
                     }
@@ -476,35 +477,7 @@ struct WeekDroplets: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(days.enumerated()), id: \.offset) { index, day in
-                let isToday = index == days.count - 1
-                VStack(spacing: 6) {
-                    ZStack(alignment: .bottom) {
-                        DewyShape()
-                            .fill(Color.white.opacity(0.3))
-                        Rectangle()
-                            .fill(day.amount >= 1 ? Color.white : Color.white.opacity(0.85))
-                            .frame(height: 40 * CGFloat(min(max(day.amount, 0), 1)))
-                            .frame(maxHeight: .infinity, alignment: .bottom)
-                            .clipShape(DewyShape())
-                        if day.amount >= 1 {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .black))
-                                .foregroundStyle(theme.isDark ? theme.sky[1] : theme.accent)
-                                .padding(.bottom, 8)
-                        }
-                    }
-                    .frame(width: 32, height: 40)
-                    Text(day.date.formatted(.dateTime.weekday(.narrow)))
-                        .font(.display(14))
-                        .foregroundStyle(isToday ? Palette.ink : Color.white.opacity(0.9))
-                        .frame(width: 24, height: 24)
-                        .background {
-                            if isToday { Circle().fill(Color.white) }
-                        }
-                }
-                .frame(maxWidth: .infinity)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(day.date.formatted(.dateTime.weekday(.wide))): \(Int((day.amount * 100).rounded())) percent")
+                dayColumn(day, isToday: index == days.count - 1)
             }
         }
         .padding(.vertical, 14)
@@ -514,6 +487,40 @@ struct WeekDroplets: View {
             RoundedRectangle(cornerRadius: 26, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.22), lineWidth: 1.5)
         }
+    }
+
+    private func dayColumn(_ day: DayTotal, isToday: Bool) -> some View {
+        let fill: CGFloat = 40 * CGFloat(min(max(day.amount, 0), 1))
+        let percent: Int = Int((day.amount * 100).rounded())
+        let reached = day.amount >= 1
+        return VStack(spacing: 6) {
+            ZStack(alignment: .bottom) {
+                DewyShape()
+                    .fill(Color.white.opacity(0.3))
+                Rectangle()
+                    .fill(reached ? Color.white : Color.white.opacity(0.85))
+                    .frame(height: fill)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .clipShape(DewyShape())
+                if reached {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 12, weight: .black))
+                        .foregroundStyle(theme.isDark ? theme.sky[1] : theme.accent)
+                        .padding(.bottom, 8)
+                }
+            }
+            .frame(width: 32, height: 40)
+            Text(day.date.formatted(.dateTime.weekday(.narrow)))
+                .font(.display(14))
+                .foregroundStyle(isToday ? Palette.ink : Color.white.opacity(0.9))
+                .frame(width: 24, height: 24)
+                .background {
+                    if isToday { Circle().fill(Color.white) }
+                }
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(day.date.formatted(.dateTime.weekday(.wide))): \(percent) percent")
     }
 }
 

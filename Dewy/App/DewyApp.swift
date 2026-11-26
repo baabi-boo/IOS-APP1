@@ -153,6 +153,22 @@ struct MainTabView: View {
                 removal: .opacity
             ))
 
+            // Content fades out softly behind the floating tab bar.
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                LinearGradient(
+                    stops: [
+                        .init(color: theme.canvas.opacity(0), location: 0),
+                        .init(color: theme.canvas.opacity(0.94), location: 0.45),
+                        .init(color: theme.canvas, location: 1)
+                    ],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .frame(height: 150)
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .allowsHitTesting(false)
+
             // Paint the status bar in the sky's top color, so the white clock stays
             // readable when light content scrolls up underneath it. The reader keeps the
             // safe area, so it can measure the inset and draw the strip just above itself.
@@ -171,13 +187,6 @@ struct MainTabView: View {
             FloatingTabBar()
                 .padding(.horizontal, 20)
                 .padding(.bottom, 4)
-                .background(alignment: .bottom) {
-                    // Content fades out softly behind the floating bar.
-                    LinearGradient(colors: [theme.canvas.opacity(0), theme.canvas.opacity(0.92), theme.canvas], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 120)
-                        .ignoresSafeArea(edges: .bottom)
-                        .allowsHitTesting(false)
-                }
         }
         .sheet(isPresented: $router.showAddDrink) {
             DrinkPickerSheet { kind, amount in

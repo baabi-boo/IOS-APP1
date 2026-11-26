@@ -62,31 +62,40 @@ struct ConfettiView: View {
         TimelineView(.animation(paused: start == nil)) { timeline in
             Canvas { context, size in
                 guard let start else { return }
-                let t = timeline.date.timeIntervalSince(start)
-                guard t >= 0, t < duration else { return }
-                let gravity = 980.0
-                let ox = Double(size.width) * Double(origin.x)
-                let oy = Double(size.height) * Double(origin.y)
-                // Every piece fades together, so set opacity once and draw plain
-                // transformed paths (no per-piece layers — much cheaper to render).
-                context.opacity = max(0, min(1, (duration - t) / 0.8))
-                for piece in pieces {
-                    let vx = cos(piece.angle) * piece.speed * 0.75
-                    let vy = sin(piece.angle) * piece.speed
-                    let x = CGFloat(ox + vx * t * 0.9 + piece.drift * sin(t * 3))
-                    let y = CGFloat(oy + vy * t + 0.5 * gravity * t * t)
-                    let transform = CGAffineTransform(translationX: x, y: y).rotated(by: CGFloat(piece.spin * t))
-                    context.fill(piece.path.applying(transform), with: .color(piece.isDroplet ? theme.water : piece.color))
-                }
+                draw(in: &context, size: size, time: timeline.date.timeIntervalSince(start))
             }
         }
         .allowsHitTesting(false)
+        .accessibilityHidden(true)
         .onChange(of: trigger) {
             start = .now
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(duration + 0.1))
                 start = nil
             }
+        }
+    }
+
+    /// Every piece fades together, so opacity is set once and pieces are plain
+    /// transformed paths (no per-piece layers, which is much cheaper to render).
+    private func draw(in context: inout GraphicsContext, size: CGSize, time t: Double) {
+        guard t >= 0, t < duration else { return }
+        let gravity: Double = 980
+        let ox: Double = Double(size.width) * Double(origin.x)
+        let oy: Double = Double(size.height) * Double(origin.y)
+        let fade: Double = (duration - t) / 0.8
+        context.opacity = max(0, min(1, fade))
+        for piece in pieces {
+            let vx: Double = cos(piece.angle) * piece.speed * 0.75
+            let vy: Double = sin(piece.angle) * piece.speed
+            let sway: Double = piece.drift * sin(t * 3)
+            let px: Double = ox + vx * t * 0.9 + sway
+            let fall: Double = 0.5 * gravity * t * t
+            let py: Double = oy + vy * t + fall
+            let spin: Double = piece.spin * t
+            let transform = CGAffineTransform(translationX: CGFloat(px), y: CGFloat(py)).rotated(by: CGFloat(spin))
+            let color: Color = piece.isDroplet ? theme.water : piece.color
+            context.fill(piece.path.applying(transform), with: .color(color))
         }
     }
 }

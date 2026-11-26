@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Drinks
 
-enum DrinkKind: String, Codable, CaseIterable, Identifiable {
+enum DrinkKind: String, Codable, CaseIterable, Identifiable, Sendable {
     case water, sparkling, tea, coffee, juice, milk, smoothie, soda, lemonade, cocoa, coconut, matcha
 
     var id: String { rawValue }

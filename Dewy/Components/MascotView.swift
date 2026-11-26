@@ -77,9 +77,14 @@ enum DewyGeometry {
 /// Dewy's silhouette, stretched to fill a rect. Handy for progress glyphs and clipping.
 struct DewyShape: Shape {
     func path(in rect: CGRect) -> Path {
-        DewyGeometry.body { x, y in
-            CGPoint(x: rect.minX + (x - 18) / 164 * rect.width, y: rect.minY + (y - 10) / 206 * rect.height)
+        let scaleX: CGFloat = rect.width / 164
+        let scaleY: CGFloat = rect.height / 206
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
+            let px: CGFloat = rect.minX + (x - 18) * scaleX
+            let py: CGFloat = rect.minY + (y - 10) * scaleY
+            return CGPoint(x: px, y: py)
         }
+        return DewyGeometry.body(point)
     }
 }
 
