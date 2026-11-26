@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="11" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="sodaFill" x1="0" y1="0" x2="0.2" y2="1">
+    <stop offset="0%" stop-color="#F77F7A"/>
+    <stop offset="55%" stop-color="#D94B4E"/>
+    <stop offset="100%" stop-color="#9A2634"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="120" cy="214" rx="50" ry="10.5" fill="#3B2B23" opacity="0.17"/>
+  <!-- Retro apothecary glass soda bottle silhouette -->
+  <path d="M104 38 L136 38 L138 72 C139 88 158 98 158 122 C158 134 152 142 152 152 C152 162 158 172 158 192 C158 206 82 206 82 192 C82 172 88 162 88 152 C88 142 82 134 82 122 C82 98 101 88 102 72 Z" fill="#FDE8E6" fill-opacity="0.72"/>
+  <!-- Ruby cherry soda inside -->
+  <path d="M106 66 L134 66 L136 74 C138 90 154 100 154 122 C154 134 148 142 148 152 C148 162 154 172 154 190 C154 201 86 201 86 190 C86 172 92 162 92 152 C92 142 86 134 86 122 C86 100 102 90 104 74 Z" fill="url(#sodaFill)"/>
+  <!-- Fizzy carbonation bubbles in neck -->
+  <g fill="#FFF5F0" opacity="0.86">
+    <circle cx="114" cy="78" r="3.4"/>
+    <circle cx="125" cy="86" r="2.8"/>
+    <circle cx="118" cy="96" r="3.8"/>
+    <circle cx="128" cy="108" r="3"/>
+    <circle cx="106" cy="112" r="2.6"/>
+  </g>
+  <!-- Vintage cream wrap label with crimson wave ribbon -->
+  <path d="M84 128 Q120 136 156 128 L153 166 Q120 174 87 166 Z" fill="#FAF2E4" stroke="#342638" stroke-opacity="0.78" stroke-width="2.16"/>
+  <path d="M88 148 Q104 141 120 148 Q136 155 152 148" fill="none" stroke="#D94B4E" stroke-width="4.68" stroke-linecap="round"/>
+  <circle cx="120" cy="148" r="6" fill="#F5C356" stroke="#342638" stroke-opacity="0.78" stroke-width="1.58"/>
+  <!-- Glass gloss & crisp contour -->
+  <path d="M94 114 C94 128 96 140 96 152 C96 164 93 176 93 188" fill="none" stroke="#FFFDF8" stroke-width="3.96" stroke-linecap="round" opacity="0.72"/>
+  <path d="M104 38 L136 38 L138 72 C139 88 158 98 158 122 C158 134 152 142 152 152 C152 162 158 172 158 192 C158 206 82 206 82 192 C82 172 88 162 88 152 C88 142 82 134 82 122 C82 98 101 88 102 72 Z" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02" stroke-linejoin="round"/>
+  <!-- Crimped antique brass bottle cap -->
+  <path d="M100 32 C100 25 140 25 140 32 L142 41 Q136 44 131 41 Q125 44 120 41 Q115 44 109 41 Q104 44 98 41 Z" fill="#EBB94E" stroke="#342638" stroke-opacity="0.78" stroke-width="2.59" stroke-linejoin="round"/>
+</g>
+</svg>

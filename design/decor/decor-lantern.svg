@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="17" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <radialGradient id="washiGlow" cx="46%" cy="46%" r="58%">
+    <stop offset="0%" stop-color="#FFF6CE"/>
+    <stop offset="52%" stop-color="#F7B762"/>
+    <stop offset="100%" stop-color="#D96846"/>
+  </radialGradient>
+  <radialGradient id="aura" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#FFE494" stop-opacity="0.48"/>
+    <stop offset="100%" stop-color="#FFE494" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="94" cy="212" rx="44" ry="9" fill="#3B2B23" opacity="0.14"/>
+  <!-- Soft warm lantern radiance halo -->
+  <circle cx="136" cy="118" r="68" fill="url(#aura)"/>
+  <!-- Curved jointed bamboo shepherd's pole -->
+  <path d="M72 210 L72 62 C72 32 106 24 134 38 L136 52" fill="none" stroke="#342638" stroke-opacity="0.80" stroke-width="11.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M72 210 L72 62 C72 32 106 24 134 38 L136 52" fill="none" stroke="#85B36E" stroke-width="3.85" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Bamboo joints & dainty sprout leaf -->
+  <line x1="67" y1="154" x2="77" y2="154" stroke="#342638" stroke-opacity="0.80" stroke-width="2.22"/>
+  <line x1="67" y1="106" x2="77" y2="106" stroke="#342638" stroke-opacity="0.80" stroke-width="2.22"/>
+  <path d="M72 96 C52 88 42 74 44 64 C58 66 68 78 72 92 Z" fill="#77B56E" stroke="#342638" stroke-opacity="0.80" stroke-width="2.22" stroke-linejoin="round"/>
+  <!-- Hanging cord -->
+  <line x1="136" y1="48" x2="136" y2="66" stroke="#342638" stroke-opacity="0.80" stroke-width="2.37" stroke-linecap="round"/>
+  <!-- Vermilion silk tassel dangling beneath lantern -->
+  <line x1="136" y1="168" x2="136" y2="180" stroke="#342638" stroke-opacity="0.80" stroke-width="2.37"/>
+  <circle cx="136" cy="180" r="4.5" fill="#E8B94A" stroke="#342638" stroke-opacity="0.80" stroke-width="1.78"/>
+  <path d="M132 184 L128 206 Q136 210 144 206 L140 184 Z" fill="#D45342" stroke="#342638" stroke-opacity="0.80" stroke-width="2.22" stroke-linejoin="round"/>
+  <!-- Glowing oval washi paper lantern body -->
+  <path d="M108 72 C84 88 82 146 108 164 L164 164 C190 146 188 88 164 72 Z" fill="url(#washiGlow)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.96" stroke-linejoin="round"/>
+  <!-- Fine horizontal bamboo washi ribs -->
+  <g fill="none" stroke="#8E4226" stroke-width="1.48" stroke-opacity="0.52">
+    <path d="M96 92 Q136 100 176 92"/>
+    <path d="M90 112 Q136 120 182 112"/>
+    <path d="M92 132 Q136 140 180 132"/>
+    <path d="M99 150 Q136 157 173 150"/>
+  </g>
+  <!-- Luminous painted candle glow core -->
+  <ellipse cx="136" cy="118" rx="22" ry="26" fill="#FFFBE0" opacity="0.48"/>
+  <!-- Lacquered plum-dark top & bottom wooden collars -->
+  <rect x="112" y="62" width="48" height="12" rx="4" fill="#3D2E3B" stroke="#342638" stroke-opacity="0.80" stroke-width="2.66"/>
+  <rect x="114" y="160" width="44" height="11" rx="4" fill="#3D2E3B" stroke="#342638" stroke-opacity="0.80" stroke-width="2.66"/>
+</g>
+</svg>

@@ -2,13 +2,12 @@ import SwiftUI
 import WidgetKit
 import AppIntents
 
-// Shared by the app (widget previews in Settings) and the widget extension.
-// Only uses Theme, Models, MascotView, Shapes, HydrationStore, DemoData, LogDrinkIntent and system
-// frameworks: no Modifiers/Scene/Effects, so the clay helpers below are private to this file.
-// Everything drawn here is a still frame (no TimelineView, `animated: false` on Dewy).
+// Shared by the main app (widget previews in Settings) and the widget extension.
+// Strictly depends ONLY on Theme, Models, MascotView, Shapes, HydrationStore, DemoData,
+// LogDrinkIntent and system frameworks — never Modifiers, Scene, ShaderModifiers or FriendView.
+// Everything drawn here is a single still frame (`animated: false`, no TimelineView).
 
 /// Everything a widget needs to draw Dewy, computed from the saved data.
-/// Shared by the widget extension and the app (which shows widget previews).
 struct DewySnapshot: TimelineEntry {
     var date: Date
     var total: Double
@@ -51,7 +50,15 @@ struct DewySnapshot: TimelineEntry {
             day = previous
         }
 
-        return DewySnapshot(date: date, total: running, goal: goal, bands: bands, theme: data.profile.theme, unit: data.profile.unit, streak: streak)
+        return DewySnapshot(
+            date: date,
+            total: running,
+            goal: goal,
+            bands: bands,
+            theme: data.profile.theme,
+            unit: data.profile.unit,
+            streak: streak
+        )
     }
 
     static let sample = DewySnapshot(
@@ -80,12 +87,10 @@ struct DewySnapshot: TimelineEntry {
 
 private extension DewySnapshot {
     var percent: Int { Int((progress * 100).rounded()) }
-
     var clampedProgress: Double { min(max(progress, 0), 1) }
-
     var skyPhase: SkyPhase { theme.phase(at: date) }
 
-    /// A short amount for tiny Lock Screen widgets: "850", "1.4L" or "47".
+    /// Short amount for compact Lock Screen widgets: "850", "1.4L" or "47".
     var compactAmount: String {
         switch unit {
         case .ml:
@@ -99,7 +104,7 @@ private extension DewySnapshot {
     }
 }
 
-/// The widget for every family: a pastel sky for the time of day, a clay cloud and Dewy on his lily pad.
+/// Editorial storybook widget for every Home Screen & Lock Screen family.
 struct DewyWidgetView: View {
     @Environment(\.widgetFamily) private var family
     var snapshot: DewySnapshot
@@ -140,38 +145,49 @@ struct DewyWidgetView: View {
     }
 }
 
-// MARK: - Sky
+// MARK: - Handcrafted Storybook Widget Sky
 
-/// The widget's backdrop: the sky for the time of day, a sun glow, one clay cloud and a strip of pond.
+/// Per-world multi-layer gouache sky, native paper-cut clouds, horizon silhouette and curved pond.
 struct WidgetSky: View {
     var theme: AppTheme
     var date: Date = .now
 
     var body: some View {
         let phase = theme.phase(at: date)
+        let sunGlow = theme.sunGlow(for: phase)
+        let sea = theme.sea(for: phase)
+        let glint = theme.glint(for: phase)
+
         GeometryReader { proxy in
             let size = proxy.size
             let isWide = size.width > size.height * 1.4
+            let pondHeight = size.height * 0.29
+
             ZStack(alignment: .topLeading) {
-                phase.gradient
+                theme.skyGradient(for: phase)
 
                 RadialGradient(
-                    colors: [phase.sunGlow.opacity(phase.isNight ? 0.4 : 0.9), phase.sunGlow.opacity(0)],
-                    center: UnitPoint(x: 0.92, y: 0.02),
+                    colors: [sunGlow.opacity(phase.isNight ? 0.38 : 0.85), sunGlow.opacity(0)],
+                    center: UnitPoint(x: 0.90, y: 0.06),
                     startRadius: 0,
-                    endRadius: max(size.width, size.height) * 0.6
+                    endRadius: max(size.width, size.height) * 0.58
                 )
 
                 if phase.isNight {
                     WidgetStars(size: size)
                 }
 
-                WidgetCloud(phase: phase, width: isWide ? 92 : 70)
-                    .position(x: size.width * (isWide ? 0.9 : 0.8), y: size.height * (isWide ? 0.2 : 0.36))
+                WidgetPaperCloud(theme: theme, phase: phase)
+                    .frame(width: isWide ? 84 : 62, height: isWide ? 34 : 26)
+                    .position(x: size.width * (isWide ? 0.86 : 0.78), y: size.height * (isWide ? 0.22 : 0.34))
 
-                WidgetPond(phase: phase)
-                    .frame(width: size.width, height: size.height * 0.27)
-                    .position(x: size.width / 2, y: size.height * (1 - 0.135))
+                WidgetHorizonSilhouette(theme: theme, phase: phase)
+                    .frame(width: size.width, height: size.height * 0.24)
+                    .position(x: size.width * 0.5, y: size.height - pondHeight - size.height * 0.08)
+
+                WidgetPond(colors: sea, glint: glint)
+                    .frame(width: size.width, height: pondHeight)
+                    .position(x: size.width * 0.5, y: size.height - pondHeight * 0.5)
             }
             .frame(width: size.width, height: size.height)
         }
@@ -179,67 +195,139 @@ struct WidgetSky: View {
     }
 }
 
-private struct WidgetCloud: View {
+/// Handcrafted multi-lobe paper-cut cloud drawn natively via SwiftUI Canvas.
+private struct WidgetPaperCloud: View {
+    var theme: AppTheme
     var phase: SkyPhase
-    var width: CGFloat
 
     var body: some View {
-        let tint = phase.cloudTint?.blended(with: .white, by: phase.isNight ? 0.25 : 0.55) ?? .white
-        Group {
-            if Art.exists("prop-cloud-2") {
-                Image("prop-cloud-2")
-                    .resizable()
-                    .interpolation(.high)
-                    .scaledToFit()
-                    .colorMultiply(tint)
-            } else {
-                // Three soft puffs if the art is missing.
-                ZStack {
-                    Circle().frame(width: width * 0.42).offset(x: -width * 0.2, y: width * 0.04)
-                    Circle().frame(width: width * 0.56).offset(x: width * 0.06, y: -width * 0.04)
-                    Capsule().frame(width: width * 0.9, height: width * 0.3).offset(y: width * 0.12)
-                }
-                .foregroundStyle(tint)
-            }
+        let lit: Color = phase.isNight ? Color(hex: 0x626BA8) : (theme.cloudTint(for: phase) ?? Palette.paper)
+        let shade: Color = phase.isNight ? Color(hex: 0x394278) : theme.cloudShade
+
+        Canvas { context, size in
+            let w = size.width
+            let h = size.height
+            var path = Path()
+            path.move(to: CGPoint(x: w * 0.10, y: h * 0.86))
+            path.addQuadCurve(to: CGPoint(x: w * 0.28, y: h * 0.36), control: CGPoint(x: 0, y: h * 0.52))
+            path.addCurve(
+                to: CGPoint(x: w * 0.62, y: h * 0.16),
+                control1: CGPoint(x: w * 0.34, y: 0),
+                control2: CGPoint(x: w * 0.54, y: 0)
+            )
+            path.addCurve(
+                to: CGPoint(x: w * 0.86, y: h * 0.48),
+                control1: CGPoint(x: w * 0.74, y: h * 0.12),
+                control2: CGPoint(x: w * 0.86, y: h * 0.28)
+            )
+            path.addQuadCurve(to: CGPoint(x: w * 0.90, y: h * 0.86), control: CGPoint(x: w, y: h * 0.68))
+            path.closeSubpath()
+
+            context.fill(
+                path,
+                with: .linearGradient(
+                    Gradient(colors: [lit, shade]),
+                    startPoint: CGPoint(x: w * 0.5, y: 0),
+                    endPoint: CGPoint(x: w * 0.5, y: h)
+                )
+            )
         }
-        .frame(width: width, height: width * 0.62)
-        .opacity(phase.isNight ? 0.6 : 0.95)
-        .shadow(color: Palette.shadow.opacity(phase.isNight ? 0 : 0.12), radius: 6, x: 0, y: 4)
+        .opacity(phase.isNight ? 0.52 : 0.88)
+    }
+}
+
+/// Subtle distant paper-cut horizon landform giving each of the 5 worlds its signature silhouette.
+private struct WidgetHorizonSilhouette: View {
+    var theme: AppTheme
+    var phase: SkyPhase
+
+    var body: some View {
+        Canvas { context, size in
+            let w = size.width
+            let h = size.height
+            let hillColor = silhouetteColor
+            var hill = Path()
+            switch theme {
+            case .matcha:
+                hill.move(to: CGPoint(x: 0, y: h))
+                hill.addQuadCurve(to: CGPoint(x: w * 0.56, y: h * 0.52), control: CGPoint(x: w * 0.24, y: h * 0.18))
+                hill.addQuadCurve(to: CGPoint(x: w, y: h * 0.60), control: CGPoint(x: w * 0.78, y: h * 0.28))
+                hill.addLine(to: CGPoint(x: w, y: h))
+                hill.closeSubpath()
+            case .midnight:
+                hill.move(to: CGPoint(x: 0, y: h))
+                hill.addLine(to: CGPoint(x: w * 0.18, y: h * 0.30))
+                hill.addLine(to: CGPoint(x: w * 0.36, y: h * 0.64))
+                hill.addLine(to: CGPoint(x: w * 0.72, y: h * 0.52))
+                hill.addLine(to: CGPoint(x: w * 0.88, y: h * 0.24))
+                hill.addLine(to: CGPoint(x: w, y: h * 0.54))
+                hill.addLine(to: CGPoint(x: w, y: h))
+                hill.closeSubpath()
+            default:
+                hill.move(to: CGPoint(x: 0, y: h))
+                hill.addQuadCurve(to: CGPoint(x: w * 0.42, y: h), control: CGPoint(x: w * 0.18, y: h * 0.34))
+                hill.closeSubpath()
+            }
+            context.fill(hill, with: .color(hillColor))
+        }
+    }
+
+    private var silhouetteColor: Color {
+        if phase.isNight || theme == .midnight {
+            return Color(hex: 0x262E60).opacity(0.62)
+        }
+        switch theme {
+        case .lagoon: return Color(hex: 0x6DB0A8).opacity(0.45)
+        case .peach: return Color(hex: 0xD69A82).opacity(0.42)
+        case .matcha: return Color(hex: 0x6BA684).opacity(0.46)
+        case .lavender: return Color(hex: 0x9B8CC8).opacity(0.42)
+        case .midnight: return Color(hex: 0x262E60).opacity(0.62)
+        }
     }
 }
 
 private struct WidgetStars: View {
     var size: CGSize
 
+    // Kept strictly in the open right sky (x >= 0.54) so top-left text never collides with stars.
     private let points: [(CGFloat, CGFloat, CGFloat)] = [
-        (0.12, 0.12, 7), (0.34, 0.08, 4), (0.55, 0.18, 6), (0.7, 0.07, 4),
-        (0.22, 0.32, 4), (0.46, 0.38, 5), (0.08, 0.5, 4), (0.62, 0.48, 3)
+        (0.54, 0.14, 4.8), (0.66, 0.10, 2.0), (0.76, 0.24, 5.2), (0.88, 0.12, 2.2),
+        (0.58, 0.36, 4.0), (0.70, 0.44, 2.2), (0.86, 0.38, 4.4), (0.93, 0.28, 2.0)
     ]
 
     var body: some View {
         ZStack(alignment: .topLeading) {
             ForEach(0..<points.count, id: \.self) { index in
                 let point = points[index]
-                SparkleShape()
-                    .fill(index.isMultiple(of: 3) ? Color(hex: 0xFFF3C4) : Color.white.opacity(0.85))
-                    .frame(width: point.2 * 2, height: point.2 * 2)
-                    .position(x: size.width * point.0, y: size.height * point.1)
+                Group {
+                    if index.isMultiple(of: 2) {
+                        StarletShape()
+                            .fill(index == 0 || index == 4 ? Color(hex: 0xFFF3C4) : Ink.starlight.opacity(0.88))
+                            .frame(width: point.2 * 2, height: point.2 * 2)
+                    } else {
+                        Circle()
+                            .fill(Ink.starlight.opacity(0.84))
+                            .frame(width: point.2, height: point.2)
+                    }
+                }
+                .position(x: size.width * point.0, y: size.height * point.1)
             }
         }
         .frame(width: size.width, height: size.height)
     }
 }
 
-/// The pond along the bottom of the widget, with a soft clay lip of light.
+/// Gently curved pond water plane with a bright shoreline glint.
 private struct WidgetPond: View {
-    var phase: SkyPhase
+    var colors: [Color]
+    var glint: Color
 
     var body: some View {
         ZStack {
             WidgetPondShape(closed: true)
-                .fill(LinearGradient(colors: phase.pond, startPoint: .top, endPoint: .bottom))
+                .fill(LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom))
             WidgetPondShape(closed: false)
-                .stroke(phase.glint.opacity(0.85), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                .stroke(glint.opacity(0.75), style: StrokeStyle(lineWidth: 2, lineCap: .round))
         }
     }
 }
@@ -253,7 +341,7 @@ private struct WidgetPondShape: Shape {
         path.move(to: CGPoint(x: rect.minX, y: rect.minY + lip))
         path.addQuadCurve(
             to: CGPoint(x: rect.maxX, y: rect.minY + lip * 0.6),
-            control: CGPoint(x: rect.midX, y: rect.minY - lip * 0.8)
+            control: CGPoint(x: rect.midX, y: rect.minY - lip * 0.7)
         )
         if closed {
             path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
@@ -264,16 +352,18 @@ private struct WidgetPondShape: Shape {
     }
 }
 
-// MARK: - Shared pieces
+// MARK: - Shared Widget Pieces
 
-/// Dewy standing on the lily pad art, as a single still frame.
+/// Dewy standing on a handcrafted native botanical lily pad as a crisp still frame.
 private struct WidgetDewyOnPad: View {
     var snapshot: DewySnapshot
     var size: CGFloat
 
     var body: some View {
+        let isNight = snapshot.skyPhase.isNight
         ZStack(alignment: .bottom) {
-            pad
+            WidgetBotanicalPad(theme: snapshot.theme, isNight: isNight)
+                .frame(width: size * 1.12, height: size * 0.34)
             MascotView(
                 progress: snapshot.progress,
                 mood: DewyMood(progress: snapshot.progress),
@@ -281,105 +371,150 @@ private struct WidgetDewyOnPad: View {
                 sparkles: snapshot.progress >= 1,
                 bands: snapshot.bands,
                 animated: false,
-                showsShadow: false
+                showsShadow: false,
+                isNight: isNight
             )
-            .padding(.bottom, size * 0.1)
+            .padding(.bottom, size * 0.09)
         }
         .frame(width: size * 1.15)
     }
+}
 
-    @ViewBuilder
-    private var pad: some View {
-        if Art.exists("prop-lilypad") {
-            Image("prop-lilypad")
-                .resizable()
-                .interpolation(.high)
-                .scaledToFit()
-                .frame(width: size * 1.05)
-                .shadow(color: Color(hex: 0x1E5A78).opacity(0.18), radius: 3, x: 0, y: 3)
-        } else {
-            Ellipse()
-                .fill(LinearGradient(colors: [Color(hex: 0xB5EBC0), Color(hex: 0x7FD196)], startPoint: .top, endPoint: .bottom))
-                .frame(width: size * 1.05, height: size * 0.27)
+/// Handcrafted veined botanical lily pad drawn natively via SwiftUI Canvas (zero PNG dependency).
+private struct WidgetBotanicalPad: View {
+    var theme: AppTheme
+    var isNight: Bool
+
+    var body: some View {
+        Canvas { context, size in
+            let cx = size.width * 0.5
+            let cy = size.height * 0.56
+            let rx = size.width * 0.44
+            let ry = size.height * 0.36
+
+            // Soft water contact shadow beneath pad.
+            let shadowRect = CGRect(x: cx - rx * 1.02, y: cy - ry * 0.75 + 2.5, width: rx * 2.04, height: ry * 1.8)
+            context.fill(Path(ellipseIn: shadowRect), with: .color(Color(hex: 0x152B3B).opacity(isNight ? 0.34 : 0.16)))
+
+            // Notched botanical pad leaf silhouette.
+            var leaf = Path()
+            let notchAngle: Double = 0.22
+            leaf.move(to: CGPoint(x: cx + rx * 0.18, y: cy + ry * 0.04))
+            let steps = 36
+            for i in 0...steps {
+                let frac = Double(i) / Double(steps)
+                let angle = notchAngle + frac * (2.0 * .pi - notchAngle * 2.0)
+                let pt = CGPoint(x: cx + CGFloat(cos(angle)) * rx, y: cy + CGFloat(sin(angle)) * ry)
+                leaf.addLine(to: pt)
+            }
+            leaf.closeSubpath()
+
+            let topCol = isNight ? theme.padLight.blended(with: Color(hex: 0x2B3B6B), by: 0.38) : theme.padLight
+            let botCol = isNight ? theme.pad.blended(with: Color(hex: 0x172145), by: 0.38) : theme.pad
+            context.fill(
+                leaf,
+                with: .linearGradient(
+                    Gradient(colors: [topCol, botCol]),
+                    startPoint: CGPoint(x: cx, y: cy - ry),
+                    endPoint: CGPoint(x: cx, y: cy + ry)
+                )
+            )
+
+            // Delicate radial leaf veins.
+            let veinColor = botCol.blended(with: Ink.primary, by: 0.25).opacity(0.45)
+            for deg in stride(from: 42.0, through: 318.0, by: 46.0) {
+                let rad = deg * .pi / 180.0
+                var vein = Path()
+                vein.move(to: CGPoint(x: cx, y: cy))
+                vein.addLine(to: CGPoint(x: cx + CGFloat(cos(rad)) * rx * 0.72, y: cy + CGFloat(sin(rad)) * ry * 0.72))
+                context.stroke(vein, with: .color(veinColor), style: StrokeStyle(lineWidth: 0.9, lineCap: .round))
+            }
+
+            // Warm botanical ink outline.
+            context.stroke(
+                leaf,
+                with: .color(Ink.primary.opacity(isNight ? 0.55 : 0.38)),
+                style: StrokeStyle(lineWidth: 1.1, lineCap: .round, lineJoin: .round)
+            )
         }
     }
 }
 
-/// A chunky aqua progress capsule with a glossy top.
+/// Matte gouache progress capsule with warm hairline track (zero plastic gloss glare).
 private struct WidgetProgressBar: View {
     var progress: Double
-    var height: CGFloat = 14
+    var height: CGFloat = 12
+    var isNight: Bool = false
 
     var body: some View {
+        let trackFill: Color = isNight ? Color(hex: 0x101634, opacity: 0.44) : Palette.paper.opacity(0.84)
+        let trackBorder: Color = isNight ? Ink.starlight.opacity(0.28) : Ink.hairlineStrong
+        let fillGrad = isNight
+            ? LinearGradient(
+                colors: [Color(hex: 0x9BEBF5), Color(hex: 0x5EC7DF)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            : LinearGradient(
+                colors: [Palette.aquaLight, Palette.aqua],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+
         GeometryReader { proxy in
             let width = proxy.size.width
             let fraction = CGFloat(min(max(progress, 0), 1))
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.white.opacity(0.75))
-                    .overlay(Capsule().stroke(Color.white, lineWidth: 1))
+                    .fill(trackFill)
+                    .overlay(Capsule().stroke(trackBorder, lineWidth: 1))
                 if fraction > 0 {
                     Capsule()
-                        .fill(LinearGradient(colors: [Palette.aquaLight, Palette.aqua], startPoint: .top, endPoint: .bottom))
-                        .overlay(alignment: .top) {
-                            Capsule()
-                                .fill(Color.white.opacity(0.45))
-                                .frame(height: height * 0.28)
-                                .padding(.horizontal, height * 0.35)
-                                .padding(.top, height * 0.16)
-                        }
+                        .fill(fillGrad)
+                        .overlay(
+                            Capsule().stroke(
+                                isNight ? Color(hex: 0xEEFCFF).opacity(0.6) : Palette.aquaDeep.opacity(0.32),
+                                lineWidth: 0.75
+                            )
+                        )
                         .frame(width: max(width * fraction, height))
+                        .padding(1.5)
                 }
             }
         }
         .frame(height: height)
-        .shadow(color: Palette.aquaDeep.opacity(0.18), radius: 3, x: 0, y: 2)
     }
 }
 
-/// A butter-yellow streak pill (butter always means streaks in Dewy).
+/// Warm parchment-gold streak pill with crisp tabular count.
 private struct WidgetStreakPill: View {
     var streak: Int
 
     var body: some View {
-        HStack(spacing: 2) {
-            Group {
-                if Art.exists("icon-flame") {
-                    Image("icon-flame")
-                        .resizable()
-                        .interpolation(.high)
-                        .scaledToFit()
-                } else {
-                    Image(systemName: "flame.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .foregroundStyle(Palette.butterDeep)
-                }
-            }
-            .frame(width: 13, height: 13)
+        HStack(spacing: 3) {
+            Image(systemName: "flame.fill")
+                .font(.system(size: 10.5, weight: .bold))
+                .foregroundStyle(Palette.butterDeep)
             Text("\(streak)")
-                .font(.display(12))
+                .font(.dewy(11.5, .bold))
+                .monospacedDigit()
                 .foregroundStyle(Ink.primary)
                 .lineLimit(1)
         }
-        .padding(.leading, 5)
-        .padding(.trailing, 7)
+        .padding(.leading, 6)
+        .padding(.trailing, 8)
         .frame(height: 21)
-        .background {
-            Capsule()
-                .fill(LinearGradient(colors: [Color.white, Palette.butterSoft], startPoint: .top, endPoint: .bottom))
-                .overlay(Capsule().stroke(Color.white, lineWidth: 1))
-                .shadow(color: Palette.butterDeep.opacity(0.25), radius: 3, x: 0, y: 2)
-        }
+        .background(Palette.paper.opacity(0.92), in: Capsule())
+        .overlay(Capsule().stroke(Palette.butterDeep.opacity(0.28), lineWidth: 1))
         .fixedSize()
         .accessibilityLabel("\(streak) day streak")
     }
 }
 
-/// Picks ink for text drawn straight on the sky, or white when the system removes the background (StandBy).
-private func widgetInk(_ phase: SkyPhase, showsBackground: Bool, soft: Bool = false) -> Color {
-    if !showsBackground { return soft ? Color.white.opacity(0.75) : .white }
-    return soft ? phase.onSkySoft : phase.onSky
+/// Picks crisp editorial ink for text over the world's sky, or white in StandBy / tinted mode.
+private func widgetInk(theme: AppTheme, phase: SkyPhase, showsBackground: Bool, soft: Bool = false) -> Color {
+    if !showsBackground { return soft ? Color.white.opacity(0.76) : .white }
+    return soft ? theme.onHeroSoft(for: phase) : theme.onHero(for: phase)
 }
 
 // MARK: - Home Screen
@@ -391,34 +526,36 @@ struct DewyWidgetSmall: View {
 
     var body: some View {
         let phase = snapshot.skyPhase
-        let ink = widgetInk(phase, showsBackground: showsBackground)
-        let soft = widgetInk(phase, showsBackground: showsBackground, soft: true)
+        let ink = widgetInk(theme: snapshot.theme, phase: phase, showsBackground: showsBackground)
+        let soft = widgetInk(theme: snapshot.theme, phase: phase, showsBackground: showsBackground, soft: true)
+
         ZStack(alignment: .bottomTrailing) {
             WidgetDewyOnPad(snapshot: snapshot, size: 62)
-                .padding(.trailing, 6)
-                .padding(.bottom, 6)
+                .padding(.trailing, 5)
+                .padding(.bottom, 5)
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top, spacing: 4) {
-                    VStack(alignment: .leading, spacing: -2) {
+                    VStack(alignment: .leading, spacing: -1) {
                         HStack(alignment: .firstTextBaseline, spacing: 2) {
                             Text(snapshot.format(snapshot.total, withUnit: false))
-                                .font(.display(26))
+                                .font(.display(23.5, .bold))
+                                .monospacedDigit()
                                 .foregroundStyle(ink)
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.6)
+                                .minimumScaleFactor(0.68)
                             Text(snapshot.unit.label)
-                                .font(.display(12, .medium))
+                                .font(.display(11.5, .medium))
                                 .foregroundStyle(soft)
                         }
                         Text("of \(snapshot.format(snapshot.goal))")
-                            .font(.dewy(11, .bold))
+                            .font(.dewy(10.5, .bold))
                             .foregroundStyle(soft)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
                     .layoutPriority(1)
-                    Spacer(minLength: 0)
+                    Spacer(minLength: 2)
                     if snapshot.streak > 0 {
                         WidgetStreakPill(streak: snapshot.streak)
                     }
@@ -426,14 +563,19 @@ struct DewyWidgetSmall: View {
                 Spacer(minLength: 0)
                 VStack(alignment: .leading, spacing: 5) {
                     Text("\(snapshot.percent)%")
-                        .font(.display(15))
+                        .font(.display(14.5, .bold))
+                        .monospacedDigit()
                         .foregroundStyle(ink)
-                    WidgetProgressBar(progress: snapshot.clampedProgress, height: 13)
+                    WidgetProgressBar(
+                        progress: snapshot.clampedProgress,
+                        height: 11,
+                        isNight: phase == .dusk || phase == .night
+                    )
                         .frame(width: 62)
                 }
                 .padding(.bottom, 2)
             }
-            .padding(14)
+            .padding(12)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .ignore)
@@ -450,40 +592,49 @@ struct DewyWidgetMedium: View {
 
     var body: some View {
         let phase = snapshot.skyPhase
-        let ink = widgetInk(phase, showsBackground: showsBackground)
-        let soft = widgetInk(phase, showsBackground: showsBackground, soft: true)
-        HStack(alignment: .bottom, spacing: 10) {
-            WidgetDewyOnPad(snapshot: snapshot, size: 92)
+        let ink = widgetInk(theme: snapshot.theme, phase: phase, showsBackground: showsBackground)
+        let soft = widgetInk(theme: snapshot.theme, phase: phase, showsBackground: showsBackground, soft: true)
+
+        HStack(alignment: .bottom, spacing: 8) {
+            WidgetDewyOnPad(snapshot: snapshot, size: 78)
                 .padding(.bottom, 4)
                 .frame(maxHeight: .infinity, alignment: .bottom)
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(alignment: .top, spacing: 6) {
-                    VStack(alignment: .leading, spacing: -2) {
+                    VStack(alignment: .leading, spacing: -1) {
                         HStack(alignment: .firstTextBaseline, spacing: 3) {
                             Text(snapshot.format(snapshot.total, withUnit: false))
-                                .font(.display(30))
+                                .font(.display(28, .bold))
+                                .monospacedDigit()
                                 .foregroundStyle(ink)
                                 .lineLimit(1)
-                                .minimumScaleFactor(0.7)
+                                .minimumScaleFactor(0.72)
                             Text(snapshot.unit.label)
-                                .font(.display(14, .medium))
+                                .font(.display(13.5, .medium))
                                 .foregroundStyle(soft)
                         }
                         Text("of \(snapshot.format(snapshot.goal)) · \(snapshot.percent)%")
-                            .font(.dewy(12, .bold))
+                            .font(.dewy(11.5, .bold))
                             .foregroundStyle(soft)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.8)
+                            .minimumScaleFactor(0.82)
                     }
                     Spacer(minLength: 0)
                     if snapshot.streak > 0 {
                         WidgetStreakPill(streak: snapshot.streak)
                     }
                 }
-                WidgetProgressBar(progress: snapshot.clampedProgress, height: 14)
+
+                WidgetProgressBar(
+                    progress: snapshot.clampedProgress,
+                    height: 11.5,
+                    isNight: phase == .dusk || phase == .night
+                )
                     .padding(.top, 8)
+
                 Spacer(minLength: 6)
+
                 HStack(spacing: 6) {
                     ForEach(quick) { kind in
                         quickButton(kind)
@@ -493,62 +644,49 @@ struct DewyWidgetMedium: View {
             .frame(maxHeight: .infinity)
         }
         .padding(.leading, 8)
-        .padding(.trailing, 14)
-        .padding(.vertical, 14)
+        .padding(.trailing, 13)
+        .padding(.vertical, 13)
     }
 
     private func quickButton(_ kind: DrinkKind) -> some View {
         Button(intent: LogDrinkIntent(kind: kind, amount: kind.defaultAmount)) {
-            HStack(spacing: 2) {
+            HStack(spacing: 2.5) {
                 Image(kind.imageName)
                     .resizable()
                     .interpolation(.high)
                     .scaledToFit()
-                    .frame(width: 26, height: 26)
+                    .frame(width: 18, height: 18)
                 Text("+\(snapshot.format(kind.defaultAmount, withUnit: false))")
-                    .font(.display(12))
+                    .font(.dewy(11.5, .bold))
+                    .monospacedDigit()
                     .foregroundStyle(Ink.primary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(0.8)
             }
-            .padding(.leading, 4)
-            .padding(.trailing, 7)
+            .padding(.horizontal, 5)
             .frame(maxWidth: .infinity)
-            .frame(height: 36)
-            .background { WidgetClayPill(glow: kind.color) }
+            .frame(height: 33)
+            .background { WidgetPaperPill(tint: kind.color) }
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Log \(snapshot.format(kind.defaultAmount)) of \(kind.name)")
     }
 }
 
-/// A white clay capsule: soft volume, a bright rim and a warm, drink-tinted shadow.
-private struct WidgetClayPill: View {
-    var glow: Color
+/// Crisp cotton-paper capsule for interactive widget quick-sip buttons.
+private struct WidgetPaperPill: View {
+    var tint: Color
 
     var body: some View {
         Capsule()
-            .fill(Color.white)
-            .overlay {
-                Capsule().fill(LinearGradient(
-                    stops: [
-                        .init(color: Color.white.opacity(0), location: 0.55),
-                        .init(color: Color(hex: 0x6B4A3A).opacity(0.06), location: 1)
-                    ],
-                    startPoint: .top, endPoint: .bottom
-                ))
-            }
-            .overlay {
-                Capsule().stroke(LinearGradient(colors: [Color.white, Color.white.opacity(0)], startPoint: .top, endPoint: .center), lineWidth: 1.5)
-            }
-            .shadow(color: glow.opacity(0.3), radius: 5, x: 0, y: 3)
-            .shadow(color: Palette.shadow.opacity(0.12), radius: 1, x: 0, y: 1)
+            .fill(Palette.paper.opacity(0.95))
+            .overlay(Capsule().stroke(Ink.hairlineStrong, lineWidth: 1))
+            .shadow(color: Palette.shadow.opacity(0.14), radius: 4, x: 0, y: 2)
     }
 }
 
 // MARK: - Lock Screen
 
-/// A droplet that fills from the bottom with today's progress.
 private struct WidgetDropletFill: View {
     var progress: Double
 
@@ -586,7 +724,8 @@ private struct WidgetAccessoryCircular: View {
                 WidgetDropletFill(progress: snapshot.clampedProgress)
                     .frame(width: 11, height: 14)
                 Text(snapshot.compactAmount)
-                    .font(.display(13))
+                    .font(.display(13, .bold))
+                    .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
             }
@@ -605,7 +744,8 @@ private struct WidgetAccessoryRectangular: View {
                 .frame(width: 24, height: 32)
             VStack(alignment: .leading, spacing: 1) {
                 Text(snapshot.format(snapshot.total))
-                    .font(.display(18))
+                    .font(.display(18, .bold))
+                    .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 Text("of \(snapshot.format(snapshot.goal)) · \(snapshot.percent)%")

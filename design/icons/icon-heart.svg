@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="120" height="120" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3" seed="31" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.05 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="g" x1="0.2" y1="0" x2="0.8" y2="1">
+    <stop offset="0%" stop-color="#FBB4CA"/>
+    <stop offset="52%" stop-color="#DC7098"/>
+    <stop offset="100%" stop-color="#A83F66"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <path d="M60 101 C30 82 15 64 15 44 C15 26 29 16 44 19 C52 21 57 27 60 33 C63 27 68 21 76 19 C91 16 105 26 105 44 C105 64 90 82 60 101 Z" fill="url(#g)" stroke="#342638" stroke-opacity="0.86" stroke-width="3.6" stroke-linejoin="round"/>
+  <path d="M29 44 C29 34 36 28 44 29" fill="none" stroke="#FFFDF8" stroke-width="5" stroke-linecap="round" opacity="0.86"/>
+</g>
+</svg>

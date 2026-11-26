@@ -53,6 +53,127 @@ struct SparkleShape: Shape {
     }
 }
 
+/// A slender six-pointed storybook starlet with delicate curved waists.
+struct StarletShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let cx = Double(rect.midX)
+        let cy = Double(rect.midY)
+        let outerR = Double(min(rect.width, rect.height)) * 0.5
+        let innerR = outerR * 0.26
+        let points = 6
+
+        var path = Path()
+        for i in 0..<(points * 2) {
+            let angle = Double(i) * (Double.pi / Double(points)) - Double.pi / 2.0
+            let isTip = i.isMultiple(of: 2)
+            let rad = isTip ? outerR * (i % 4 == 0 ? 1.0 : 0.84) : innerR
+            let pt = CGPoint(x: cx + cos(angle) * rad, y: cy + sin(angle) * rad)
+            if i == 0 {
+                path.move(to: pt)
+            } else {
+                path.addLine(to: pt)
+            }
+        }
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// A tapered pressed botanical leaf with subtle organic curvature.
+struct BotanicalLeafShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        let tip = CGPoint(x: rect.midX + w * 0.04, y: rect.minY)
+        let base = CGPoint(x: rect.midX - w * 0.03, y: rect.maxY)
+
+        var path = Path()
+        path.move(to: base)
+        path.addCurve(
+            to: tip,
+            control1: CGPoint(x: rect.minX - w * 0.06, y: rect.minY + h * 0.72),
+            control2: CGPoint(x: rect.minX + w * 0.14, y: rect.minY + h * 0.22)
+        )
+        path.addCurve(
+            to: base,
+            control1: CGPoint(x: rect.maxX - w * 0.06, y: rect.minY + h * 0.28),
+            control2: CGPoint(x: rect.maxX + w * 0.04, y: rect.minY + h * 0.76)
+        )
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// An organic hand-cut gouache blossom petal with a soft cherry-blossom notch at its crown.
+struct BlossomPetalShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        let base = CGPoint(x: rect.midX, y: rect.maxY)
+        let notch = CGPoint(x: rect.midX, y: rect.minY + h * 0.16)
+        let leftCrown = CGPoint(x: rect.minX + w * 0.24, y: rect.minY + h * 0.04)
+        let rightCrown = CGPoint(x: rect.maxX - w * 0.24, y: rect.minY + h * 0.04)
+
+        var path = Path()
+        path.move(to: base)
+        path.addCurve(
+            to: leftCrown,
+            control1: CGPoint(x: rect.minX + w * 0.04, y: rect.minY + h * 0.72),
+            control2: CGPoint(x: rect.minX - w * 0.04, y: rect.minY + h * 0.20)
+        )
+        path.addQuadCurve(
+            to: notch,
+            control: CGPoint(x: rect.minX + w * 0.40, y: rect.minY)
+        )
+        path.addQuadCurve(
+            to: rightCrown,
+            control: CGPoint(x: rect.maxX - w * 0.40, y: rect.minY)
+        )
+        path.addCurve(
+            to: base,
+            control1: CGPoint(x: rect.maxX + w * 0.04, y: rect.minY + h * 0.20),
+            control2: CGPoint(x: rect.maxX - w * 0.04, y: rect.minY + h * 0.72)
+        )
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// A glistening plump botanical water bead / teardrop.
+struct TeardropBeadShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        let apex = CGPoint(x: rect.midX, y: rect.minY)
+        let bottom = CGPoint(x: rect.midX, y: rect.maxY)
+
+        var path = Path()
+        path.move(to: apex)
+        path.addCurve(
+            to: CGPoint(x: rect.maxX, y: rect.minY + h * 0.64),
+            control1: CGPoint(x: rect.midX + w * 0.22, y: rect.minY + h * 0.22),
+            control2: CGPoint(x: rect.maxX, y: rect.minY + h * 0.44)
+        )
+        path.addCurve(
+            to: bottom,
+            control1: CGPoint(x: rect.maxX, y: rect.minY + h * 0.88),
+            control2: CGPoint(x: rect.midX + w * 0.28, y: rect.maxY)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.minX, y: rect.minY + h * 0.64),
+            control1: CGPoint(x: rect.midX - w * 0.28, y: rect.maxY),
+            control2: CGPoint(x: rect.minX, y: rect.minY + h * 0.88)
+        )
+        path.addCurve(
+            to: apex,
+            control1: CGPoint(x: rect.minX, y: rect.minY + h * 0.44),
+            control2: CGPoint(x: rect.midX - w * 0.22, y: rect.minY + h * 0.22)
+        )
+        path.closeSubpath()
+        return path
+    }
+}
+
 /// A smooth rolling hill. Heights are fractions of the rect, measured from the top.
 struct HillShape: Shape {
     var left: CGFloat

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="11" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="ojFill" x1="0" y1="0" x2="0.1" y2="1">
+    <stop offset="0%" stop-color="#FFD068"/>
+    <stop offset="50%" stop-color="#FFA238"/>
+    <stop offset="100%" stop-color="#E3731C"/>
+  </linearGradient>
+  <clipPath id="strawClip">
+    <rect x="128" y="24" width="13" height="156" rx="6" transform="rotate(14 134 102)"/>
+  </clipPath>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="116" cy="212" rx="56" ry="11" fill="#3B2B23" opacity="0.14"/>
+  <!-- Citrus wheel perched on rim -->
+  <circle cx="158" cy="86" r="27" fill="#F08324" stroke="#342638" stroke-opacity="0.78" stroke-width="2.74"/>
+  <circle cx="158" cy="86" r="21" fill="#FFF3D4"/>
+  <g fill="#FFA33A">
+    <path d="M158 86 L145 73 A18 18 0 0 1 158 68 Z"/>
+    <path d="M158 86 L171 73 A18 18 0 0 1 176 86 Z"/>
+    <path d="M158 86 L171 99 A18 18 0 0 1 158 104 Z"/>
+    <path d="M158 86 L145 99 A18 18 0 0 1 140 86 Z"/>
+  </g>
+  <!-- Coral-striped paper straw emerging diagonally -->
+  <g>
+    <rect x="128" y="24" width="13" height="86" rx="5" transform="rotate(14 134 102)" fill="#FFF8EE" stroke="#342638" stroke-opacity="0.78" stroke-width="2.59"/>
+    <g clip-path="url(#strawClip)" stroke="#E06552" stroke-width="4.32">
+      <line x1="120" y1="30" x2="165" y2="48"/>
+      <line x1="116" y1="48" x2="162" y2="66"/>
+      <line x1="112" y1="66" x2="158" y2="84"/>
+      <line x1="108" y1="84" x2="154" y2="102"/>
+    </g>
+    <rect x="128" y="24" width="13" height="86" rx="5" transform="rotate(14 134 102)" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="2.59"/>
+  </g>
+  <!-- Stout glass tumbler -->
+  <path d="M64 82 L76 196 C78 207 154 207 156 196 L168 82 Z" fill="#FFFBF2" fill-opacity="0.62"/>
+  <!-- Sunlit pressed orange juice -->
+  <path d="M68 102 Q116 116 164 102 L155 192 C153 201 79 201 77 192 Z" fill="url(#ojFill)"/>
+  <!-- Submerged translucent straw inside juice -->
+  <path d="M126 102 L106 186" stroke="#FFF4DF" stroke-width="11" stroke-linecap="round" opacity="0.34"/>
+  <!-- Fresh citrus pulp specks -->
+  <g fill="#FFE8A6" opacity="0.72">
+    <ellipse cx="98" cy="144" rx="4.5" ry="2.2" transform="rotate(-18 98 144)"/>
+    <ellipse cx="132" cy="158" rx="5" ry="2.4" transform="rotate(12 132 158)"/>
+    <ellipse cx="114" cy="176" rx="4" ry="2"/>
+    <ellipse cx="138" cy="128" rx="4" ry="2"/>
+  </g>
+  <!-- Frothy meniscus -->
+  <ellipse cx="116" cy="102" rx="48" ry="11.5" fill="#FFE49C" stroke="#FFFDF8" stroke-width="1.73"/>
+  <!-- Glass reflection & base -->
+  <path d="M77 188 Q116 200 155 188 L156 196 C154 207 78 207 76 196 Z" fill="#FFFDF8" opacity="0.58"/>
+  <path d="M76 96 L84 182" stroke="#FFFDF8" stroke-width="4.68" stroke-linecap="round" opacity="0.84"/>
+  <path d="M64 82 L76 196 C78 207 154 207 156 196 L168 82" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="116" cy="82" rx="52" ry="12.5" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02"/>
+</g>
+</svg>

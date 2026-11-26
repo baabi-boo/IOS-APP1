@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="11" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="lemFill" x1="0" y1="0" x2="0.1" y2="1">
+    <stop offset="0%" stop-color="#FFF29C"/>
+    <stop offset="55%" stop-color="#FBD356"/>
+    <stop offset="100%" stop-color="#DF9E24"/>
+  </linearGradient>
+  <clipPath id="lemStrawClip">
+    <rect x="86" y="22" width="12" height="92" rx="5" transform="rotate(-15 92 68)"/>
+  </clipPath>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="120" cy="212" rx="58" ry="11" fill="#3B2B23" opacity="0.14"/>
+  <!-- Fresh dual-leaf mint sprig peeking out right -->
+  <path d="M148 78 C154 52 174 44 188 50 C182 66 168 78 150 82 Z" fill="#6BB874" stroke="#342638" stroke-opacity="0.78" stroke-width="2.45" stroke-linejoin="round"/>
+  <path d="M140 76 C132 54 146 38 160 36 C164 52 156 68 142 78 Z" fill="#8CD489" stroke="#342638" stroke-opacity="0.78" stroke-width="2.45" stroke-linejoin="round"/>
+  <path d="M150 78 Q166 60 180 53" fill="none" stroke="#E0F7CF" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Ochre-striped paper straw -->
+  <g>
+    <rect x="86" y="22" width="12" height="90" rx="5" transform="rotate(-15 92 68)" fill="#FFFBF2" stroke="#342638" stroke-opacity="0.78" stroke-width="2.52"/>
+    <g clip-path="url(#lemStrawClip)" stroke="#E3A430" stroke-width="3.96">
+      <line x1="68" y1="30" x2="114" y2="48"/>
+      <line x1="72" y1="48" x2="118" y2="66"/>
+      <line x1="76" y1="66" x2="122" y2="84"/>
+    </g>
+    <rect x="86" y="22" width="12" height="90" rx="5" transform="rotate(-15 92 68)" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="2.52"/>
+  </g>
+  <!-- Flared garden glass -->
+  <path d="M58 76 C66 132 76 176 80 198 C82 208 158 208 160 198 C164 176 174 132 182 76 Z" fill="#FFFDF4" fill-opacity="0.6"/>
+  <!-- Sun-bright lemonade fill -->
+  <path d="M64 100 Q120 116 176 100 C170 144 162 178 158 194 C156 202 84 202 82 194 C78 178 70 144 64 100 Z" fill="url(#lemFill)"/>
+  <!-- Submerged translucent straw inside lemonade -->
+  <path d="M98 100 L118 186" stroke="#FFFDF4" stroke-width="10" stroke-linecap="round" opacity="0.34"/>
+  <!-- Painterly floating lemon slice & rounded translucent ice cushion inside -->
+  <g transform="rotate(-24 130 142)">
+    <path d="M108 142 A22 22 0 0 1 152 142 Z" fill="#FCE068" stroke="#B88218" stroke-opacity="0.65" stroke-width="1.58" stroke-linejoin="round"/>
+    <path d="M113 141 A17 17 0 0 1 147 141 Z" fill="#FFF9DC" opacity="0.92"/>
+    <path d="M130 141 L120 128 M130 141 L130 125 M130 141 L140 128" stroke="#F4C744" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <g transform="rotate(14 98 125)">
+    <rect x="85" y="113" width="26" height="24" rx="9" fill="#FFFDF6" fill-opacity="0.68" stroke="#D19A2C" stroke-opacity="0.5" stroke-width="1.5"/>
+    <path d="M91 119 Q98 117 104 119" fill="none" stroke="#FFFFFF" stroke-width="1.87" stroke-linecap="round"/>
+  </g>
+  <!-- Meniscus -->
+  <ellipse cx="120" cy="100" rx="55" ry="12" fill="#FFF6B8" fill-opacity="0.82" stroke="#FFFDF8" stroke-width="1.73"/>
+  <!-- Glass gloss & contour -->
+  <path d="M74 92 L88 184" stroke="#FFFDF8" stroke-width="4.68" stroke-linecap="round" opacity="0.86"/>
+  <path d="M58 76 C66 132 76 176 80 198 C82 208 158 208 160 198 C164 176 174 132 182 76" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02" stroke-linecap="round"/>
+  <ellipse cx="120" cy="76" rx="62" ry="13.5" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02"/>
+</g>
+</svg>

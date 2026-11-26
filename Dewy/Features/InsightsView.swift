@@ -1,8 +1,8 @@
 import SwiftUI
 import Charts
 
-/// Insights: a cream canvas with one hero card (this week at a glance), then clean clay cards
-/// for the chart, the streak calendar, the drink mix, the sip rhythm, caffeine and Apple Health.
+/// Insights: an editorial hydration journal on warm cotton rag paper with weekly droplets,
+/// interactive gouache Swift Charts, watercolor streak calendar, drink mix, sip rhythm and caffeine.
 struct InsightsView: View {
     @Environment(HydrationStore.self) private var store
     @Environment(PurchaseManager.self) private var purchases
@@ -42,12 +42,12 @@ struct InsightsView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 10)
-            .padding(.bottom, 120)
+            .padding(.bottom, 130)
         }
         .scrollIndicators(.hidden)
         .background(theme.canvas.ignoresSafeArea())
         .onAppear {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.05)) {
+            withAnimation(.spring(response: 0.56, dampingFraction: 0.82).delay(0.05)) {
                 appeared = true
             }
         }
@@ -61,9 +61,10 @@ struct InsightsView: View {
     private var header: some View {
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 2) {
-                CapsLabel(text: "Your flow", color: theme.inkSoft, size: 12)
+                CapsLabel(text: "Hydration journal", color: theme.inkSoft, size: 11)
                 Text("Insights")
-                    .font(.display(34))
+                    .font(.display(34, .bold))
+                    .tracking(-0.5)
                     .foregroundStyle(theme.ink)
             }
             Spacer(minLength: 8)
@@ -74,18 +75,19 @@ struct InsightsView: View {
     private var totalPill: some View {
         HStack(spacing: 6) {
             DewyShape()
-                .fill(LinearGradient(colors: [Palette.aquaLight, Palette.aqua], startPoint: .top, endPoint: .bottom))
-                .frame(width: 14, height: 18)
+                .fill(Palette.aqua)
+                .overlay(DewyShape().stroke(Ink.primary.opacity(0.3), lineWidth: 0.8))
+                .frame(width: 13, height: 17)
             Text(store.formatLiters(store.totalEffective))
-                .font(.display(16))
+                .font(.dewy(14.5, .bold))
                 .foregroundStyle(theme.ink)
                 .monospacedDigit()
         }
         .padding(.leading, 11)
-        .padding(.trailing, 14)
+        .padding(.trailing, 13)
         .frame(height: 36)
         .background {
-            ClaySurface(shape: Capsule(), fill: .white, glow: Palette.aqua, elevation: 0.55)
+            PaperSurface(shape: Capsule(), fill: Palette.paper, tint: Palette.aqua, elevation: 0.45)
         }
         .padding(.bottom, 4)
         .accessibilityElement(children: .ignore)
@@ -105,23 +107,26 @@ struct InsightsView: View {
         let ratio = average / store.goal
         let ratioPercent = Int((ratio * 100).rounded())
         let current = store.currentStreak
+
         return VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .center, spacing: 8) {
                 VStack(alignment: .leading, spacing: 4) {
-                    CapsLabel(text: "This week", color: theme.inkSoft, size: 11)
+                    CapsLabel(text: "This week", color: theme.inkSoft, size: 10.5)
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(store.format(average, withUnit: false))
-                            .font(.display(44))
+                            .font(.display(44, .bold))
+                            .tracking(-0.6)
+                            .monospacedDigit()
                             .foregroundStyle(theme.ink)
                             .contentTransition(.numericText(value: store.displayValue(average)))
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                         Text(store.profile.unit.label)
-                            .font(.display(18))
+                            .font(.display(18, .medium))
                             .foregroundStyle(theme.inkSoft)
                     }
                     Text("a day on average · \(ratioPercent)% of goal")
-                        .font(.dewy(14, .semibold))
+                        .font(.editorialItalic(14))
                         .foregroundStyle(theme.inkSoft)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -151,7 +156,7 @@ struct InsightsView: View {
                 HStack(spacing: 6) {
                     ClayIcon(glyph: .flame, size: 16)
                     Text("\(nextMilestone - current) more goal days to a \(nextMilestone)-day streak")
-                        .font(.dewy(13, .bold))
+                        .font(.dewy(12.5, .bold))
                         .foregroundStyle(theme.inkSoft)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -170,22 +175,22 @@ struct InsightsView: View {
                         colors: [Palette.aquaSoft, Palette.aquaSoft.opacity(0)],
                         center: .center,
                         startRadius: 0,
-                        endRadius: 56
+                        endRadius: 52
                     )
                 )
-                .frame(width: 112, height: 30)
-                .offset(y: 6)
+                .frame(width: 104, height: 26)
+                .offset(y: 4)
             MascotView(
                 progress: max(ratio, 0.12),
                 mood: DewyMood(progress: ratio),
-                size: 92,
+                size: 88,
                 outfits: store.outfits,
                 sparkles: sparkles,
                 backdrop: .light,
                 animated: false
             )
         }
-        .frame(width: 112)
+        .frame(width: 106)
     }
 
     // MARK: Range + chart
@@ -207,7 +212,7 @@ struct InsightsView: View {
         .background {
             Capsule()
                 .fill(theme.well)
-                .overlay(Capsule().stroke(Color(hex: 0xEADBCD).opacity(0.7), lineWidth: 1))
+                .overlay(Capsule().stroke(Ink.hairline, lineWidth: 1))
         }
     }
 
@@ -220,16 +225,16 @@ struct InsightsView: View {
             HStack(spacing: 5) {
                 Text(option.title)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(0.75)
                 if locked {
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 10, weight: .heavy))
+                        .font(.system(size: 10, weight: .bold))
                 }
             }
-            .font(.display(15))
-            .foregroundStyle(isSelected ? Color.white : theme.inkSoft)
+            .font(.dewy(14, .bold))
+            .foregroundStyle(isSelected ? Palette.paper : theme.inkSoft)
             .frame(maxWidth: .infinity)
-            .frame(height: 38)
+            .frame(height: 36)
             .background {
                 if isSelected {
                     rangeThumb
@@ -237,22 +242,22 @@ struct InsightsView: View {
             }
             .contentShape(Capsule())
         }
-        .buttonStyle(SquishyButtonStyle(scale: 0.95))
+        .buttonStyle(SquishyButtonStyle(scale: 0.96))
         .accessibilityLabel(locked ? "\(option.title), Dewy+" : option.title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     private var rangeThumb: some View {
         Capsule()
-            .fill(LinearGradient(colors: [Palette.aquaLight, theme.accent], startPoint: .top, endPoint: .bottom))
-            .overlay(alignment: .top) {
-                Capsule()
-                    .fill(Color.white.opacity(0.35))
-                    .frame(height: 10)
-                    .padding(.horizontal, 14)
-                    .padding(.top, 4)
-            }
-            .shadow(color: theme.accent.opacity(0.35), radius: 8, x: 0, y: 4)
+            .fill(
+                LinearGradient(
+                    colors: [theme.accent.blended(with: .white, by: 0.05), theme.accent],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .overlay(Capsule().stroke(theme.accentDeep.opacity(0.32), lineWidth: 1))
+            .shadow(color: theme.accentDeep.opacity(0.20), radius: 6, x: 0, y: 3)
             .matchedGeometryEffect(id: "range-thumb", in: rangeNamespace)
     }
 
@@ -264,7 +269,7 @@ struct InsightsView: View {
         }
         guard option != range else { return }
         Haptics.select()
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.8)) {
             range = option
         }
     }
@@ -314,9 +319,10 @@ struct InsightsView: View {
         let data = bars
         let goal = store.goal
         let highest = data.map(\.amount).max() ?? 0
-        let maxValue = max(goal * 1.25, highest * 1.08)
+        let maxValue = max(goal * 1.25, highest * 1.10)
         let selected = selectedBar(in: data)
         let average = store.average(days: range.days)
+
         return VStack(alignment: .leading, spacing: 16) {
             chartHeader(selected: selected, average: average, goal: goal)
             InsightsBarChart(
@@ -325,9 +331,11 @@ struct InsightsView: View {
                 maxValue: maxValue,
                 range: range,
                 appeared: appeared,
+                selected: selected,
+                format: { store.format($0) },
                 selectedDate: $selectedDate
             )
-            .frame(height: 190)
+            .frame(height: 204)
             chartLegend
         }
         .dewyCard(padding: 20)
@@ -338,14 +346,15 @@ struct InsightsView: View {
         let label = selected.map { selectedLabel(for: $0.date) } ?? "Daily average"
         return HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
-                CapsLabel(text: label, color: theme.inkSoft, size: 11)
+                CapsLabel(text: label, color: selected != nil ? Palette.aquaDeep : theme.inkSoft, size: 10.5)
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(store.format(value, withUnit: false))
-                        .font(.display(34))
+                        .font(.display(34, .bold))
+                        .monospacedDigit()
                         .foregroundStyle(theme.ink)
                         .contentTransition(.numericText(value: store.displayValue(value)))
                     Text(store.profile.unit.label)
-                        .font(.display(16))
+                        .font(.display(16, .medium))
                         .foregroundStyle(theme.inkSoft)
                 }
             }
@@ -353,15 +362,17 @@ struct InsightsView: View {
             HStack(spacing: 6) {
                 Capsule()
                     .fill(Palette.coral)
-                    .frame(width: 12, height: 3)
+                    .frame(width: 12, height: 2.5)
                 Text("Goal \(store.format(goal))")
-                    .font(.display(13))
+                    .font(.dewy(12, .bold))
+                    .monospacedDigit()
                     .foregroundStyle(Palette.coralDeep)
                     .lineLimit(1)
             }
-            .padding(.horizontal, 11)
-            .frame(height: 30)
+            .padding(.horizontal, 10)
+            .frame(height: 28)
             .background(Palette.coralSoft, in: Capsule())
+            .overlay(Capsule().stroke(Palette.coral.opacity(0.24), lineWidth: 1))
         }
     }
 
@@ -387,7 +398,7 @@ struct InsightsView: View {
                 .fill(color)
                 .frame(width: 8, height: 8)
             Text(title)
-                .font(.dewy(12, .bold))
+                .font(.dewy(11.5, .bold))
                 .foregroundStyle(theme.inkSoft)
                 .lineLimit(1)
         }
@@ -406,20 +417,21 @@ struct InsightsView: View {
         let sipped = totals.reduce(0) { $0 + $1.amount }
         let goalDays = totals.filter { $0.amount >= store.goal }.count
         let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+
         return VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "At a glance", trailing: range.caption)
             LazyVGrid(columns: columns, spacing: 12) {
                 InsightsStatTile(value: store.formatLiters(sipped), label: "Sipped") {
-                    IconTile(systemImage: "drop.fill", color: Palette.aqua, size: 36)
+                    IconTile(systemImage: "drop.fill", color: Palette.aqua, size: 36, filled: false)
                 }
                 InsightsStatTile(value: "\(goalDays)/\(totals.count)", label: "Goal days") {
-                    ClayIcon(glyph: .star, size: 34)
+                    ClayIcon(glyph: .star, size: 32)
                 }
                 InsightsStatTile(value: "\(logged)", label: "Drinks logged") {
-                    ClayIcon(glyph: .cup, size: 34)
+                    ClayIcon(glyph: .cup, size: 32)
                 }
                 InsightsStatTile(value: favorite?.name ?? "None yet", label: "Favorite drink") {
-                    DrinkIcon(kind: favorite ?? .water, size: 38)
+                    DrinkIcon(kind: favorite ?? .water, size: 36)
                 }
             }
         }
@@ -469,28 +481,31 @@ struct InsightsView: View {
         return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center) {
                 Text(today.formatted(.dateTime.month(.wide)))
-                    .font(.display(24))
+                    .font(.display(23, .semibold))
                     .foregroundStyle(theme.ink)
                 Spacer()
                 HStack(spacing: 4) {
-                    ClayIcon(glyph: .flame, size: 18)
+                    ClayIcon(glyph: .flame, size: 17)
                     Text(goalDays == 1 ? "1 goal day" : "\(goalDays) goal days")
-                        .font(.display(14))
-                        .foregroundStyle(Palette.butterDeep.blended(with: Ink.primary, by: 0.35))
+                        .font(.dewy(12.5, .bold))
+                        .foregroundStyle(Palette.butterDeep)
                 }
                 .padding(.leading, 8)
-                .padding(.trailing, 12)
-                .frame(height: 30)
+                .padding(.trailing, 11)
+                .frame(height: 28)
                 .background(Palette.butterSoft, in: Capsule())
+                .overlay(Capsule().stroke(Palette.butterDeep.opacity(0.24), lineWidth: 1))
             }
+
             HStack(spacing: 0) {
                 ForEach(Array(weekdays.enumerated()), id: \.offset) { _, symbol in
                     Text(symbol)
-                        .font(.display(13))
+                        .font(.dewy(12, .bold))
                         .foregroundStyle(theme.inkSoft)
                         .frame(maxWidth: .infinity)
                 }
             }
+
             VStack(spacing: 8) {
                 ForEach(0..<rows, id: \.self) { row in
                     InsightsCalendarWeekRow(cells: Array(cells[(row * 7)..<(row * 7 + 7)]))
@@ -514,9 +529,9 @@ struct InsightsView: View {
         let shares = store.breakdown(days: range.days)
         if shares.isEmpty {
             HStack(spacing: 14) {
-                DrinkBadge(kind: .water, size: 56)
-                Text("Log a few drinks and your mix shows up here.")
-                    .font(.dewy(15, .semibold))
+                DrinkBadge(kind: .water, size: 54)
+                Text("Log a few drinks and your mix will appear here.")
+                    .font(.editorialItalic(15))
                     .foregroundStyle(theme.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
@@ -540,40 +555,42 @@ struct InsightsView: View {
         let topPercent: Int = Int(((top?.share ?? 0) * 100).rounded())
         return ZStack {
             Circle()
-                .stroke(theme.well, lineWidth: 26)
-                .padding(13)
+                .stroke(theme.well, lineWidth: 24)
+                .padding(12)
             Chart(shares) { share in
                 SectorMark(
                     angle: .value("Amount", appeared ? share.amount : 0.0001),
-                    innerRadius: .ratio(0.62),
+                    innerRadius: .ratio(0.64),
                     angularInset: 2.5
                 )
-                .cornerRadius(8)
+                .cornerRadius(6)
                 .foregroundStyle(share.kind.color)
             }
             .chartLegend(.hidden)
-            .animation(.spring(response: 0.8, dampingFraction: 0.8), value: appeared)
+            .animation(.spring(response: 0.78, dampingFraction: 0.82), value: appeared)
+
             VStack(spacing: 0) {
-                DrinkIcon(kind: top?.kind ?? .water, size: 44)
+                DrinkIcon(kind: top?.kind ?? .water, size: 40)
                 Text("\(topPercent)%")
-                    .font(.display(17))
+                    .font(.dewy(14.5, .bold))
+                    .monospacedDigit()
                     .foregroundStyle(theme.ink)
             }
         }
-        .frame(width: 136, height: 136)
+        .frame(width: 132, height: 132)
     }
 
     private func breakdownRow(_ share: KindShare) -> some View {
         HStack(spacing: 8) {
             DrinkBadge(kind: share.kind, size: 28)
             Text(share.kind.name)
-                .font(.display(15))
+                .font(.display(15, .semibold))
                 .foregroundStyle(theme.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             Spacer(minLength: 4)
             Text("\(Int((share.share * 100).rounded()))%")
-                .font(.display(14))
+                .font(.dewy(13, .bold))
                 .foregroundStyle(theme.inkSoft)
                 .monospacedDigit()
         }
@@ -589,7 +606,7 @@ struct InsightsView: View {
         return VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "Sip rhythm", trailing: rhythm.isEmpty ? nil : "Peak · \(peakLabel)")
             InsightsRhythmChart(rhythm: rhythm, peak: peak, appeared: appeared)
-                .frame(height: 104)
+                .frame(height: 112)
                 .dewyCard(padding: 20)
         }
     }
@@ -608,50 +625,53 @@ struct InsightsView: View {
         let limit = max(store.profile.caffeineLimit, 1)
         let average = store.averageCaffeine(days: range.days)
         let over = today >= limit
-        let fillColors: [Color] = over ? [Palette.coral.blended(with: .white, by: 0.25), Palette.coral] : [Palette.peach, DrinkKind.coffee.color]
+        let barColor: Color = over ? Palette.coral : DrinkKind.coffee.deep
+
         return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center, spacing: 12) {
                 DrinkBadge(kind: .coffee, size: 46)
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text("Today")
-                        .font(.display(19))
+                        .font(.display(19, .semibold))
                         .foregroundStyle(theme.ink)
                     Text("Avg \(Int(average.rounded())) mg a day")
-                        .font(.dewy(13, .bold))
+                        .font(.dewy(12.5, .bold))
                         .foregroundStyle(theme.inkSoft)
                 }
                 Spacer()
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text("\(Int(today.rounded()))")
-                        .font(.display(30))
+                        .font(.display(30, .bold))
+                        .monospacedDigit()
                         .foregroundStyle(theme.ink)
                     Text("mg")
-                        .font(.display(15))
+                        .font(.display(15, .medium))
                         .foregroundStyle(theme.inkSoft)
                 }
             }
+
             VStack(alignment: .leading, spacing: 6) {
                 GeometryReader { proxy in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(theme.well)
                         Capsule()
-                            .fill(LinearGradient(colors: fillColors, startPoint: .leading, endPoint: .trailing))
-                            .overlay(alignment: .top) {
-                                Capsule()
-                                    .fill(Color.white.opacity(0.35))
-                                    .frame(height: 4)
-                                    .padding(.horizontal, 6)
-                                    .padding(.top, 2)
-                            }
-                            .frame(width: max(14, proxy.size.width * CGFloat(min(today / limit, 1))))
-                            .scaleEffect(x: appeared ? 1 : 0, anchor: .leading)
+                            .fill(theme.well)
+                            .overlay(Capsule().stroke(Ink.hairline, lineWidth: 1))
+                        if today > 0 {
+                            Capsule()
+                                .fill(barColor)
+                                .frame(width: max(14, proxy.size.width * CGFloat(min(today / limit, 1))))
+                                .scaleEffect(x: appeared ? 1 : 0, anchor: .leading)
+                                .padding(1.5)
+                        }
                     }
                 }
-                .frame(height: 14)
+                .frame(height: 13)
+
                 HStack {
-                    Text(over ? "Over today's budget, maybe water next?" : "\(Int((limit - today).rounded())) mg left in today's budget")
+                    Text(over ? "Over today's budget — maybe water next?" : "\(Int((limit - today).rounded())) mg left in today's budget")
                     Spacer()
                     Text("\(Int(limit)) mg")
+                        .monospacedDigit()
                 }
                 .font(.dewy(12, .bold))
                 .foregroundStyle(theme.inkSoft)
@@ -665,19 +685,17 @@ struct InsightsView: View {
     private var healthCard: some View {
         let isOn = store.profile.healthSyncOn
         return HStack(alignment: .center, spacing: 14) {
-            ClayIcon(glyph: .heart, size: 34)
-                .frame(width: 56, height: 56)
-                .background {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(LinearGradient(colors: [Palette.pinkSoft.blended(with: .white, by: 0.3), Palette.pinkSoft], startPoint: .top, endPoint: .bottom))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .stroke(LinearGradient(colors: [.white, .clear], startPoint: .top, endPoint: .center), lineWidth: 1.2)
-                        }
+            ClayIcon(glyph: .heart, size: 32)
+                .frame(width: 52, height: 52)
+                .background(Palette.pinkSoft, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Palette.pink.opacity(0.24), lineWidth: 1)
                 }
+
             VStack(alignment: .leading, spacing: 3) {
                 Text(isOn ? "Syncing with Apple Health" : "Apple Health")
-                    .font(.display(18))
+                    .font(.display(18, .semibold))
                     .foregroundStyle(theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -686,13 +704,16 @@ struct InsightsView: View {
                     .foregroundStyle(theme.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
             Spacer(minLength: 4)
+
             if isOn {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 14, weight: .black))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 32, height: 32)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Palette.paper)
+                    .frame(width: 30, height: 30)
                     .background(Palette.mint, in: Circle())
+                    .overlay(Circle().stroke(Palette.leafDeep.opacity(0.35), lineWidth: 1))
                     .accessibilityLabel("On")
             } else {
                 ChipButton(title: "Turn on", isSelected: true) {
@@ -752,8 +773,7 @@ private struct InsightsBar: Identifiable {
     var id: Date { date }
 }
 
-/// Pastel rounded bars, aqua when the goal was met, lilac when not, peach for today,
-/// with a dashed coral goal line. Drag across it to read a single day.
+/// Matte gouache bars with a dashed terracotta goal rule. Scrub horizontally to inspect any day.
 private struct InsightsBarChart: View {
     @Environment(\.dewyTheme) private var theme
     var bars: [InsightsBar]
@@ -761,14 +781,20 @@ private struct InsightsBarChart: View {
     var maxValue: Double
     var range: InsightsRange
     var appeared: Bool
+    var selected: InsightsBar?
+    var format: (Double) -> String
     @Binding var selectedDate: Date?
 
     private var unit: Calendar.Component { range == .year ? .month : .day }
-    private var radius: CGFloat { range == .month ? 4 : 9 }
-    private var barWidth: MarkDimension { .ratio(range == .month ? 0.7 : 0.58) }
+    private var radius: CGFloat { range == .month ? 4 : 8 }
+    private var barWidth: MarkDimension { .ratio(range == .month ? 0.68 : 0.56) }
 
     var body: some View {
         Chart {
+            RuleMark(y: .value("Half", goal * 0.5))
+                .foregroundStyle(theme.line)
+                .lineStyle(StrokeStyle(lineWidth: 1, lineCap: .round, dash: [3, 5]))
+
             ForEach(bars) { bar in
                 BarMark(
                     x: .value("Date", bar.date, unit: unit),
@@ -777,11 +803,25 @@ private struct InsightsBarChart: View {
                 )
                 .cornerRadius(radius, style: .continuous)
                 .foregroundStyle(fill(for: bar))
-                .opacity(isDimmed(bar) ? 0.4 : 1)
+                .opacity(isDimmed(bar) ? 0.36 : 1)
             }
+
             RuleMark(y: .value("Goal", goal))
                 .foregroundStyle(Palette.coral)
-                .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, dash: [4, 6]))
+                .lineStyle(StrokeStyle(lineWidth: 1.8, lineCap: .round, dash: [4, 5]))
+
+            if let selected {
+                RuleMark(x: .value("Selected", selected.date, unit: unit))
+                    .foregroundStyle(Palette.aqua.opacity(0.32))
+                    .lineStyle(StrokeStyle(lineWidth: 1.2, dash: [3, 3]))
+                    .annotation(
+                        position: .top,
+                        spacing: 4,
+                        overflowResolution: .init(x: .fit(to: .chart), y: .disabled)
+                    ) {
+                        scrubCallout(for: selected)
+                    }
+            }
         }
         .chartYScale(domain: 0...maxValue)
         .chartYAxis(.hidden)
@@ -789,16 +829,39 @@ private struct InsightsBarChart: View {
             AxisMarks(values: axisValues) { value in
                 AxisValueLabel(centered: true) {
                     if let date = value.as(Date.self) {
-                        Text(axisLabel(for: date))
-                            .font(.display(12))
-                            .foregroundStyle(theme.inkSoft)
+                        let isCurrent = isCurrentPeriod(date)
+                        VStack(spacing: 3) {
+                            Text(axisLabel(for: date))
+                                .font(.dewy(11.5, isCurrent ? .heavy : .bold))
+                                .foregroundStyle(isCurrent ? Palette.aquaDeep : theme.inkSoft)
+                            Circle()
+                                .fill(isCurrent ? Palette.aqua : Color.clear)
+                                .frame(width: 4, height: 4)
+                        }
+                        .padding(.top, 4)
                     }
                 }
             }
         }
         .chartXSelection(value: $selectedDate)
-        .animation(.spring(response: 0.75, dampingFraction: 0.8), value: appeared)
-        .animation(.spring(response: 0.6, dampingFraction: 0.82), value: range)
+        .animation(.spring(response: 0.72, dampingFraction: 0.82), value: appeared)
+        .animation(.spring(response: 0.55, dampingFraction: 0.84), value: range)
+    }
+
+    private func scrubCallout(for bar: InsightsBar) -> some View {
+        Text(format(bar.amount))
+            .font(.dewy(11.5, .bold))
+            .monospacedDigit()
+            .foregroundStyle(theme.ink)
+            .padding(.horizontal, 9)
+            .frame(height: 24)
+            .background {
+                PaperSurface(shape: Capsule(), fill: Palette.paper, tint: Palette.aqua, elevation: 0.5)
+            }
+    }
+
+    private func isCurrentPeriod(_ date: Date) -> Bool {
+        Calendar.current.isDate(date, equalTo: .now, toGranularity: unit)
     }
 
     private var axisValues: AxisMarkValues {
@@ -823,17 +886,21 @@ private struct InsightsBarChart: View {
     }
 
     private func fill(for bar: InsightsBar) -> LinearGradient {
-        let colors: [Color]
+        let base: Color
         if bar.amount <= 0 {
-            colors = [theme.well, Color(hex: 0xF1E2D5)]
+            base = theme.well
         } else if bar.met {
-            colors = [Palette.aquaLight, Palette.aqua]
+            base = Palette.aqua
         } else if bar.isCurrent {
-            colors = [Palette.peach.blended(with: .white, by: 0.3), Palette.peach]
+            base = Palette.peach
         } else {
-            colors = [Palette.lilac.blended(with: .white, by: 0.3), Palette.lilac]
+            base = Palette.lilac
         }
-        return LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom)
+        return LinearGradient(
+            colors: [base.blended(with: .white, by: 0.12), base],
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
 }
 
@@ -855,8 +922,8 @@ private struct InsightsRhythmChart: View {
                     y: .value("Amount", appeared ? (rhythm[hour] ?? 0) : 0),
                     width: .fixed(10)
                 )
-                .cornerRadius(5)
-                .foregroundStyle(hour == peak ? theme.accent : Palette.aquaLight.opacity(0.45))
+                .cornerRadius(4)
+                .foregroundStyle(hour == peak ? Palette.aqua : Palette.aquaLight.opacity(0.45))
             }
         }
         .chartXScale(domain: 5.5...23.5)
@@ -866,19 +933,20 @@ private struct InsightsRhythmChart: View {
                 AxisValueLabel {
                     if let hour = value.as(Double.self).map({ Int($0) }) {
                         Text(hour == 12 ? "noon" : hour < 12 ? "\(hour)am" : "\(hour - 12)pm")
-                            .font(.display(12))
+                            .font(.dewy(11.5, .bold))
                             .foregroundStyle(theme.inkSoft)
+                            .padding(.top, 4)
                     }
                 }
             }
         }
-        .animation(.spring(response: 0.8, dampingFraction: 0.8), value: appeared)
+        .animation(.spring(response: 0.78, dampingFraction: 0.82), value: appeared)
     }
 }
 
 // MARK: - Hero pieces
 
-/// A soft pastel well with a clay icon and one number.
+/// A matte watercolor stat well with a handcrafted glyph and serif metric.
 private struct InsightsHeroStat: View {
     @Environment(\.dewyTheme) private var theme
     var glyph: ClayGlyph
@@ -887,16 +955,18 @@ private struct InsightsHeroStat: View {
     var tint: Color
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
         HStack(spacing: 10) {
-            ClayIcon(glyph: glyph, size: 30)
-            VStack(alignment: .leading, spacing: 0) {
+            ClayIcon(glyph: glyph, size: 28)
+            VStack(alignment: .leading, spacing: 1) {
                 Text(value)
-                    .font(.display(20))
+                    .font(.display(19, .semibold))
+                    .monospacedDigit()
                     .foregroundStyle(theme.ink)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .minimumScaleFactor(0.72)
                 Text(label)
-                    .font(.dewy(12, .semibold))
+                    .font(.dewy(11.5, .bold))
                     .foregroundStyle(theme.inkSoft)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
@@ -907,30 +977,32 @@ private struct InsightsHeroStat: View {
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
         .background {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            shape
                 .fill(tint)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(LinearGradient(colors: [.white.opacity(0.9), .clear], startPoint: .top, endPoint: .center), lineWidth: 1.2)
-                }
+                .overlay(shape.stroke(Ink.hairline, lineWidth: 1))
         }
     }
 }
 
-/// The last seven days as little Dewy silhouettes, each filled to that day's progress.
+/// Seven hand-inked Dewy silhouettes showing the past week's hydration fill.
 private struct InsightsWeekDroplets: View {
     @Environment(\.dewyTheme) private var theme
     var days: [DayTotal]
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
         HStack(spacing: 0) {
             ForEach(Array(days.enumerated()), id: \.offset) { index, day in
                 dayColumn(day, isToday: index == days.count - 1)
             }
         }
         .padding(.vertical, 12)
-        .padding(.horizontal, 4)
-        .background(theme.well, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .padding(.horizontal, 6)
+        .background {
+            shape
+                .fill(theme.well)
+                .overlay(shape.stroke(Ink.hairline, lineWidth: 1))
+        }
     }
 
     private func dayColumn(_ day: DayTotal, isToday: Bool) -> some View {
@@ -938,29 +1010,40 @@ private struct InsightsWeekDroplets: View {
         let fill: CGFloat = height * CGFloat(min(max(day.amount, 0), 1))
         let percent: Int = Int((day.amount * 100).rounded())
         let reached = day.amount >= 1
-        return VStack(spacing: 6) {
+
+        return VStack(spacing: 4) {
+            StarletShape()
+                .fill(reached ? Palette.butter : Color.clear)
+                .frame(width: 9, height: 9)
+
             ZStack(alignment: .bottom) {
                 DewyShape()
-                    .fill(Color.white)
+                    .fill(Palette.paper)
                 Rectangle()
-                    .fill(LinearGradient(colors: [Palette.aquaLight, Palette.aqua], startPoint: .top, endPoint: .bottom))
+                    .fill(
+                        LinearGradient(
+                            colors: [Palette.aquaLight, Palette.aqua],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
                     .frame(height: fill)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .clipShape(DewyShape())
                 DewyShape()
-                    .stroke(Color.white.opacity(0.9), lineWidth: 1.2)
+                    .stroke(reached ? Palette.aquaDeep.opacity(0.65) : Ink.primary.opacity(0.24), lineWidth: 1.1)
                 if reached {
                     Image(systemName: "checkmark")
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundStyle(Color.white)
+                        .font(.system(size: 9.5, weight: .bold))
+                        .foregroundStyle(Palette.paper)
                         .padding(.bottom, 7)
                 }
             }
-            .frame(width: 27, height: height)
-            .shadow(color: Palette.shadow.opacity(0.18), radius: 3, x: 0, y: 2)
+            .frame(width: 26, height: height)
+
             Text(day.date.formatted(.dateTime.weekday(.narrow)))
-                .font(.display(13))
-                .foregroundStyle(isToday ? Color.white : theme.inkSoft)
+                .font(.dewy(12, .bold))
+                .foregroundStyle(isToday ? Palette.paper : theme.inkSoft)
                 .frame(width: 24, height: 24)
                 .background {
                     if isToday {
@@ -974,7 +1057,7 @@ private struct InsightsWeekDroplets: View {
     }
 }
 
-/// A white clay tile with an icon, a number and a label.
+/// Cotton-paper stat tile with handcrafted icon, serif numeral and crisp label.
 private struct InsightsStatTile<Icon: View>: View {
     @Environment(\.dewyTheme) private var theme
     let value: String
@@ -993,12 +1076,13 @@ private struct InsightsStatTile<Icon: View>: View {
                 .frame(width: 38, height: 38)
             VStack(alignment: .leading, spacing: 1) {
                 Text(value)
-                    .font(.display(24))
+                    .font(.display(23, .semibold))
+                    .monospacedDigit()
                     .foregroundStyle(theme.ink)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(0.65)
                 Text(label)
-                    .font(.dewy(13, .semibold))
+                    .font(.dewy(12.5, .semibold))
                     .foregroundStyle(theme.inkSoft)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -1027,7 +1111,7 @@ private struct InsightsRunSegment: Identifiable {
     var id: Int { start }
 }
 
-/// One week of the calendar. Consecutive goal days are joined into a puffy clay capsule.
+/// One week of the streak calendar with matte gouache watercolor run capsules.
 private struct InsightsCalendarWeekRow: View {
     @Environment(\.dewyTheme) private var theme
     var cells: [InsightsCalendarCell]
@@ -1048,7 +1132,7 @@ private struct InsightsCalendarWeekRow: View {
     var body: some View {
         GeometryReader { proxy in
             let cellWidth = proxy.size.width / 7
-            let rowHeight = proxy.size.height - 3
+            let rowHeight = proxy.size.height - 2
             ZStack(alignment: .topLeading) {
                 ForEach(segments) { segment in
                     runCapsule(color: Palette.runs[segment.run % Palette.runs.count])
@@ -1063,20 +1147,15 @@ private struct InsightsCalendarWeekRow: View {
                 }
             }
         }
-        .frame(height: 42)
+        .frame(height: 40)
     }
 
     private func runCapsule(color: Color) -> some View {
-        Capsule()
-            .fill(LinearGradient(colors: [color.blended(with: .white, by: 0.22), color], startPoint: .top, endPoint: .bottom))
-            .overlay(alignment: .top) {
-                Capsule()
-                    .fill(Color.white.opacity(0.35))
-                    .frame(height: 8)
-                    .padding(.horizontal, 10)
-                    .padding(.top, 4)
-            }
-            .background(Capsule().fill(color.blended(with: Color(hex: 0x6B4A3A), by: 0.18)).offset(y: 3))
+        let deep = color.blended(with: Ink.primary, by: 0.22)
+        return Capsule()
+            .fill(color)
+            .overlay(Capsule().stroke(deep.opacity(0.38), lineWidth: 1))
+            .background(Capsule().fill(deep.opacity(0.5)).offset(y: 2))
     }
 
     @ViewBuilder
@@ -1084,31 +1163,34 @@ private struct InsightsCalendarWeekRow: View {
         if let day = cell.day {
             if cell.met {
                 Text("\(day)")
-                    .font(.display(16))
-                    .foregroundStyle(Color.white)
-                    .shadow(color: Color(hex: 0x6B4A3A).opacity(0.25), radius: 0, x: 0, y: 1)
+                    .font(.dewy(14.5, .bold))
+                    .monospacedDigit()
+                    .foregroundStyle(Palette.paper)
             } else if cell.isToday {
                 Text("\(day)")
-                    .font(.display(16))
+                    .font(.dewy(14.5, .bold))
+                    .monospacedDigit()
                     .foregroundStyle(Palette.aquaDeep)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 34, height: 34)
                     .background {
                         Circle()
                             .fill(Palette.aquaSoft)
-                            .overlay(Circle().stroke(theme.accent, lineWidth: 2))
+                            .overlay(Circle().stroke(theme.accent, lineWidth: 1.5))
                     }
             } else if cell.isFuture {
                 Text("\(day)")
-                    .font(.display(16, .medium))
+                    .font(.dewy(14, .semibold))
+                    .monospacedDigit()
                     .foregroundStyle(theme.inkFaint)
             } else {
                 VStack(spacing: 2) {
                     Text("\(day)")
-                        .font(.display(16, .medium))
+                        .font(.dewy(14, .semibold))
+                        .monospacedDigit()
                         .foregroundStyle(theme.inkSoft)
                     Circle()
                         .fill(cell.partial >= 0.5 ? theme.accent : theme.inkFaint)
-                        .frame(width: 5, height: 5)
+                        .frame(width: 4.5, height: 4.5)
                 }
             }
         } else {

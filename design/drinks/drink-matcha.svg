@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="11" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="chawanClay" x1="0" y1="0" x2="1" y2="0.85">
+    <stop offset="0%" stop-color="#F4EDE0"/>
+    <stop offset="52%" stop-color="#DCD0BE"/>
+    <stop offset="100%" stop-color="#B09F8B"/>
+  </linearGradient>
+  <radialGradient id="matchaFroth" cx="44%" cy="42%" r="58%">
+    <stop offset="0%" stop-color="#BCE08E"/>
+    <stop offset="65%" stop-color="#76B45E"/>
+    <stop offset="100%" stop-color="#4A8241"/>
+  </radialGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="120" cy="206" rx="62" ry="12" fill="#3B2B23" opacity="0.15"/>
+  <!-- Delicate calm steam curls -->
+  <path d="M102 76 C96 60 112 52 104 38" fill="none" stroke="#C5BCAE" stroke-width="3.02" stroke-linecap="round" opacity="0.72"/>
+  <path d="M134 74 C128 58 144 50 136 34" fill="none" stroke="#C5BCAE" stroke-width="3.24" stroke-linecap="round" opacity="0.7"/>
+  <!-- Rustic pottery foot ring -->
+  <path d="M84 188 L88 202 C92 207 148 207 152 202 L156 188 Z" fill="#9A836E" stroke="#342638" stroke-opacity="0.78" stroke-width="2.88" stroke-linejoin="round"/>
+  <!-- Hand-thrown Japanese chawan tea bowl -->
+  <path d="M44 106 C42 158 64 192 120 192 C176 192 198 158 196 106 Z" fill="url(#chawanClay)" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02" stroke-linejoin="round"/>
+  <!-- Hand-thrown pottery wheel grooves & glaze drip -->
+  <path d="M50 136 Q120 148 190 136" fill="none" stroke="#8C7B6A" stroke-width="1.58" stroke-opacity="0.45"/>
+  <path d="M58 162 Q120 172 182 162" fill="none" stroke="#8C7B6A" stroke-width="1.58" stroke-opacity="0.4"/>
+  <path d="M58 122 C60 146 68 164 82 174" fill="none" stroke="#FFFDF8" stroke-width="4.68" stroke-linecap="round" opacity="0.68"/>
+  <g fill="#5C4D40" opacity="0.34">
+    <circle cx="96" cy="150" r="2.2"/><circle cx="144" cy="144" r="2"/>
+    <circle cx="128" cy="172" r="2.3"/><circle cx="164" cy="158" r="1.8"/>
+  </g>
+  <!-- Iron-rimmed stoneware lip & frothy emerald matcha -->
+  <ellipse cx="120" cy="106" rx="76" ry="23" fill="#7D6857" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02"/>
+  <ellipse cx="120" cy="108" rx="68" ry="18.5" fill="url(#matchaFroth)"/>
+  <!-- Whisked micro-foam swirl & tiny frothy bubbles -->
+  <path d="M84 108 C92 98 144 98 154 108 C144 117 98 117 94 110 C98 104 134 104 136 109" fill="none" stroke="#DEF2BE" stroke-width="2.45" stroke-linecap="round" opacity="0.86"/>
+  <g fill="#EBF8D4" opacity="0.9">
+    <circle cx="78" cy="109" r="3.4"/><circle cx="88" cy="115" r="2.8"/>
+    <circle cx="152" cy="114" r="3.2"/><circle cx="164" cy="108" r="2.6"/>
+  </g>
+</g>
+</svg>

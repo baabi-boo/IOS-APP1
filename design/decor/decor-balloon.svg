@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="17" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="balLilac" x1="0" y1="0" x2="0.4" y2="1">
+    <stop offset="0%" stop-color="#C8B6F5"/>
+    <stop offset="100%" stop-color="#7F6DB8"/>
+  </linearGradient>
+  <linearGradient id="balCoral" x1="0" y1="0" x2="0.3" y2="1">
+    <stop offset="0%" stop-color="#F7A690"/>
+    <stop offset="100%" stop-color="#D65E4A"/>
+  </linearGradient>
+  <linearGradient id="balButter" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#FCE898"/>
+    <stop offset="100%" stop-color="#DF9E30"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <!-- Rigging suspension ropes -->
+  <line x1="104" y1="158" x2="108" y2="184" stroke="#5A453A" stroke-width="2.07"/>
+  <line x1="136" y1="158" x2="132" y2="184" stroke="#5A453A" stroke-width="2.07"/>
+  <line x1="120" y1="160" x2="120" y2="184" stroke="#5A453A" stroke-width="1.78"/>
+  <!-- Woven wicker gondola basket -->
+  <path d="M100 182 L140 182 L136 210 C135 214 105 214 104 210 Z" fill="#D49E66" stroke="#342638" stroke-opacity="0.80" stroke-width="2.81" stroke-linejoin="round"/>
+  <line x1="102" y1="192" x2="138" y2="192" stroke="#8C5D34" stroke-width="1.63"/>
+  <line x1="103" y1="201" x2="137" y2="201" stroke="#8C5D34" stroke-width="1.63"/>
+  <line x1="114" y1="183" x2="114" y2="211" stroke="#8C5D34" stroke-width="1.48"/>
+  <line x1="126" y1="183" x2="126" y2="211" stroke="#8C5D34" stroke-width="1.48"/>
+  <!-- Balloon outer envelope (lilac outer gores) -->
+  <path d="M120 26 C72 26 48 64 56 106 C62 134 86 150 100 162 L140 162 C154 150 178 134 184 106 C192 64 168 26 120 26 Z" fill="url(#balLilac)" stroke="#342638" stroke-opacity="0.80" stroke-width="3.11" stroke-linejoin="round"/>
+  <!-- Mid coral gores -->
+  <path d="M120 26 C88 30 74 66 79 106 C83 132 98 148 108 162 L132 162 C142 148 157 132 161 106 C166 66 152 30 120 26 Z" fill="url(#balCoral)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.37" stroke-linejoin="round"/>
+  <!-- Center butter-gold gore -->
+  <path d="M120 26 C104 34 100 70 103 108 C105 132 111 148 115 162 L125 162 C129 148 135 132 137 108 C140 70 136 34 120 26 Z" fill="url(#balButter)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.37" stroke-linejoin="round"/>
+  <!-- Equator festive cream scalloped bunting garland -->
+  <path d="M56 102 Q120 116 184 102" fill="none" stroke="#342638" stroke-opacity="0.80" stroke-width="2.07"/>
+  <g fill="#FFF9EC" stroke="#342638" stroke-opacity="0.80" stroke-width="1.63" stroke-linejoin="round">
+    <polygon points="64,104 78,107 70,118"/>
+    <polygon points="84,108 98,110 91,122"/>
+    <polygon points="104,110 118,111 111,123"/>
+    <polygon points="124,111 138,110 131,123"/>
+    <polygon points="144,109 158,107 151,120"/>
+    <polygon points="164,106 177,103 171,116"/>
+  </g>
+  <!-- Gouache sunlit sheen along upper-left envelope -->
+  <path d="M74 62 C78 46 90 36 104 33" fill="none" stroke="#FFFDF8" stroke-width="4.07" stroke-linecap="round" opacity="0.62"/>
+</g>
+</svg>

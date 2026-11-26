@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="11" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="cocoHusk" x1="0" y1="0" x2="0.4" y2="1">
+    <stop offset="0%" stop-color="#9BD489"/>
+    <stop offset="52%" stop-color="#5AA062"/>
+    <stop offset="100%" stop-color="#366E45"/>
+  </linearGradient>
+  <linearGradient id="cocoWater" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#D8F4EE"/>
+    <stop offset="100%" stop-color="#87D0C2"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="120" cy="206" rx="68" ry="13" fill="#3B2B23" opacity="0.15"/>
+  <!-- Jointed golden bamboo straw -->
+  <g transform="rotate(16 134 72)">
+    <rect x="128" y="22" width="13" height="90" rx="5" fill="#E7C26E" stroke="#342638" stroke-opacity="0.78" stroke-width="2.59"/>
+    <line x1="127" y1="48" x2="142" y2="48" stroke="#9C712B" stroke-width="2.3" stroke-linecap="round"/>
+    <line x1="127" y1="76" x2="142" y2="76" stroke="#9C712B" stroke-width="2.3" stroke-linecap="round"/>
+    <line x1="132" y1="26" x2="132" y2="96" stroke="#FFF4C8" stroke-width="1.8" stroke-linecap="round" opacity="0.72"/>
+  </g>
+  <!-- Tropical green halved coconut outer shell -->
+  <path d="M46 112 C46 174 78 204 120 204 C162 204 194 174 194 112 Z" fill="url(#cocoHusk)" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02" stroke-linejoin="round"/>
+  <!-- Subtle vertical husk ribs & gloss -->
+  <path d="M62 128 C66 160 80 180 96 190" fill="none" stroke="#D4F0C0" stroke-width="4.32" stroke-linecap="round" opacity="0.45"/>
+  <path d="M148 134 C146 164 136 184 124 196" fill="none" stroke="#2C5938" stroke-width="2.3" stroke-linecap="round" opacity="0.42"/>
+  <!-- Fibrous brown rim, snowy coconut meat & chilled water -->
+  <ellipse cx="120" cy="112" rx="74" ry="26" fill="#9A6B49" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02"/>
+  <ellipse cx="120" cy="112" rx="64" ry="21" fill="#FFFDF7" stroke="#342638" stroke-opacity="0.78" stroke-width="1.87"/>
+  <ellipse cx="120" cy="114" rx="51" ry="15" fill="url(#cocoWater)" stroke="#62B5A8" stroke-width="1.5"/>
+  <path d="M88 113 Q116 106 144 114" fill="none" stroke="#FFFDF8" stroke-width="2.02" stroke-linecap="round" opacity="0.82"/>
+  <!-- Tucked coral-pink hibiscus blossom on left rim -->
+  <g transform="translate(64 98)">
+    <circle cx="-12" cy="-8" r="11" fill="#F28598" stroke="#342638" stroke-opacity="0.78" stroke-width="2.16"/>
+    <circle cx="6" cy="-14" r="11" fill="#FA9EB0" stroke="#342638" stroke-opacity="0.78" stroke-width="2.16"/>
+    <circle cx="14" cy="2" r="11" fill="#F28598" stroke="#342638" stroke-opacity="0.78" stroke-width="2.16"/>
+    <circle cx="-1" cy="13" r="11" fill="#E66E85" stroke="#342638" stroke-opacity="0.78" stroke-width="2.16"/>
+    <circle cx="-14" cy="6" r="11" fill="#FA9EB0" stroke="#342638" stroke-opacity="0.78" stroke-width="2.16"/>
+    <circle cx="0" cy="0" r="6" fill="#FCE07A" stroke="#342638" stroke-opacity="0.78" stroke-width="1.73"/>
+  </g>
+</g>
+</svg>

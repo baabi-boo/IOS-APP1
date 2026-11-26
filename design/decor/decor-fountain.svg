@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="17" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="stoneG" x1="0" y1="0" x2="1" y2="0.4">
+    <stop offset="0%" stop-color="#F2ECE2"/>
+    <stop offset="55%" stop-color="#D7CFC2"/>
+    <stop offset="100%" stop-color="#A89F92"/>
+  </linearGradient>
+  <linearGradient id="jetBlue" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#D8F6FC"/>
+    <stop offset="100%" stop-color="#56B8D8"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="120" cy="208" rx="74" ry="12" fill="#3B2B23" opacity="0.15"/>
+  <!-- Arched sparkling spring water jets from finial -->
+  <path d="M120 46 C100 32 76 58 76 110" fill="none" stroke="#6AC7E2" stroke-width="5.18" stroke-linecap="round"/>
+  <path d="M120 46 C100 32 76 58 76 110" fill="none" stroke="#FFFDF8" stroke-width="2.07" stroke-linecap="round" opacity="0.82"/>
+  <path d="M120 46 C140 32 164 58 164 110" fill="none" stroke="#6AC7E2" stroke-width="5.18" stroke-linecap="round"/>
+  <path d="M120 46 C140 32 164 58 164 110" fill="none" stroke="#FFFDF8" stroke-width="2.07" stroke-linecap="round" opacity="0.82"/>
+  <!-- Upper tier bowl & finial -->
+  <path d="M110 66 L120 42 L130 66 Z" fill="url(#stoneG)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.66" stroke-linejoin="round"/>
+  <path d="M84 74 C88 94 102 100 120 100 C138 100 152 94 156 74 Z" fill="url(#stoneG)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.81" stroke-linejoin="round"/>
+  <ellipse cx="120" cy="74" rx="36" ry="9" fill="#8CD6EA" stroke="#342638" stroke-opacity="0.80" stroke-width="2.66"/>
+  <!-- Center carved stone pedestal -->
+  <path d="M106 98 L100 144 L140 144 L134 98 Z" fill="url(#stoneG)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.81" stroke-linejoin="round"/>
+  <!-- Lower wide carved limestone spring basin -->
+  <path d="M48 134 C54 166 78 178 120 178 C162 178 186 166 192 134 Z" fill="url(#stoneG)" stroke="#342638" stroke-opacity="0.80" stroke-width="3.11" stroke-linejoin="round"/>
+  <!-- Carved fluted base & plinth -->
+  <path d="M90 176 L80 202 L160 202 L150 176 Z" fill="url(#stoneG)" stroke="#342638" stroke-opacity="0.80" stroke-width="2.96" stroke-linejoin="round"/>
+  <!-- Shimmering basin water surface -->
+  <ellipse cx="120" cy="134" rx="72" ry="17" fill="#E6DEC8" stroke="#342638" stroke-opacity="0.80" stroke-width="2.96"/>
+  <ellipse cx="120" cy="135" rx="62" ry="12.5" fill="url(#jetBlue)"/>
+  <!-- Cascading spills from upper bowl into lower basin -->
+  <path d="M90 78 C86 98 86 114 90 132" fill="none" stroke="#A6E4F4" stroke-width="4.07" stroke-linecap="round"/>
+  <path d="M150 78 C154 98 154 114 150 132" fill="none" stroke="#A6E4F4" stroke-width="4.07" stroke-linecap="round"/>
+  <ellipse cx="76" cy="134" rx="8" ry="3.5" fill="#FFFDF8" opacity="0.85"/>
+  <ellipse cx="164" cy="134" rx="8" ry="3.5" fill="#FFFDF8" opacity="0.85"/>
+  <!-- Soft mossy stone garden accents -->
+  <path d="M56 150 C62 142 74 142 80 150 C72 156 62 156 56 150 Z" fill="#6CAE6E" stroke="#342638" stroke-opacity="0.80" stroke-width="1.78"/>
+  <path d="M148 196 C156 186 172 186 178 198 C168 203 154 202 148 196 Z" fill="#78BA74" stroke="#342638" stroke-opacity="0.80" stroke-width="1.92"/>
+</g>
+</svg>

@@ -1,8 +1,8 @@
 import SwiftUI
 import UIKit
 
-/// The "Me" screen, presented as a sheet from the avatar button on Today.
-/// Profile, goal, reminders, worlds, Apple Health, Live Activity, widgets and data.
+/// The "Me" sheet presented from the avatar button on Today:
+/// profile, daily goal, reminders, worlds gallery, Lock Screen & Home Screen widgets, Health, feel & data.
 struct SettingsView: View {
     @Environment(HydrationStore.self) private var store
     @Environment(PurchaseManager.self) private var purchases
@@ -57,7 +57,7 @@ struct SettingsView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 6)
+                .padding(.top, 12)
                 .padding(.bottom, 40)
             }
             .scrollIndicators(.hidden)
@@ -67,7 +67,7 @@ struct SettingsView: View {
             .onAppear {
                 appeared = true
                 if LaunchOptions.screenshot == "widgets" {
-                    // Demo screenshot: show the worlds and the widget previews.
+                    // Demo screenshot: frame the worlds and widget previews cleanly.
                     Task { @MainActor in
                         try? await Task.sleep(for: .seconds(0.6))
                         withAnimation(.easeInOut(duration: 0.5)) {
@@ -78,7 +78,10 @@ struct SettingsView: View {
             }
         }
         .task { await refreshHealthWeight() }
-        .sheet(isPresented: $showPaywall) { PaywallView() }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+                .preferredColorScheme(.light)
+        }
         .onChange(of: reminderSignature) {
             ReminderScheduler.reschedule(for: store.profile)
         }
@@ -159,43 +162,52 @@ struct SettingsView: View {
     // MARK: Top bar
 
     private var topBar: some View {
-        HStack(alignment: .center) {
-            Text("Me")
-                .font(.display(34))
-                .foregroundStyle(theme.ink)
-            Spacer()
-            CircleIconButton(systemImage: "xmark", size: 38) {
-                Haptics.tap()
-                dismiss()
+        VStack(spacing: 0) {
+            HStack(alignment: .center) {
+                Text("Me")
+                    .font(.display(32, .bold))
+                    .tracking(-0.4)
+                    .foregroundStyle(theme.ink)
+                Spacer()
+                CircleIconButton(systemImage: "xmark", size: 36) {
+                    Haptics.tap()
+                    dismiss()
+                }
+                .accessibilityLabel("Close")
             }
-            .accessibilityLabel("Close")
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+            Rectangle()
+                .fill(theme.line)
+                .frame(height: 1)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .padding(.bottom, 10)
-        .background(theme.canvas.opacity(0.96))
+        .background(theme.canvas)
     }
 
     // MARK: Profile hero
 
     private var profileHero: some View {
         let phase = theme.phase()
+        let shape = RoundedRectangle(cornerRadius: 28, style: .continuous)
+
         return VStack(spacing: 10) {
             MascotView(
                 progress: store.todayProgress,
                 mood: store.mood,
-                size: 110,
+                size: 106,
                 outfits: store.outfits,
                 bands: store.todayBands,
-                animated: false
+                animated: false,
+                isNight: phase.isNight
             )
             Text(displayName)
-                .font(.display(28))
-                .foregroundStyle(phase.onSky)
+                .font(.display(28, .bold))
+                .foregroundStyle(theme.onHero)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.72)
                 .padding(.horizontal, 20)
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 CountPill(glyph: .drop, value: store.dropBalance, tint: Palette.coral)
                 CountPill(glyph: .flame, value: store.currentStreak, tint: Palette.butter)
                 if purchases.isPremium {
@@ -203,10 +215,14 @@ struct SettingsView: View {
                 }
             }
         }
-        .padding(.top, 22)
-        .padding(.bottom, 22)
+        .padding(.vertical, 22)
         .frame(maxWidth: .infinity)
-        .background { HeroCardBackground(phase: phase) }
+        .background {
+            ClayWorld(horizon: 260, animated: false, showsLandmark: false)
+                .clipShape(shape)
+                .overlay(shape.stroke(Ink.hairlineStrong, lineWidth: 1))
+                .shadow(color: Palette.shadow.opacity(0.14), radius: 14, x: 0, y: 6)
+        }
     }
 
     // MARK: Dewy+
@@ -225,33 +241,50 @@ struct SettingsView: View {
             showPaywall = true
         } label: {
             HStack(spacing: 14) {
-                MascotView(progress: 1, mood: .ecstatic, size: 66, outfits: [.crown], bands: Self.rainbow, backdrop: .light, animated: false, showsShadow: false)
-                    .frame(width: 74, height: 84)
+                MascotView(
+                    progress: 1,
+                    mood: .ecstatic,
+                    size: 64,
+                    outfits: [.crown],
+                    bands: Self.rainbow,
+                    backdrop: .light,
+                    animated: false,
+                    showsShadow: false
+                )
+                .frame(width: 72, height: 80)
+
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         Text("Dewy+")
-                            .font(.display(24))
+                            .font(.display(23, .bold))
                             .foregroundStyle(theme.ink)
-                        ClayIcon(glyph: .crown, size: 24)
+                        ClayIcon(glyph: .crown, size: 22)
                     }
                     Text("Every world, friend and drink, 2× Dew Drops and custom reminders.")
-                        .font(.dewy(13.5, .medium))
+                        .font(.dewy(13, .semibold))
                         .foregroundStyle(theme.inkSoft)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+
                 Spacer(minLength: 0)
+
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .black))
-                    .foregroundStyle(.white)
-                    .frame(width: 34, height: 34)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Palette.paper)
+                    .frame(width: 32, height: 32)
                     .background(theme.accent, in: Circle())
             }
             .padding(16)
             .background {
-                ClaySurface(shape: RoundedRectangle(cornerRadius: 28, style: .continuous), fill: Palette.butterSoft, glow: Palette.butterDeep)
+                PaperSurface(
+                    shape: RoundedRectangle(cornerRadius: 24, style: .continuous),
+                    fill: Palette.butterSoft,
+                    tint: Palette.butterDeep,
+                    elevation: 0.75
+                )
             }
-            .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
         .buttonStyle(SquishyButtonStyle(scale: 0.97))
     }
@@ -268,13 +301,14 @@ struct SettingsView: View {
                         store.profile.dailyGoal = max(500, store.profile.dailyGoal - store.profile.unit.step)
                     }
                     Spacer()
-                    VStack(spacing: -2) {
+                    VStack(spacing: 0) {
                         Text(store.format(store.profile.dailyGoal, withUnit: false))
-                            .font(.display(46))
+                            .font(.display(44, .bold))
+                            .monospacedDigit()
                             .foregroundStyle(theme.ink)
                             .contentTransition(.numericText(value: store.profile.dailyGoal))
                         Text(store.profile.unit.label + " per day")
-                            .font(.dewy(14, .semibold))
+                            .font(.editorialItalic(14.5))
                             .foregroundStyle(theme.inkSoft)
                     }
                     Spacer()
@@ -289,8 +323,8 @@ struct SettingsView: View {
                         Text("Matches your recommended goal")
                             .foregroundStyle(theme.inkSoft)
                     }
-                    .font(.dewy(13.5, .semibold))
-                    .frame(height: 30)
+                    .font(.dewy(13, .semibold))
+                    .frame(height: 28)
                 } else {
                     Button {
                         Haptics.select()
@@ -300,11 +334,12 @@ struct SettingsView: View {
                             Image(systemName: "sparkles")
                             Text("Use recommended \(store.format(recommended))")
                         }
-                        .font(.display(15))
+                        .font(.dewy(14, .bold))
                         .foregroundStyle(theme.link)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 42)
+                        .frame(height: 40)
                         .background(theme.accentSoft, in: Capsule())
+                        .overlay(Capsule().stroke(theme.accent.opacity(0.24), lineWidth: 1))
                     }
                     .buttonStyle(SquishyButtonStyle())
                 }
@@ -316,14 +351,14 @@ struct SettingsView: View {
     private func roundButton(_ icon: String, action: @escaping () -> Void) -> some View {
         Button {
             Haptics.select()
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { action() }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.72)) { action() }
         } label: {
             Image(systemName: icon)
-                .font(.system(size: 18, weight: .black))
+                .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(theme.onAccent)
-                .frame(width: 50, height: 50)
+                .frame(width: 46, height: 46)
         }
-        .buttonStyle(CandyButtonStyle(fill: theme.accent, lip: theme.accentDeep, shape: AnyShape(Circle()), depth: 4))
+        .buttonStyle(StampButtonStyle(fill: theme.accent, lip: theme.accentDeep, shape: AnyShape(Circle()), depth: 3))
     }
 
     // MARK: You
@@ -341,7 +376,7 @@ struct SettingsView: View {
         MeRow(icon: "person.fill", tint: Palette.aqua, title: "Name") {
             TextField("Your name", text: binding(\.name))
                 .multilineTextAlignment(.trailing)
-                .font(.dewy(16, .medium))
+                .font(.dewy(16, .semibold))
                 .foregroundStyle(theme.ink)
                 .submitLabel(.done)
                 .frame(maxWidth: 160)
@@ -352,12 +387,12 @@ struct SettingsView: View {
         }
         MeDivider()
         MeRow(icon: "ruler.fill", tint: Palette.mint, title: "Weigh in") {
-            ClaySegmented(items: [false, true], selection: binding(\.usesPounds), title: { $0 ? "lb" : "kg" })
+            StorySegmented(items: [false, true], selection: binding(\.usesPounds), title: { $0 ? "lb" : "kg" })
                 .frame(width: 124)
         }
         MeDivider()
-        MeRow(icon: "drop.fill", tint: Palette.aquaLight, title: "Drinks in") {
-            ClaySegmented(items: VolumeUnit.allCases, selection: binding(\.unit), title: { $0.label })
+        MeRow(icon: "drop.fill", tint: Palette.aqua, title: "Drinks in") {
+            StorySegmented(items: VolumeUnit.allCases, selection: binding(\.unit), title: { $0.label })
                 .frame(width: 124)
         }
     }
@@ -366,13 +401,13 @@ struct SettingsView: View {
     private var lifestyleRows: some View {
         VStack(alignment: .leading, spacing: 4) {
             MeRow(icon: store.profile.activity.symbol, tint: Palette.lilac, title: "Activity", subtitle: store.profile.activity.subtitle)
-            ClaySegmented(items: ActivityLevel.allCases, selection: bodyBinding(\.activity), title: { $0.title })
+            StorySegmented(items: ActivityLevel.allCases, selection: bodyBinding(\.activity), title: { $0.title })
                 .padding(.bottom, 12)
         }
         MeDivider()
         VStack(alignment: .leading, spacing: 4) {
-            MeRow(icon: store.profile.climate.symbol, tint: Palette.butter, title: "Climate", subtitle: "Hotter days need a little more water")
-            ClaySegmented(items: Climate.allCases, selection: bodyBinding(\.climate), title: { $0.title })
+            MeRow(icon: store.profile.climate.symbol, tint: Palette.butterDeep, title: "Climate", subtitle: "Hotter days need a little more water")
+            StorySegmented(items: Climate.allCases, selection: bodyBinding(\.climate), title: { $0.title })
                 .padding(.bottom, 12)
         }
     }
@@ -387,7 +422,7 @@ struct SettingsView: View {
                 }
             }
             Text(weightText(store.profile.weightKg))
-                .font(.display(17))
+                .font(.dewy(15.5, .bold))
                 .foregroundStyle(theme.ink)
                 .monospacedDigit()
                 .contentTransition(.numericText(value: store.profile.weightKg))
@@ -430,7 +465,7 @@ struct SettingsView: View {
     private var intervalPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                CapsLabel(text: "Remind me every", color: theme.inkSoft, size: 11)
+                CapsLabel(text: "Remind me every", color: theme.inkSoft, size: 10.5)
                 if !purchases.isPremium {
                     PlusBadge()
                 }
@@ -491,8 +526,8 @@ struct SettingsView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 6)
-                .padding(.bottom, 16)
+                .padding(.top, 4)
+                .padding(.bottom, 14)
             }
             .scrollIndicators(.hidden)
             .scrollClipDisabled()
@@ -513,7 +548,7 @@ struct SettingsView: View {
         } label: {
             MeWorldTile(world: option, isSelected: store.theme == option, isLocked: locked)
         }
-        .buttonStyle(SquishyButtonStyle(scale: 0.95))
+        .buttonStyle(SquishyButtonStyle(scale: 0.96))
         .accessibilityLabel(option.displayName + (locked ? ", Dewy+" : ""))
     }
 
@@ -532,7 +567,7 @@ struct SettingsView: View {
                 )
             )
             MeDivider()
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 10) {
                 MeRow(icon: "square.grid.2x2.fill", tint: Palette.lilac, title: "Widgets", subtitle: "Touch and hold your Home Screen, tap +, find Dewy")
                 widgetPreviews
                     .padding(.bottom, 14)
@@ -550,31 +585,46 @@ struct SettingsView: View {
         }
     }
 
+    /// Framed Medium + Small Home Screen widget showcase that fits 100% cleanly within card bounds.
     private var widgetPreviews: some View {
-        let snapshot = DewySnapshot.make(from: AppData(profile: store.profile, entries: store.entries, hasOnboarded: true), at: .now)
-        return ScrollView(.horizontal) {
-            HStack(spacing: 12) {
-                widgetPreview(width: 150) { DewyWidgetSmall(snapshot: snapshot) }
-                widgetPreview(width: 322) { DewyWidgetMedium(snapshot: snapshot) }
+        let snapshot = DewySnapshot.make(
+            from: AppData(profile: store.profile, entries: store.entries, hasOnboarded: true),
+            at: .now
+        )
+        return VStack(alignment: .leading, spacing: 12) {
+            widgetFrame(height: 150) {
+                DewyWidgetMedium(snapshot: snapshot)
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
+
+            HStack(alignment: .center, spacing: 14) {
+                widgetFrame(width: 148, height: 148) {
+                    DewyWidgetSmall(snapshot: snapshot)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    CapsLabel(text: "Home & Lock", color: Palette.aquaDeep, size: 10)
+                    Text("Always in sight")
+                        .font(.display(17, .semibold))
+                        .foregroundStyle(theme.ink)
+                    Text("Glance at Dewy's fill level, keep your streak warm, or log a sip in a single tap.")
+                        .font(.dewy(12.5, .medium))
+                        .foregroundStyle(theme.inkSoft)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
-        .scrollIndicators(.hidden)
-        .scrollClipDisabled()
-        .padding(.horizontal, -16)
     }
 
-    private func widgetPreview<Content: View>(width: CGFloat, @ViewBuilder content: () -> Content) -> some View {
-        content()
-            .frame(width: width, height: 150)
+    private func widgetFrame<Content: View>(width: CGFloat? = nil, height: CGFloat, @ViewBuilder content: () -> Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
+        return content()
+            .frame(minWidth: width, maxWidth: width ?? .infinity)
+            .frame(height: height)
             .background(WidgetSky(theme: theme))
-            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 26, style: .continuous)
-                    .strokeBorder(LinearGradient(colors: [.white.opacity(0.8), .white.opacity(0)], startPoint: .top, endPoint: .center), lineWidth: 1.5)
-            }
-            .shadow(color: Palette.shadow.opacity(0.22), radius: 12, x: 0, y: 7)
+            .clipShape(shape)
+            .overlay(shape.strokeBorder(Ink.hairlineStrong, lineWidth: 1))
+            .shadow(color: Palette.shadow.opacity(0.16), radius: 10, x: 0, y: 5)
             .allowsHitTesting(false)
     }
 
@@ -602,7 +652,7 @@ struct SettingsView: View {
                 } label: {
                     MeRow(icon: "scalemass.fill", tint: Palette.peach, title: "Use weight from Health (\(weightText(weight)))", subtitle: "Updates your recommended goal") {
                         Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 22, weight: .bold))
+                            .font(.system(size: 21, weight: .bold))
                             .foregroundStyle(theme.accent)
                     }
                     .contentShape(Rectangle())
@@ -699,12 +749,12 @@ struct SettingsView: View {
 
     private var footer: some View {
         VStack(spacing: 6) {
-            MascotView(progress: 0.6, mood: .happy, size: 56, backdrop: .light, animated: false, showsShadow: false)
+            MascotView(progress: 0.6, mood: .happy, size: 54, backdrop: .light, animated: false, showsShadow: false)
             Text("Made with love for tiny sips")
-                .font(.display(15, .medium))
+                .font(.editorialItalic(15))
                 .foregroundStyle(theme.inkSoft)
             Text("Dewy 2.0")
-                .font(.dewy(12, .bold))
+                .font(.dewy(11.5, .bold))
                 .foregroundStyle(theme.inkFaint)
         }
         .padding(.top, 4)
@@ -713,7 +763,7 @@ struct SettingsView: View {
 
 // MARK: - Pieces
 
-/// A titled clay card that holds grouped rows.
+/// Grouped cotton-paper settings card with an editorial New York serif header.
 private struct MeGroup<Content: View>: View {
     var title: String?
     var content: Content
@@ -739,19 +789,19 @@ private struct MeGroup<Content: View>: View {
     }
 }
 
-/// A hairline between rows, aligned with the row titles.
+/// Hairline divider aligned cleanly to row copy.
 private struct MeDivider: View {
     @Environment(\.dewyTheme) private var theme
 
     var body: some View {
         Rectangle()
             .fill(theme.line)
-            .frame(height: 1.5)
+            .frame(height: 1)
             .padding(.leading, 48)
     }
 }
 
-/// Icon tile, title (and optional subtitle), then the value or control on the right.
+/// Matte botanical icon tile, title, optional subtitle, and trailing control.
 private struct MeRow<Trailing: View>: View {
     @Environment(\.dewyTheme) private var theme
     var icon: String
@@ -772,10 +822,10 @@ private struct MeRow<Trailing: View>: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            IconTile(systemImage: icon, color: tint, size: 36)
+            IconTile(systemImage: icon, color: tint, size: 36, filled: false)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.dewy(16, .semibold))
+                    .font(.dewy(15.5, .semibold))
                     .foregroundStyle(titleColor ?? theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 if let subtitle {
@@ -790,7 +840,7 @@ private struct MeRow<Trailing: View>: View {
             trailing
         }
         .padding(.vertical, 10)
-        .frame(minHeight: 58)
+        .frame(minHeight: 56)
     }
 }
 
@@ -800,7 +850,6 @@ extension MeRow where Trailing == EmptyView {
     }
 }
 
-/// A row with an aqua switch.
 private struct MeToggleRow: View {
     @Environment(\.dewyTheme) private var theme
     var icon: String
@@ -826,7 +875,6 @@ private struct MeToggleRow: View {
     }
 }
 
-/// A tappable row with a chevron.
 private struct MeActionRow: View {
     @Environment(\.dewyTheme) private var theme
     var icon: String
@@ -839,7 +887,7 @@ private struct MeActionRow: View {
         Button(action: action) {
             MeRow(icon: icon, tint: tint, title: title, titleColor: isDestructive ? Palette.berry : nil) {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .black))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(theme.inkFaint)
             }
             .contentShape(Rectangle())
@@ -848,84 +896,49 @@ private struct MeActionRow: View {
     }
 }
 
-/// The gold "Dewy+" membership pill shown on the hero for subscribers.
+/// Editorial antique-brass Dewy+ membership pill on the profile hero.
 private struct MemberPill: View {
     @Environment(\.dewyTheme) private var theme
 
     var body: some View {
         HStack(spacing: 5) {
-            ClayIcon(glyph: .crown, size: 22)
+            ClayIcon(glyph: .crown, size: 19)
             Text("Dewy+")
-                .font(.display(16))
+                .font(.dewy(14, .bold))
                 .foregroundStyle(theme.ink)
         }
-        .padding(.leading, 7)
+        .padding(.leading, 8)
         .padding(.trailing, 12)
-        .frame(height: 38)
+        .frame(height: 36)
         .background {
-            ClaySurface(shape: Capsule(), fill: Palette.butterSoft, glow: Palette.butter, elevation: 0.55)
+            PaperSurface(shape: Capsule(), fill: Palette.butterSoft, tint: Palette.butter, elevation: 0.45)
         }
     }
 }
 
-/// The soft sky behind the profile hero, with two clay clouds drifting at the edges.
-private struct HeroCardBackground: View {
-    var phase: SkyPhase
-
-    private let shape = RoundedRectangle(cornerRadius: 30, style: .continuous)
-
-    var body: some View {
-        shape
-            .fill(phase.gradient)
-            .overlay {
-                RadialGradient(colors: [phase.sunGlow.opacity(0.85), phase.sunGlow.opacity(0)], center: UnitPoint(x: 0.85, y: 0.1), startRadius: 0, endRadius: 160)
-            }
-            .overlay(alignment: .topLeading) {
-                cloud("prop-cloud-1", width: 96)
-                    .offset(x: -22, y: 26)
-            }
-            .overlay(alignment: .topTrailing) {
-                cloud("prop-cloud-2", width: 84)
-                    .offset(x: 18, y: 78)
-            }
-            .clipShape(shape)
-            .overlay {
-                shape.strokeBorder(LinearGradient(colors: [.white.opacity(0.9), .white.opacity(0)], startPoint: .top, endPoint: .center), lineWidth: 1.5)
-            }
-            .shadow(color: phase.sky[0].opacity(0.35), radius: 18, x: 0, y: 10)
-            .shadow(color: Palette.shadow.opacity(0.1), radius: 1.5, x: 0, y: 1.5)
-    }
-
-    @ViewBuilder
-    private func cloud(_ name: String, width: CGFloat) -> some View {
-        if Art.exists(name) {
-            Image(name)
-                .resizable()
-                .scaledToFit()
-                .frame(width: width)
-                .colorMultiply(phase.cloudTint.map { $0.blended(with: .white, by: 0.45) } ?? .white)
-                .opacity(0.95)
-                .accessibilityHidden(true)
-        }
-    }
-}
-
-/// A clay postcard of a world: its landmark art on the world's tint, its name and tagline.
+/// Live miniature illustrated world postcard showing each world's authentic multi-layer panorama.
 private struct MeWorldTile: View {
     @Environment(\.dewyTheme) private var theme
     var world: AppTheme
     var isSelected: Bool
     var isLocked: Bool
 
-    private let shape = RoundedRectangle(cornerRadius: 26, style: .continuous)
+    private let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
 
     var body: some View {
+        let previewShape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+
         VStack(alignment: .leading, spacing: 10) {
-            art
+            ClayWorld(horizon: 62, animated: false, showsLandmark: true)
+                .environment(\.dewyTheme, world)
+                .frame(height: 104)
+                .clipShape(previewShape)
+                .overlay(previewShape.strokeBorder(Ink.hairline, lineWidth: 1))
+
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(world.displayName)
-                        .font(.display(17))
+                        .font(.display(17, .semibold))
                         .foregroundStyle(theme.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -935,7 +948,7 @@ private struct MeWorldTile: View {
                     }
                 }
                 Text(world.tagline)
-                    .font(.dewy(12, .medium))
+                    .font(.dewy(11.5, .medium))
                     .foregroundStyle(theme.inkSoft)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2, reservesSpace: true)
@@ -944,71 +957,26 @@ private struct MeWorldTile: View {
             .padding(.bottom, 2)
         }
         .padding(10)
-        .frame(width: 170)
+        .frame(width: 174)
         .background {
-            ClaySurface(shape: shape, fill: .white, glow: world.tint, elevation: 0.75)
+            PaperSurface(shape: shape, fill: Palette.paper, tint: world.tint, elevation: isSelected ? 0.95 : 0.65)
         }
         .overlay {
-            shape.strokeBorder(isSelected ? theme.accent : Color.clear, lineWidth: 2.5)
+            shape.strokeBorder(isSelected ? theme.accent : Color.clear, lineWidth: 2.2)
         }
         .overlay(alignment: .topTrailing) {
             if isSelected {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .black))
-                    .foregroundStyle(.white)
-                    .frame(width: 26, height: 26)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Palette.paper)
+                    .frame(width: 24, height: 24)
                     .background(theme.accent, in: Circle())
-                    .overlay(Circle().strokeBorder(Color.white, lineWidth: 2))
-                    .offset(x: 6, y: -6)
+                    .overlay(Circle().strokeBorder(Palette.paper, lineWidth: 2))
+                    .offset(x: 5, y: -5)
                     .transition(.scale.combined(with: .opacity))
             }
         }
         .contentShape(shape)
-    }
-
-    private var art: some View {
-        let wash = RoundedRectangle(cornerRadius: 20, style: .continuous)
-        return ZStack(alignment: .bottom) {
-            wash.fill(LinearGradient(
-                colors: [world.tint.blended(with: .white, by: 0.6), world.tint.blended(with: .white, by: 0.15)],
-                startPoint: .top, endPoint: .bottom
-            ))
-            celestial
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .padding(10)
-            landmarks
-                .padding(.bottom, 4)
-        }
-        .frame(height: 108)
-        .clipShape(wash)
-        .overlay {
-            wash.strokeBorder(LinearGradient(colors: [.white.opacity(0.85), .white.opacity(0)], startPoint: .top, endPoint: .center), lineWidth: 1.2)
-        }
-    }
-
-    @ViewBuilder
-    private var celestial: some View {
-        let name = world == .midnight ? "prop-moon" : "prop-sun"
-        if Art.exists(name) {
-            Image(name)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 28, height: 28)
-                .accessibilityHidden(true)
-        }
-    }
-
-    @ViewBuilder
-    private var landmarks: some View {
-        let names = world.landmarks
-        if names.count > 1 {
-            HStack(alignment: .bottom, spacing: -8) {
-                ArtImage(name: names[0], size: 84)
-                ArtImage(name: names[1], size: 54)
-            }
-        } else if let first = names.first {
-            ArtImage(name: first, size: 92)
-        }
     }
 }
 

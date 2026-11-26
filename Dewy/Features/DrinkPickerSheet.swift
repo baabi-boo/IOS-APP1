@@ -15,14 +15,18 @@ struct DrinkPickerSheet: View {
     @State private var appeared = LaunchOptions.freezesMotion
 
     private let presets: [Double] = [150, 250, 330, 500]
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 4)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 11), count: 4)
     private let range: ClosedRange<Double> = 50...1_000
 
     private var isLocked: Bool { kind.isPremium && !purchases.isPremium }
 
+    /// Deep, readable gouache pigment for controls & CTA so light drinks never look muddy.
+    private var activeFill: Color { kind.deep }
+    private var activeLip: Color { kind.deep.blended(with: Ink.primary, by: 0.30) }
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: 22) {
                 header
                     .floatIn(appeared, index: 0)
                 hero
@@ -33,8 +37,8 @@ struct DrinkPickerSheet: View {
                     .floatIn(appeared, index: 3)
             }
             .padding(.horizontal, 20)
-            .padding(.top, 24)
-            .padding(.bottom, 16)
+            .padding(.top, 22)
+            .padding(.bottom, 18)
         }
         .scrollIndicators(.hidden)
         .scrollBounceBehavior(.basedOnSize)
@@ -44,10 +48,11 @@ struct DrinkPickerSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .presentationCornerRadius(38)
+        .presentationCornerRadius(34)
         .presentationBackground(theme.canvas)
         .sheet(isPresented: $showPaywall) {
             PaywallView()
+                .preferredColorScheme(.light)
         }
         .onAppear {
             if !appeared {
@@ -64,9 +69,10 @@ struct DrinkPickerSheet: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                CapsLabel(text: "Every sip counts", color: theme.inkSoft, size: 11)
+                CapsLabel(text: "Every sip counts", color: theme.inkSoft, size: 10.5)
                 Text("Add a drink")
-                    .font(.display(34))
+                    .font(.display(32, .bold))
+                    .tracking(-0.4)
                     .foregroundStyle(theme.ink)
             }
             Spacer()
@@ -78,7 +84,7 @@ struct DrinkPickerSheet: View {
         PrimaryButton(
             title: isLocked ? "Unlock \(kind.name)" : "Pour it in",
             systemImage: isLocked ? "lock.fill" : "drop.fill",
-            style: .tinted(kind.color, kind.deep)
+            style: .tinted(activeFill, activeLip)
         ) {
             if isLocked {
                 Haptics.tap()
@@ -89,27 +95,27 @@ struct DrinkPickerSheet: View {
             }
         }
         .padding(.horizontal, 20)
-        .padding(.top, 14)
+        .padding(.top, 12)
         .padding(.bottom, 6)
         .background {
             LinearGradient(
                 stops: [
                     .init(color: theme.canvas.opacity(0), location: 0),
-                    .init(color: theme.canvas, location: 0.22),
+                    .init(color: theme.canvas, location: 0.24),
                     .init(color: theme.canvas, location: 1)
                 ],
                 startPoint: .top, endPoint: .bottom
             )
             .ignoresSafeArea()
         }
-        .animation(.smooth(duration: 0.3), value: kind)
+        .animation(.smooth(duration: 0.28), value: kind)
     }
 
-    // MARK: Hero
+    // MARK: Tasting Card Hero
 
     private var hero: some View {
         VStack(spacing: 14) {
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 heroArt
                 heroText
                 Spacer(minLength: 0)
@@ -127,63 +133,63 @@ struct DrinkPickerSheet: View {
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        .animation(.spring(response: 0.45, dampingFraction: 0.75), value: kind)
+        .animation(.spring(response: 0.42, dampingFraction: 0.78), value: kind)
     }
 
     private var heroArt: some View {
         ZStack {
-            // Clay glow in the drink's color.
             Circle()
-                .fill(RadialGradient(colors: [kind.color.opacity(0.42), kind.color.opacity(0)], center: .center, startRadius: 4, endRadius: 78))
-                .frame(width: 156, height: 156)
-            Circle()
-                .fill(LinearGradient(colors: [Color.white.opacity(0.85), kind.light.opacity(0.6)], startPoint: .top, endPoint: .bottom))
-                .frame(width: 104, height: 104)
-                .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
-                .shadow(color: kind.deep.opacity(0.18), radius: 10, x: 0, y: 6)
+                .fill(kind.light.blended(with: Palette.paper, by: 0.18))
+                .overlay(Circle().stroke(kind.deep.opacity(0.16), lineWidth: 1))
+                .frame(width: 112, height: 112)
+
             Ellipse()
-                .fill(kind.deep.opacity(0.2))
-                .frame(width: 84, height: 14)
-                .blur(radius: 5)
-                .offset(y: 60)
-            DrinkIcon(kind: kind, size: 130)
+                .fill(Palette.shadow.opacity(0.14))
+                .frame(width: 72, height: 12)
+                .blur(radius: 4)
+                .offset(y: 48)
+
+            DrinkIcon(kind: kind, size: 116)
                 .id(kind)
-                .transition(.scale(scale: 0.5).combined(with: .opacity))
+                .transition(.scale(scale: 0.6).combined(with: .opacity))
                 .keyframeAnimator(initialValue: 1.0, trigger: pop) { content, scale in
                     content.scaleEffect(scale, anchor: .bottom)
                 } keyframes: { _ in
                     KeyframeTrack {
-                        CubicKeyframe(0.88, duration: 0.1)
-                        SpringKeyframe(1.08, duration: 0.18)
-                        SpringKeyframe(1.0, duration: 0.4, spring: .bouncy)
+                        CubicKeyframe(0.90, duration: 0.1)
+                        SpringKeyframe(1.06, duration: 0.18)
+                        SpringKeyframe(1.0, duration: 0.36, spring: .bouncy)
                     }
                 }
         }
-        .frame(width: 140, height: 150)
+        .frame(width: 128, height: 132)
     }
 
     private var heroText: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 3) {
             Text(kind.name)
-                .font(.display(22))
+                .font(.display(21, .semibold))
                 .foregroundStyle(kind.deep)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
+
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(store.format(amount, withUnit: false))
-                    .font(.display(52))
+                    .font(.display(48, .bold))
+                    .tracking(-0.8)
                     .foregroundStyle(theme.ink)
                     .monospacedDigit()
                     .contentTransition(.numericText(value: amount))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 Text(store.profile.unit.label)
-                    .font(.display(20))
+                    .font(.display(19, .medium))
                     .foregroundStyle(theme.inkSoft)
             }
             .animation(.snappy, value: amount)
+
             Text(kind.blurb)
-                .font(.dewy(14, .semibold))
+                .font(.editorialItalic(14))
                 .foregroundStyle(theme.inkSoft)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -193,34 +199,26 @@ struct DrinkPickerSheet: View {
     private var factRow: some View {
         HStack(spacing: 6) {
             PickerFactChip(text: "\(Int(kind.hydration * 100))% hydrating", tint: kind.deep)
-            PickerFactChip(text: "counts \(store.format(amount * kind.hydration))", tint: kind.deep)
+            PickerFactChip(text: "= \(store.format(amount * kind.hydration))", tint: kind.deep)
             if kind.caffeinePerML > 0 {
-                PickerFactChip(text: "\(Int((amount * kind.caffeinePerML).rounded())) mg caffeine", tint: Color(hex: 0x8A6BC9))
+                PickerFactChip(
+                    text: "\(Int((amount * kind.caffeinePerML).rounded())) mg caff",
+                    tint: Color(hex: 0x5E4894)
+                )
             }
             Spacer(minLength: 0)
         }
     }
 
     private var heroBackground: some View {
-        let shape = RoundedRectangle(cornerRadius: 32, style: .continuous)
-        return ClaySurface(shape: shape, fill: kind.light.blended(with: .white, by: 0.25), glow: kind.color)
+        let shape = RoundedRectangle(cornerRadius: 28, style: .continuous)
+        return PaperSurface(shape: shape, fill: Palette.paper, tint: kind.color, elevation: 0.8)
             .overlay {
-                // A soft wash of the drink color with a couple of clay bubbles.
-                ZStack {
-                    LinearGradient(colors: [Color.white.opacity(0), kind.color.opacity(0.14)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    Circle()
-                        .fill(kind.color.opacity(0.16))
-                        .frame(width: 150, height: 150)
-                        .offset(x: 140, y: -70)
-                    Circle()
-                        .fill(Color.white.opacity(0.55))
-                        .frame(width: 34, height: 34)
-                        .offset(x: 70, y: -62)
-                    Circle()
-                        .fill(kind.color.opacity(0.1))
-                        .frame(width: 80, height: 80)
-                        .offset(x: -150, y: 80)
-                }
+                LinearGradient(
+                    colors: [kind.light.opacity(0.62), kind.light.opacity(0.14), Color.clear],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
                 .clipShape(shape)
                 .allowsHitTesting(false)
             }
@@ -236,14 +234,25 @@ struct DrinkPickerSheet: View {
             }
             HStack(spacing: 12) {
                 stepButton("minus") { step(-1) }
-                AmountSlider(value: $amount, range: range, step: store.profile.unit == .ml ? 10 : VolumeUnit.mlPerOunce, tint: kind.color, lip: kind.deep)
+                AmountSlider(
+                    value: $amount,
+                    range: range,
+                    step: store.profile.unit == .ml ? 10 : VolumeUnit.mlPerOunce,
+                    tint: activeFill,
+                    lip: activeLip
+                )
                 stepButton("plus") { step(1) }
             }
             HStack(spacing: 8) {
                 ForEach(presets, id: \.self) { preset in
-                    ChipButton(title: store.format(preset), isSelected: abs(amount - preset) < 1, tint: kind.color, tintDeep: kind.deep) {
+                    ChipButton(
+                        title: store.format(preset),
+                        isSelected: abs(amount - preset) < 1,
+                        tint: activeFill,
+                        tintDeep: activeLip
+                    ) {
                         Haptics.select()
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) { amount = preset }
+                        withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) { amount = preset }
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -255,17 +264,17 @@ struct DrinkPickerSheet: View {
     private func stepButton(_ icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 17, weight: .black))
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(Palette.paper)
+                .frame(width: 42, height: 42)
         }
-        .buttonStyle(CandyButtonStyle(fill: kind.color, lip: kind.deep, shape: AnyShape(Circle()), depth: 4))
+        .buttonStyle(StampButtonStyle(fill: activeFill, lip: activeLip, shape: AnyShape(Circle()), depth: 3))
         .accessibilityLabel(icon == "plus" ? "More" : "Less")
     }
 
     private func step(_ direction: Double) {
         Haptics.select()
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.78)) {
             amount = min(max(amount + direction * store.profile.unit.step, range.lowerBound), range.upperBound)
         }
     }
@@ -274,8 +283,11 @@ struct DrinkPickerSheet: View {
 
     private var drinksGrid: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "Drinks", trailing: purchases.isPremium ? "\(DrinkKind.allCases.count) drinks" : "4 free · \(DrinkKind.allCases.count - 4) with Dewy+")
-            LazyVGrid(columns: columns, spacing: 14) {
+            SectionHeader(
+                title: "Drinks",
+                trailing: purchases.isPremium ? "\(DrinkKind.allCases.count) drinks" : "4 free · \(DrinkKind.allCases.count - 4) Dewy+"
+            )
+            LazyVGrid(columns: columns, spacing: 12) {
                 ForEach(DrinkKind.allCases) { option in
                     DrinkChoiceTile(
                         kind: option,
@@ -283,7 +295,7 @@ struct DrinkPickerSheet: View {
                         isLocked: option.isPremium && !purchases.isPremium
                     ) {
                         Haptics.select()
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.75)) {
+                        withAnimation(.spring(response: 0.42, dampingFraction: 0.78)) {
                             kind = option
                             amount = option.defaultAmount
                         }
@@ -303,19 +315,23 @@ private struct PickerFactChip: View {
 
     var body: some View {
         Text(text)
-            .font(.dewy(12, .heavy))
+            .font(.dewy(11.5, .bold))
+            .monospacedDigit()
             .foregroundStyle(tint)
             .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .padding(.horizontal, 10)
-            .frame(height: 28)
+            .fixedSize(horizontal: true, vertical: false)
+            .padding(.horizontal, 9)
+            .frame(height: 26)
             .background {
-                ClaySurface(shape: Capsule(), fill: .white, glow: tint, elevation: 0.35)
+                Capsule()
+                    .fill(Palette.paper)
+                    .overlay(Capsule().fill(tint.opacity(0.07)))
+                    .overlay(Capsule().stroke(tint.opacity(0.24), lineWidth: 1))
             }
     }
 }
 
-/// One drink in the grid: a white clay tile that lifts and takes a drink-colored rim when selected.
+/// Tactile cotton-paper drink tile with handcrafted watercolor vessel art.
 struct DrinkChoiceTile: View {
     @Environment(\.dewyTheme) private var theme
     var kind: DrinkKind
@@ -323,7 +339,7 @@ struct DrinkChoiceTile: View {
     var isLocked: Bool
     var action: () -> Void
 
-    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 22, style: .continuous) }
+    private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 20, style: .continuous) }
 
     var body: some View {
         Button(action: action) {
@@ -331,29 +347,36 @@ struct DrinkChoiceTile: View {
                 ZStack {
                     Circle()
                         .fill(kind.light)
+                        .overlay(Circle().stroke(kind.deep.opacity(0.14), lineWidth: 0.75))
                         .frame(width: 48, height: 48)
-                        .offset(y: 4)
-                    DrinkIcon(kind: kind, size: 52)
+                        .offset(y: 3)
+                    DrinkIcon(kind: kind, size: 50)
                 }
-                .frame(height: 56)
+                .frame(height: 54)
+
                 Text(kind.name)
-                    .font(.display(13))
+                    .font(.display(12.5, .semibold))
                     .foregroundStyle(theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
             .padding(.horizontal, 4)
             .frame(maxWidth: .infinity)
-            .frame(height: 94)
+            .frame(height: 92)
             .background {
-                ClaySurface(shape: shape, fill: .white, glow: isSelected ? kind.color : Palette.shadow, elevation: isSelected ? 0.95 : 0.55)
+                PaperSurface(
+                    shape: shape,
+                    fill: isSelected ? kind.light.blended(with: Palette.paper, by: 0.55) : Palette.paper,
+                    tint: isSelected ? kind.deep : Palette.shadow,
+                    elevation: isSelected ? 0.85 : 0.5
+                )
             }
             .overlay {
-                shape.strokeBorder(isSelected ? kind.color : Color.clear, lineWidth: 2.5)
+                shape.strokeBorder(isSelected ? kind.deep : Color.clear, lineWidth: 2)
             }
             .overlay(alignment: .topTrailing) { cornerBadge }
-            .offset(y: isSelected ? -3 : 0)
-            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isSelected)
+            .offset(y: isSelected ? -2 : 0)
+            .animation(.spring(response: 0.34, dampingFraction: 0.76), value: isSelected)
             .contentShape(shape)
         }
         .buttonStyle(SquishyButtonStyle())
@@ -365,23 +388,22 @@ struct DrinkChoiceTile: View {
     private var cornerBadge: some View {
         if isLocked {
             PlusBadge()
-                .scaleEffect(0.78, anchor: .topTrailing)
-                .offset(x: 6, y: -7)
+                .scaleEffect(0.76, anchor: .topTrailing)
+                .offset(x: 5, y: -6)
         } else if isSelected {
             Image(systemName: "checkmark")
-                .font(.system(size: 10, weight: .black))
-                .foregroundStyle(.white)
-                .frame(width: 22, height: 22)
-                .background(kind.color, in: Circle())
-                .overlay(Circle().strokeBorder(Color.white, lineWidth: 2))
-                .shadow(color: kind.deep.opacity(0.3), radius: 3, x: 0, y: 2)
-                .offset(x: 5, y: -5)
+                .font(.system(size: 9.5, weight: .bold))
+                .foregroundStyle(Palette.paper)
+                .frame(width: 20, height: 20)
+                .background(kind.deep, in: Circle())
+                .overlay(Circle().strokeBorder(Palette.paper, lineWidth: 1.5))
+                .offset(x: 4, y: -4)
                 .transition(.scale.combined(with: .opacity))
         }
     }
 }
 
-/// A puffy clay slider: a recessed track, a glossy candy fill in the drink color and a big white clay thumb.
+/// Matte tactile cotton-paper slider with recessed linen track and letterpress thumb.
 struct AmountSlider: View {
     @Binding var value: Double
     var range: ClosedRange<Double>
@@ -393,8 +415,8 @@ struct AmountSlider: View {
     @Environment(\.dewyTheme) private var theme
     @State private var isDragging = false
 
-    private var trackHeight: CGFloat { 18 }
-    private var thumb: CGFloat { 36 }
+    private var trackHeight: CGFloat { 14 }
+    private var thumb: CGFloat { 32 }
 
     var body: some View {
         GeometryReader { proxy in
@@ -426,9 +448,9 @@ struct AmountSlider: View {
                     }
                     .onEnded { _ in isDragging = false }
             )
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragging)
+            .animation(.spring(response: 0.28, dampingFraction: 0.74), value: isDragging)
         }
-        .frame(height: 46)
+        .frame(height: 44)
         .accessibilityElement()
         .accessibilityLabel("Amount")
         .accessibilityValue("\(Int(value)) \(unitName)")
@@ -443,36 +465,26 @@ struct AmountSlider: View {
 
     private var track: some View {
         Capsule()
-            .fill(theme.well.shadow(.inner(color: Palette.shadow.opacity(0.28), radius: 2, x: 0, y: 1.5)))
-            .overlay(Capsule().stroke(Color(hex: 0xEADBCD).opacity(0.7), lineWidth: 1))
+            .fill(theme.well)
+            .overlay(Capsule().stroke(Ink.hairlineStrong, lineWidth: 1))
             .frame(height: trackHeight)
     }
 
     private func fill(width: CGFloat) -> some View {
         Capsule()
-            .fill(LinearGradient(colors: [tint.blended(with: .white, by: 0.22), tint], startPoint: .top, endPoint: .bottom))
-            .overlay(alignment: .top) {
-                Capsule()
-                    .fill(Color.white.opacity(0.45))
-                    .frame(height: 5)
-                    .padding(.horizontal, 6)
-                    .padding(.top, 3)
-            }
+            .fill(tint)
+            .overlay(Capsule().stroke(lip.opacity(0.35), lineWidth: 0.75))
             .frame(width: width, height: trackHeight)
-            .shadow(color: lip.opacity(0.25), radius: 4, x: 0, y: 2)
     }
 
     private var thumbView: some View {
         ZStack {
-            ClaySurface(shape: Circle(), fill: .white, glow: lip, elevation: isDragging ? 0.9 : 0.6)
+            PaperSurface(shape: Circle(), fill: Palette.paper, tint: lip, elevation: isDragging ? 0.95 : 0.65)
             Circle()
-                .fill(LinearGradient(colors: [tint.blended(with: .white, by: 0.2), tint], startPoint: .top, endPoint: .bottom))
-                .frame(width: 14, height: 14)
-                .overlay(alignment: .top) {
-                    Circle().fill(Color.white.opacity(0.5)).frame(width: 6, height: 4).padding(.top, 2)
-                }
+                .fill(tint)
+                .frame(width: 11, height: 11)
         }
         .frame(width: thumb, height: thumb)
-        .scaleEffect(isDragging ? 1.14 : 1)
+        .scaleEffect(isDragging ? 1.12 : 1)
     }
 }

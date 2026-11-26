@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="11" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="cupGlaze" x1="0" y1="0" x2="1" y2="0.8">
+    <stop offset="0%" stop-color="#E7F3E2"/>
+    <stop offset="55%" stop-color="#C2DFBE"/>
+    <stop offset="100%" stop-color="#8AB98F"/>
+  </linearGradient>
+  <linearGradient id="teaBrew" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#D9A84E"/>
+    <stop offset="100%" stop-color="#9A6826"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="118" cy="204" rx="76" ry="14" fill="#3B2B23" opacity="0.14"/>
+  <!-- Curled fragrant steam wisps -->
+  <path d="M98 76 C90 60 106 52 98 36" fill="none" stroke="#C5B9AD" stroke-width="3.24" stroke-linecap="round" opacity="0.72"/>
+  <path d="M124 72 C116 54 134 44 124 26" fill="none" stroke="#C5B9AD" stroke-width="3.46" stroke-linecap="round" opacity="0.76"/>
+  <path d="M144 80 C138 66 150 58 144 45" fill="none" stroke="#C5B9AD" stroke-width="2.74" stroke-linecap="round" opacity="0.62"/>
+  <!-- Scalloped ceramic saucer -->
+  <ellipse cx="118" cy="188" rx="76" ry="22" fill="#F4ECDF" stroke="#342638" stroke-opacity="0.78" stroke-width="2.88"/>
+  <ellipse cx="118" cy="184" rx="64" ry="15" fill="#FAF5EA" stroke="#342638" stroke-opacity="0.78" stroke-width="1.5" stroke-opacity="0.28"/>
+  <ellipse cx="118" cy="184" rx="34" ry="8" fill="#DFD4C2"/>
+  <!-- Ear handle on right -->
+  <path d="M167 112 C198 110 202 156 164 160" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="14" stroke-linecap="round"/>
+  <path d="M167 112 C198 110 202 156 164 160" fill="none" stroke="#CBE3C6" stroke-width="4.68" stroke-linecap="round"/>
+  <!-- Ceramic teacup body -->
+  <path d="M58 100 C56 158 76 186 118 186 C160 186 180 158 178 100 Z" fill="url(#cupGlaze)" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02" stroke-linejoin="round"/>
+  <!-- Subtle stoneware rim glaze & clay speckles -->
+  <path d="M68 126 C70 154 78 168 92 175" fill="none" stroke="#FFFDF8" stroke-width="4.68" stroke-linecap="round" opacity="0.7"/>
+  <g fill="#5C4E45" opacity="0.32">
+    <circle cx="88" cy="142" r="2"/>
+    <circle cx="144" cy="152" r="2.2"/>
+    <circle cx="132" cy="134" r="1.6"/>
+    <circle cx="108" cy="166" r="1.8"/>
+    <circle cx="154" cy="130" r="1.7"/>
+  </g>
+  <!-- Tea surface inside cup -->
+  <ellipse cx="118" cy="100" rx="60" ry="17" fill="#FAF4E8" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02"/>
+  <ellipse cx="118" cy="102" rx="51" ry="12.5" fill="url(#teaBrew)"/>
+  <path d="M88 102 Q114 96 140 103" fill="none" stroke="#FCE5B0" stroke-width="2.02" stroke-linecap="round" opacity="0.72"/>
+  <!-- Botanical leaf tea-bag string & tag -->
+  <path d="M110 109 Q92 118 86 148" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="1.73" stroke-linecap="round"/>
+  <path d="M86 146 C72 146 66 162 80 172 C94 168 98 152 86 146 Z" fill="#63A86A" stroke="#342638" stroke-opacity="0.78" stroke-width="2.16" stroke-linejoin="round"/>
+  <path d="M85 149 L81 168" stroke="#DFF5D4" stroke-width="1.5" stroke-linecap="round"/>
+</g>
+</svg>

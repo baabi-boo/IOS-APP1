@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.76" numOctaves="3" seed="17" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.055 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <filter id="softBand" x="-15%" y="-15%" width="130%" height="130%">
+    <feGaussianBlur stdDeviation="2.2"/>
+  </filter>
+  <linearGradient id="cloudL" x1="0" y1="0" x2="0.2" y2="1">
+    <stop offset="0%" stop-color="#FFFDF9"/>
+    <stop offset="68%" stop-color="#F5F0EA"/>
+    <stop offset="100%" stop-color="#D9D1E4"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <!-- Soft translucent hand-painted watercolor rainbow ribbon (NO heavy black marker borders!) -->
+  <g fill="none" stroke-linecap="round" filter="url(#softBand)">
+    <path d="M36 168 C42 74 198 70 204 166" stroke="#EA7A6A" stroke-opacity="0.82" stroke-width="18"/>
+    <path d="M46 168 C52 88 188 84 194 166" stroke="#F4BE58" stroke-opacity="0.84" stroke-width="16"/>
+    <path d="M56 168 C62 102 178 98 184 166" stroke="#85C784" stroke-opacity="0.82" stroke-width="14"/>
+    <path d="M65 168 C71 114 169 110 175 166" stroke="#6AC0DC" stroke-opacity="0.82" stroke-width="13"/>
+    <path d="M74 168 C80 126 160 122 166 166" stroke="#A694DB" stroke-opacity="0.78" stroke-width="11"/>
+  </g>
+  <!-- Crisp sunlit gouache shimmer arc riding the crest -->
+  <path d="M56 112 C82 78 134 72 162 86" fill="none" stroke="#FFFDF8" stroke-width="4" stroke-linecap="round" opacity="0.58"/>
+  <!-- Left asymmetrical billowy paper-cut storybook cloud -->
+  <path d="M18 182 C10 180 10 164 22 160 C20 144 38 134 52 142 C60 128 84 132 88 150 C102 152 104 176 90 182 Z" fill="url(#cloudL)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M26 174 Q54 180 86 174" fill="none" stroke="#CEC5DC" stroke-width="4" stroke-linecap="round" opacity="0.65"/>
+  <path d="M34 150 Q46 142 56 147" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" opacity="0.85"/>
+  <!-- Right smaller asymmetrical billowy cloud + trailing wisp -->
+  <path d="M150 180 C138 178 138 160 150 156 C154 140 174 134 186 144 C198 134 218 142 218 158 C230 162 228 180 216 180 Z" fill="url(#cloudL)" stroke="#342638" stroke-opacity="0.78" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M158 173 Q186 178 212 172" fill="none" stroke="#CEC5DC" stroke-width="3.6" stroke-linecap="round" opacity="0.65"/>
+  <path d="M184 150 Q196 142 208 150" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+  <!-- Tiny dreamy distant cloud puff drifting beside arch -->
+  <ellipse cx="196" cy="110" rx="14" ry="7" fill="#FFFDF8" opacity="0.72"/>
+</g>
+</svg>

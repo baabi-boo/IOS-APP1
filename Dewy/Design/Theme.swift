@@ -1,6 +1,5 @@
 import SwiftUI
 import UIKit
-import CoreText
 
 // MARK: - Color helpers
 
@@ -30,80 +29,97 @@ extension Color {
     }
 }
 
-// MARK: - Visual language
+// MARK: - Editorial Storybook Palette
 //
-// Dewy's look in one paragraph: soft clay toys on warm cream paper.
-// - Surfaces are cream (#FFF8F0) with white clay cards: an inner top highlight and a warm,
-//   colored drop shadow instead of gray.
-// - Text is a warm plum-cocoa ink, never pure black.
-// - One accent (aqua) means "water / do this". Coral means rewards and Dew Drops.
-//   Butter yellow means streaks. Other pastels only ever tint illustrations and charts.
-// - Skies follow the real time of day: peach dawn, aqua day, lilac dusk, indigo night.
-// - Headlines and numbers are Fredoka; everything else is SF Pro Rounded.
+// Dewy's visual language: tactile cotton rag paper paired with hand-mixed storybook gouache
+// and deep botanical ink.
+// - Paper grounds stay warm and unbleached (#FAF4EA / #FFFDF8), anchored by fine ink hairlines.
+// - Copy is deep plum-espresso ink (#251E2B) and readable warm slate (#685E6D) — never pure black.
+// - Cerulean spring (#237FA3) marks hydration & primary actions; terracotta coral (#D45842)
+//   marks Dew Drops & rewards; antique ochre (#DC982B) marks streaks and Dewy+.
+// - Each world holds its own hand-painted 4-phase atmosphere (dawn, day, dusk, night).
+// - Display typography speaks in Apple New York (.serif); data and pills use SF Pro Rounded.
 
 enum Ink {
-    static let primary = Color(hex: 0x3E2F45)
-    static let soft = Color(hex: 0x9A8A9E)
-    static let faint = Color(hex: 0xC8BAC4)
+    static let primary = Color(hex: 0x251E2B)
+    static let soft = Color(hex: 0x685E6D)
+    static let faint = Color(hex: 0xA398A6)
+    static let hairline = Color(hex: 0x251E2B, opacity: 0.10)
+    static let hairlineStrong = Color(hex: 0x251E2B, opacity: 0.17)
+    static let starlight = Color(hex: 0xFAF5EC)
 }
 
-/// The pastel palette. Only `aqua`, `coral` and `butter` carry meaning in the UI;
-/// the rest are for illustration, charts and friend tints.
+/// Hand-mixed storybook gouache pigments and cotton-paper surfaces.
 enum Palette {
-    static let cream = Color(hex: 0xFFF8F0)
-    static let creamDeep = Color(hex: 0xFBEFE3)
-    static let paper = Color(hex: 0xFFFDFA)
+    // Cotton rag paper & archival wells
+    static let cream = Color(hex: 0xFAF4EA)
+    static let creamDeep = Color(hex: 0xF1E7D7)
+    static let paper = Color(hex: 0xFFFDF8)
+    static let parchment = Color(hex: 0xF5ECDE)
 
-    static let aqua = Color(hex: 0x2EAEE6)
-    static let aquaDeep = Color(hex: 0x1C8CC6)
-    static let aquaLight = Color(hex: 0x7FD3F5)
-    static let aquaSoft = Color(hex: 0xDDF3FC)
+    // Cerulean spring water (primary interactive accent)
+    static let aqua = Color(hex: 0x237FA3)
+    static let aquaDeep = Color(hex: 0x185C78)
+    static let aquaLight = Color(hex: 0x6EB4CE)
+    static let aquaSoft = Color(hex: 0xE3F1F5)
 
-    static let coral = Color(hex: 0xFF8A78)
-    static let coralDeep = Color(hex: 0xE5675A)
-    static let coralSoft = Color(hex: 0xFFE7E1)
+    // Terracotta coral / persimmon (rewards & Dew Drops)
+    static let coral = Color(hex: 0xD45842)
+    static let coralDeep = Color(hex: 0xA83D2B)
+    static let coralSoft = Color(hex: 0xFBE9E4)
 
-    static let butter = Color(hex: 0xFFCF56)
-    static let butterDeep = Color(hex: 0xE9A52A)
-    static let butterSoft = Color(hex: 0xFFF3D0)
+    // Ochre marigold & antique brass (streaks & Dewy+)
+    static let butter = Color(hex: 0xDC982B)
+    static let butterDeep = Color(hex: 0xAA6C12)
+    static let butterSoft = Color(hex: 0xFAF0D7)
 
-    static let lilac = Color(hex: 0xB6A3FF)
-    static let lilacSoft = Color(hex: 0xEEE9FF)
-    static let mint = Color(hex: 0x7FD6A6)
-    static let mintSoft = Color(hex: 0xE2F6EA)
-    static let pink = Color(hex: 0xFF9EC4)
-    static let pinkSoft = Color(hex: 0xFFE6F0)
-    static let peach = Color(hex: 0xFFC2A0)
-    static let peachSoft = Color(hex: 0xFFEDE2)
+    // Botanical gouache accents (illustrations, charts & companions)
+    static let lilac = Color(hex: 0x7D6BB5)
+    static let lilacSoft = Color(hex: 0xEEEBF8)
+    static let mint = Color(hex: 0x4D8E6D)
+    static let mintSoft = Color(hex: 0xE5F1EA)
+    static let pink = Color(hex: 0xD27192)
+    static let pinkSoft = Color(hex: 0xFAECF1)
+    static let peach = Color(hex: 0xDE8864)
+    static let peachSoft = Color(hex: 0xFBECE4)
 
-    // Compatibility names used by older views and the widget.
+    // Compatibility aliases used across views and widgets
     static let sunshine = butter
-    static let tangerine = Color(hex: 0xFFAE6B)
-    static let berry = Color(hex: 0xF27BA5)
+    static let tangerine = Color(hex: 0xD97D45)
+    static let berry = Color(hex: 0xC95A82)
     static let blush = pink
     static let grape = lilac
     static let sky = aqua
     static let leaf = mint
-    static let leafDeep = Color(hex: 0x4FB27F)
-    static let soil = Color(hex: 0xC99B7C)
+    static let leafDeep = Color(hex: 0x376F52)
+    static let soil = Color(hex: 0x9E755A)
     static let ink = Ink.primary
-    static let cheek = Color(hex: 0xFF8DB0)
+    static let cheek = Color(hex: 0xE07B9A)
 
-    static let flame = LinearGradient(colors: [Color(hex: 0xFFD978), Color(hex: 0xFF9E5E)], startPoint: .top, endPoint: .bottom)
-    static let gold = LinearGradient(colors: [Color(hex: 0xFFE48F), Color(hex: 0xFFB940)], startPoint: .top, endPoint: .bottom)
-    static let dropGradient = LinearGradient(colors: [Color(hex: 0xFFB2A3), coral], startPoint: .top, endPoint: .bottom)
+    static let flame = LinearGradient(
+        colors: [Color(hex: 0xE8AA3D), Color(hex: 0xD45842)],
+        startPoint: .top, endPoint: .bottom
+    )
+    static let gold = LinearGradient(
+        colors: [Color(hex: 0xCFA042), Color(hex: 0xA8751E)],
+        startPoint: .top, endPoint: .bottom
+    )
+    static let dropGradient = LinearGradient(
+        colors: [Color(hex: 0xE8826E), coral],
+        startPoint: .top, endPoint: .bottom
+    )
     static let confetti: [Color] = [butter, pink, mint, lilac, aquaLight, coral, peach]
 
     /// Colors for streak runs on the calendar, picked in order.
     static let runs: [Color] = [aqua, coral, mint, lilac, butterDeep, pink]
 
-    /// Warm shadow tone for clay surfaces.
-    static let shadow = Color(hex: 0xB98E7A)
+    /// Clean archival espresso shadow tone for cotton-paper surfaces.
+    static let shadow = Color(hex: 0x3B2B23)
 }
 
 // MARK: - Time of day
 
-/// The sky follows the real time of day: a peach dawn, aqua day, lilac dusk and an indigo night.
+/// The four storybook hours of the sky: dawn, day, dusk, and night.
 enum SkyPhase: String, CaseIterable {
     case dawn, day, dusk, night
 
@@ -118,60 +134,25 @@ enum SkyPhase: String, CaseIterable {
         }
     }
 
-    /// Sky from the top of the screen down to the horizon.
-    var sky: [Color] {
-        switch self {
-        case .dawn: [Color(hex: 0xFFC9B5), Color(hex: 0xFFDCC8), Color(hex: 0xFFEEDD)]
-        case .day: [Color(hex: 0x8FD6FA), Color(hex: 0xBDE8FC), Color(hex: 0xE6F7FF)]
-        case .dusk: [Color(hex: 0xB9A6F5), Color(hex: 0xE9B9E0), Color(hex: 0xFFD4C4)]
-        case .night: [Color(hex: 0x2F3279), Color(hex: 0x4A4C9E), Color(hex: 0x7D78C4)]
-        }
-    }
+    /// Default Lagoon storybook sky from zenith to horizon.
+    var sky: [Color] { AppTheme.lagoon.sky(for: self) }
 
-    /// The pond, from the far shore to the near edge.
-    var pond: [Color] {
-        switch self {
-        case .dawn: [Color(hex: 0xBCE6EF), Color(hex: 0x86CDE2)]
-        case .day: [Color(hex: 0x9DE3F4), Color(hex: 0x56BEE3)]
-        case .dusk: [Color(hex: 0xC6C2F2), Color(hex: 0x9192DE)]
-        case .night: [Color(hex: 0x50579F), Color(hex: 0x323778)]
-        }
-    }
+    /// Default Lagoon water from far shore to foreground edge.
+    var pond: [Color] { AppTheme.lagoon.sea(for: self) }
 
-    /// Light glinting on the water and on cloud tops.
-    var glint: Color {
-        switch self {
-        case .dawn: Color(hex: 0xFFF1E2)
-        case .day: .white
-        case .dusk: Color(hex: 0xFFE8F1)
-        case .night: Color(hex: 0xB9C0FF)
-        }
-    }
+    /// Light glinting on the water and cloud crests.
+    var glint: Color { AppTheme.lagoon.glint(for: self) }
 
-    var sunGlow: Color {
-        switch self {
-        case .dawn: Color(hex: 0xFFF0C9)
-        case .day: Color(hex: 0xFFFBE0)
-        case .dusk: Color(hex: 0xFFE0C2)
-        case .night: Color(hex: 0xC9CCFF)
-        }
-    }
+    var sunGlow: Color { AppTheme.lagoon.sunGlow(for: self) }
 
-    /// Tint laid over cloud art so it sits in the light of the hour.
-    var cloudTint: Color? {
-        switch self {
-        case .day: nil
-        case .dawn: Color(hex: 0xFFC7A8)
-        case .dusk: Color(hex: 0xD9A8E8)
-        case .night: Color(hex: 0x5A5BAA)
-        }
-    }
+    /// Atmospheric tint applied to clouds in the hour's light.
+    var cloudTint: Color? { AppTheme.lagoon.cloudTint(for: self) }
 
     var isNight: Bool { self == .night }
 
-    /// Text drawn straight on the sky.
-    var onSky: Color { isNight ? .white : Ink.primary }
-    var onSkySoft: Color { isNight ? .white.opacity(0.75) : Ink.primary.opacity(0.6) }
+    /// Text drawn directly over the sky — calibrated for WCAG AA+ contrast in every phase.
+    var onSky: Color { isNight ? Ink.starlight : Ink.primary }
+    var onSkySoft: Color { isNight ? Ink.starlight.opacity(0.78) : Ink.primary.opacity(0.68) }
 
     var greeting: String {
         switch self {
@@ -182,21 +163,14 @@ enum SkyPhase: String, CaseIterable {
         }
     }
 
-    var gradient: LinearGradient {
-        LinearGradient(stops: [
-            .init(color: sky[0], location: 0),
-            .init(color: sky[1], location: 0.55),
-            .init(color: sky[2], location: 1)
-        ], startPoint: .top, endPoint: .bottom)
-    }
+    var gradient: LinearGradient { AppTheme.lagoon.skyGradient(for: self) }
 }
 
 // MARK: - Worlds
 
-/// The places Dewy can live. Lagoon is free, the rest are part of Dewy+.
-///
-/// A world only changes the scenery (its landmark, the pond and, for Starlight, a forced night).
-/// The interface itself always stays on cream with the aqua accent, so the app reads as one product.
+/// The five illustrated worlds Dewy can inhabit.
+/// Each world carries its own hand-mixed 4-phase gouache sky and water palette while the
+/// surrounding cotton-paper interface remains serene and cohesive.
 enum AppTheme: String, CaseIterable, Codable, Identifiable {
     case lagoon, peach, matcha, lavender, midnight
 
@@ -214,100 +188,255 @@ enum AppTheme: String, CaseIterable, Codable, Identifiable {
 
     var tagline: String {
         switch self {
-        case .lagoon: "A palm island in turquoise water"
-        case .peach: "Sailboats and a candy lighthouse"
-        case .matcha: "Rolling hills and round little trees"
-        case .lavender: "A castle floating on clouds"
-        case .midnight: "Always night, always cozy"
+        case .lagoon: "A quiet palm isle in turquoise shallows"
+        case .peach: "Sunlit limestone cliffs and a red-striped beacon"
+        case .matcha: "Rolling sage hills along a jade spring creek"
+        case .lavender: "Rose-periwinkle towers floating on high clouds"
+        case .midnight: "Velvet indigo peaks and a starlit mirror lake"
         }
     }
 
     var isPremium: Bool { self != .lagoon }
 
-    /// Landmark art drawn at the horizon, in the World asset folder.
-    var landmarks: [String] {
-        switch self {
-        case .lagoon: ["prop-island"]
-        case .peach: ["prop-lighthouse", "prop-sailboat"]
-        case .matcha: ["prop-hills"]
-        case .lavender: ["prop-castle"]
-        case .midnight: ["prop-island"]
-        }
-    }
-
-    /// The world's signature tint, used on its picker card.
+    /// Signature gouache swatch for pickers and badges.
     var tint: Color {
         switch self {
-        case .lagoon: Color(hex: 0x7FD3F5)
-        case .peach: Color(hex: 0xFFB59C)
-        case .matcha: Color(hex: 0x8EDDB0)
-        case .lavender: Color(hex: 0xC9B6FF)
-        case .midnight: Color(hex: 0x8F93E8)
+        case .lagoon: Color(hex: 0x5DB2CE)
+        case .peach: Color(hex: 0xE69A7B)
+        case .matcha: Color(hex: 0x6AA889)
+        case .lavender: Color(hex: 0x9B89CE)
+        case .midnight: Color(hex: 0x4B5799)
         }
     }
 
-    /// The time of day to show in this world.
+    /// The time of day rendered in this world (`midnight` is permanently starlit).
     func phase(at date: Date = .now) -> SkyPhase {
         self == .midnight ? .night : SkyPhase.at(date)
     }
 
-    /// The UI never goes dark; only Starlight's scenery does.
+    /// True whenever the world's active sky is dark enough to require light status bar ink.
+    var prefersLightStatusBar: Bool { phase().isNight }
+
+    /// The cotton-paper UI always stays warm light; only the night sky hero goes deep indigo.
     var isDark: Bool { false }
     var colorScheme: ColorScheme { .light }
 
-    // MARK: Scenery (current time of day)
+    // MARK: Per-World 4-Phase Atmosphere
 
-    var sky: [Color] { phase().sky }
-    var sea: [Color] { phase().pond }
-    var seaGlint: Color { phase().glint }
-    var sunGlow: Color { phase().sunGlow }
-    var cloudShade: Color { Color(hex: 0xEDE6FA) }
-    var pad: Color { Color(hex: 0x8FD9A0) }
-    var padLight: Color { Color(hex: 0xB9EBC3) }
+    /// Sky colors from zenith to horizon for this specific world and hour.
+    func sky(for phase: SkyPhase) -> [Color] {
+        if self == .midnight {
+            return [Color(hex: 0x171D3D), Color(hex: 0x262F5F), Color(hex: 0x454B84)]
+        }
+        switch (self, phase) {
+        case (.lagoon, .dawn):
+            return [Color(hex: 0xF2BEA7), Color(hex: 0xF8D7C0), Color(hex: 0xFCF0DF)]
+        case (.lagoon, .day):
+            return [Color(hex: 0x7EC5DF), Color(hex: 0xB4DFEE), Color(hex: 0xE7F4F7)]
+        case (.lagoon, .dusk):
+            return [Color(hex: 0xA696CE), Color(hex: 0xDBA8C6), Color(hex: 0xF6CEBA)]
+        case (.lagoon, .night):
+            return [Color(hex: 0x1C244A), Color(hex: 0x2E3A6E), Color(hex: 0x4E5A94)]
+
+        case (.peach, .dawn):
+            return [Color(hex: 0xEEAA92), Color(hex: 0xF7CCB5), Color(hex: 0xFDF0E2)]
+        case (.peach, .day):
+            return [Color(hex: 0xF2BD9C), Color(hex: 0xF9DAC2), Color(hex: 0xFCF1E3)]
+        case (.peach, .dusk):
+            return [Color(hex: 0xC9838E), Color(hex: 0xE8AA9B), Color(hex: 0xF8D7BE)]
+        case (.peach, .night):
+            return [Color(hex: 0x242042), Color(hex: 0x3C3463), Color(hex: 0x625382)]
+
+        case (.matcha, .dawn):
+            return [Color(hex: 0xD5DFC3), Color(hex: 0xEAEAD2), Color(hex: 0xF8F4E5)]
+        case (.matcha, .day):
+            return [Color(hex: 0x98CCB8), Color(hex: 0xC6E3D2), Color(hex: 0xEDF6EC)]
+        case (.matcha, .dusk):
+            return [Color(hex: 0x91A7A1), Color(hex: 0xCBC0B0), Color(hex: 0xF1DDC4)]
+        case (.matcha, .night):
+            return [Color(hex: 0x192B34), Color(hex: 0x27424D), Color(hex: 0x40646E)]
+
+        case (.lavender, .dawn):
+            return [Color(hex: 0xD6B3DD), Color(hex: 0xEBC9DF), Color(hex: 0xFAE8EC)]
+        case (.lavender, .day):
+            return [Color(hex: 0xB3A4DE), Color(hex: 0xD2C6EE), Color(hex: 0xF0E9FA)]
+        case (.lavender, .dusk):
+            return [Color(hex: 0xA48ECE), Color(hex: 0xCE9FCC), Color(hex: 0xF3C9D1)]
+        case (.lavender, .night):
+            return [Color(hex: 0x221E48), Color(hex: 0x39316D), Color(hex: 0x5D5096)]
+
+        case (.midnight, _):
+            return [Color(hex: 0x171D3D), Color(hex: 0x262F5F), Color(hex: 0x454B84)]
+        }
+    }
+
+    /// Water colors from far shore to foreground edge for this world and hour.
+    func sea(for phase: SkyPhase) -> [Color] {
+        if self == .midnight {
+            return [Color(hex: 0x222C5B), Color(hex: 0x141A3B)]
+        }
+        switch (self, phase) {
+        case (.lagoon, .dawn): return [Color(hex: 0x9BD5DB), Color(hex: 0x56A5BA)]
+        case (.lagoon, .day): return [Color(hex: 0x6CC3D6), Color(hex: 0x2F8EAA)]
+        case (.lagoon, .dusk): return [Color(hex: 0x8F8AC4), Color(hex: 0x595C9E)]
+        case (.lagoon, .night): return [Color(hex: 0x2B3B6B), Color(hex: 0x172145)]
+
+        case (.peach, .dawn): return [Color(hex: 0x84B9CF), Color(hex: 0x4784A6)]
+        case (.peach, .day): return [Color(hex: 0x67B2CB), Color(hex: 0x2A7298)]
+        case (.peach, .dusk): return [Color(hex: 0x6E7AA8), Color(hex: 0x3D4C7A)]
+        case (.peach, .night): return [Color(hex: 0x323A64), Color(hex: 0x1B2242)]
+
+        case (.matcha, .dawn): return [Color(hex: 0x9CCBB6), Color(hex: 0x5E9B84)]
+        case (.matcha, .day): return [Color(hex: 0x7BC3A7), Color(hex: 0x428A71)]
+        case (.matcha, .dusk): return [Color(hex: 0x6C9A8E), Color(hex: 0x3F6D66)]
+        case (.matcha, .night): return [Color(hex: 0x264A50), Color(hex: 0x152E34)]
+
+        case (.lavender, .dawn): return [Color(hex: 0xC9B8E6), Color(hex: 0x9080C2)]
+        case (.lavender, .day): return [Color(hex: 0xB5A8E0), Color(hex: 0x7A6CB8)]
+        case (.lavender, .dusk): return [Color(hex: 0x937DC0), Color(hex: 0x5B4B8E)]
+        case (.lavender, .night): return [Color(hex: 0x3D3573), Color(hex: 0x211B48)]
+
+        case (.midnight, _): return [Color(hex: 0x222C5B), Color(hex: 0x141A3B)]
+        }
+    }
+
+    func glint(for phase: SkyPhase) -> Color {
+        let effective = self == .midnight ? .night : phase
+        switch effective {
+        case .dawn: return Color(hex: 0xFFF3E2)
+        case .day: return Color(hex: 0xFFFDF8)
+        case .dusk: return Color(hex: 0xFFE9EE)
+        case .night: return Color(hex: 0xC2CAFF)
+        }
+    }
+
+    func sunGlow(for phase: SkyPhase) -> Color {
+        let effective = self == .midnight ? .night : phase
+        switch effective {
+        case .dawn: return Color(hex: 0xFCEAC2)
+        case .day: return Color(hex: 0xFFF9DD)
+        case .dusk: return Color(hex: 0xFAD8B8)
+        case .night: return Color(hex: 0xC9D0FF)
+        }
+    }
+
+    func cloudTint(for phase: SkyPhase) -> Color? {
+        let effective = self == .midnight ? .night : phase
+        switch (self, effective) {
+        case (_, .night): return Color(hex: 0x4B538F)
+        case (.peach, .day): return Color(hex: 0xFFE8D8)
+        case (.matcha, .day): return Color(hex: 0xEFF7EE)
+        case (.lavender, .day): return Color(hex: 0xF3ECFA)
+        case (_, .day): return nil
+        case (_, .dawn): return Color(hex: 0xF7C9AE)
+        case (_, .dusk): return Color(hex: 0xD8A8D6)
+        }
+    }
+
+    func skyGradient(for phase: SkyPhase) -> LinearGradient {
+        let stops = sky(for: phase)
+        return LinearGradient(
+            stops: [
+                .init(color: stops[0], location: 0),
+                .init(color: stops[1], location: 0.54),
+                .init(color: stops[2], location: 1)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    func seaGradient(for phase: SkyPhase) -> LinearGradient {
+        LinearGradient(colors: sea(for: phase), startPoint: .top, endPoint: .bottom)
+    }
+
+    func onHero(for phase: SkyPhase) -> Color {
+        let effective = self == .midnight ? .night : phase
+        return effective.isNight ? Ink.starlight : Ink.primary
+    }
+
+    func onHeroSoft(for phase: SkyPhase) -> Color {
+        let effective = self == .midnight ? .night : phase
+        return effective.isNight ? Ink.starlight.opacity(0.80) : Ink.primary.opacity(0.68)
+    }
+
+    // MARK: Scenery (active time of day)
+
+    var sky: [Color] { sky(for: phase()) }
+    var sea: [Color] { sea(for: phase()) }
+    var seaGlint: Color { glint(for: phase()) }
+    var sunGlow: Color { sunGlow(for: phase()) }
+    var cloudTint: Color? { cloudTint(for: phase()) }
+
+    var cloudShade: Color {
+        switch self {
+        case .lagoon: Color(hex: 0xDCEAF0)
+        case .peach: Color(hex: 0xF0DDD2)
+        case .matcha: Color(hex: 0xDCE8DF)
+        case .lavender: Color(hex: 0xE6DFF5)
+        case .midnight: Color(hex: 0x353E72)
+        }
+    }
+
+    var pad: Color {
+        switch self {
+        case .matcha: Color(hex: 0x5B9E78)
+        case .midnight: Color(hex: 0x4A7E74)
+        default: Color(hex: 0x65A67E)
+        }
+    }
+
+    var padLight: Color {
+        switch self {
+        case .matcha: Color(hex: 0x8BC49F)
+        case .midnight: Color(hex: 0x6EA398)
+        default: Color(hex: 0x94CBA6)
+        }
+    }
 
     // MARK: Brand (shared by every world)
 
     var accent: Color { Palette.aqua }
     var accentDeep: Color { Palette.aquaDeep }
     var accentSoft: Color { Palette.aquaSoft }
-    var onAccent: Color { .white }
+    var onAccent: Color { Palette.paper }
     var link: Color { Palette.aquaDeep }
 
     var hero: Color { sky[1] }
     var heroDeep: Color { sky[0] }
     var heroLight: Color { sky[2] }
 
-    /// Dewy's default water color.
-    var water: Color { Color(hex: 0x5CC4F2) }
+    /// Dewy's default spring-water hue.
+    var water: Color { Color(hex: 0x4EAAD0) }
 
-    // MARK: Surfaces
+    // MARK: Cotton-Paper Surfaces
 
     var canvas: Color { Palette.cream }
-    var card: Color { .white }
-    var well: Color { Color(hex: 0xF8EEE4) }
-    var line: Color { Color(hex: 0xF1E4D8) }
-    var shadow: Color { Palette.shadow.opacity(0.2) }
+    var card: Color { Palette.paper }
+    var well: Color { Palette.creamDeep }
+    var line: Color { Color(hex: 0xE5D9C8) }
+    var shadow: Color { Palette.shadow.opacity(0.14) }
 
-    // MARK: Text
+    // MARK: Ink
 
     var ink: Color { Ink.primary }
     var inkSoft: Color { Ink.soft }
     var inkFaint: Color { Ink.faint }
-    var onHero: Color { phase().onSky }
-    var onHeroSoft: Color { phase().onSkySoft }
+    var onHero: Color { onHero(for: phase()) }
+    var onHeroSoft: Color { onHeroSoft(for: phase()) }
 
     var cta: Color { accent }
     var ctaDeep: Color { accentDeep }
     var onCta: Color { onAccent }
-    var faceInk: Color { Color(hex: 0x3A2A44) }
+    var faceInk: Color { Ink.primary }
 
     // MARK: Gradients
 
-    var skyGradient: LinearGradient { phase().gradient }
+    var skyGradient: LinearGradient { skyGradient(for: phase()) }
     var heroGradient: LinearGradient { skyGradient }
-    var seaGradient: LinearGradient { LinearGradient(colors: sea, startPoint: .top, endPoint: .bottom) }
+    var seaGradient: LinearGradient { seaGradient(for: phase()) }
     var waterGradient: LinearGradient {
-        LinearGradient(colors: [water.opacity(0.85), water], startPoint: .top, endPoint: .bottom)
+        LinearGradient(colors: [water.opacity(0.84), water], startPoint: .top, endPoint: .bottom)
     }
 }
 
@@ -324,49 +453,51 @@ extension EnvironmentValues {
     }
 }
 
-// MARK: - Typography
+// MARK: - Editorial Storybook Typography
 
-/// Dewy's display face. Fredoka's round terminals echo Dewy's own shape;
-/// it is used for headlines, numbers and buttons, while body copy stays in SF Rounded.
+/// Display weights mapped onto Apple's New York editorial serif face.
 enum DisplayWeight {
     case medium, semibold, bold
 
-    var fontName: String {
+    var swiftUIWeight: Font.Weight {
         switch self {
-        case .medium: "Fredoka-Medium"
-        case .semibold: "Fredoka-SemiBold"
-        case .bold: "Fredoka-Bold"
+        case .medium: .medium
+        case .semibold: .semibold
+        case .bold: .bold
         }
     }
 }
 
 extension Font {
-    /// Body copy: SF Pro Rounded.
+    /// Compact UI metadata, pills, controls and tabular numbers: SF Pro Rounded.
     static func dewy(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight, design: .rounded)
     }
 
-    /// Headlines, numbers and buttons: Fredoka.
+    /// Editorial storybook titles, chapter headings and sculpted hero numerals: Apple New York serif.
     static func display(_ size: CGFloat, _ weight: DisplayWeight = .semibold) -> Font {
-        .custom(weight.fontName, fixedSize: size)
+        .system(size: size, weight: weight.swiftUIWeight, design: .serif)
+    }
+
+    /// Poetic greetings, Journey story beats and italic pull quotes: Apple New York italic serif.
+    static func editorialItalic(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight, design: .serif).italic()
+    }
+
+    /// Small tracked archival kickers above editorial titles.
+    static func kicker(_ size: CGFloat = 11) -> Font {
+        .system(size: size, weight: .bold, design: .rounded)
     }
 }
 
-/// Registers the bundled Fredoka fonts once at launch.
+/// Kept as a harmless no-op so existing app and widget startup hooks remain intact.
 enum FontRegistry {
-    static func registerFonts() {
-        for weight in [DisplayWeight.medium, .semibold, .bold] {
-            let url = Bundle.main.url(forResource: weight.fontName, withExtension: "ttf")
-                ?? Bundle.main.url(forResource: weight.fontName, withExtension: "ttf", subdirectory: "Fonts")
-            guard let url else { continue }
-            CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
-        }
-    }
+    static func registerFonts() {}
 }
 
 // MARK: - Art
 
-/// Asset-catalog art with a graceful fallback, so a missing image never shows a blank square.
+/// Asset-catalog art lookup with a graceful fallback.
 enum Art {
     static func exists(_ name: String) -> Bool { UIImage(named: name) != nil }
 }

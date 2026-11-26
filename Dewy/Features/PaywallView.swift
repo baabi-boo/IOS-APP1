@@ -1,22 +1,21 @@
 import SwiftUI
 
-/// Legacy Dewy+ colors. The clay paywall uses the shared palette (aqua, coral, butter),
-/// but these stay available for any view that still references them.
+/// Compatibility palette tokens retained for older views if referenced.
 enum PlusPalette {
-    static let violet = Color(hex: 0x8B5CF6)
-    static let violetDeep = Color(hex: 0x6236D9)
-    static let soft = Color(hex: 0xF1EAFF)
-    static let gold = Color(hex: 0xFFD45C)
+    static let violet = Palette.lilac
+    static let violetDeep = Color(hex: 0x5E4E96)
+    static let soft = Palette.lilacSoft
+    static let gold = Palette.butter
     static let sky = LinearGradient(stops: [
-        .init(color: Color(hex: 0x6C55F5), location: 0),
-        .init(color: Color(hex: 0xB46CF2), location: 0.45),
-        .init(color: Color(hex: 0xFF9DB0), location: 0.8),
-        .init(color: Color(hex: 0xFFD3A6), location: 1)
+        .init(color: Color(hex: 0x7D6BB5), location: 0),
+        .init(color: Color(hex: 0xB39CD8), location: 0.45),
+        .init(color: Color(hex: 0xE8B4C4), location: 0.8),
+        .init(color: Color(hex: 0xF7D7C2), location: 1)
     ], startPoint: .top, endPoint: .bottom)
 }
 
-/// The Dewy+ paywall: a cinematic clay scene with Dewy and the premium friends,
-/// a perks card, three plan cards and one big aqua call to action.
+/// The Dewy+ paywall: live animated celestial pavilion panorama with crowned Dewy and
+/// premium live FriendView companions, editorial cotton-paper perks, and tactile plan cards.
 struct PaywallView: View {
     @Environment(PurchaseManager.self) private var purchases
     @Environment(\.dewyTheme) private var theme
@@ -42,7 +41,7 @@ struct PaywallView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let heroHeight = max(proxy.size.height * 0.45, 330)
+            let heroHeight = max(proxy.size.height * 0.36, 294)
             ZStack {
                 theme.canvas.ignoresSafeArea()
 
@@ -51,18 +50,20 @@ struct PaywallView: View {
                         stage(height: heroHeight)
                         titleBlock
                             .floatIn(appeared, index: 1)
-                        VStack(spacing: 24) {
-                            perksCard.floatIn(appeared, index: 2)
-                            plans.floatIn(appeared, index: 3)
-                            cta.floatIn(appeared, index: 4)
-                            footer
+                        VStack(spacing: 20) {
+                            plans.floatIn(appeared, index: 2)
+                            perksCard.floatIn(appeared, index: 3)
                         }
                         .padding(.horizontal, 20)
-                        .padding(.top, 24)
-                        .padding(.bottom, 34)
+                        .padding(.top, 18)
+                        .padding(.bottom, 24)
                     }
                 }
                 .scrollIndicators(.hidden)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    stickyBottomBar
+                        .floatIn(appeared, index: 4)
+                }
 
                 ConfettiView(trigger: celebrate, origin: UnitPoint(x: 0.5, y: 0.25))
                     .ignoresSafeArea()
@@ -70,16 +71,16 @@ struct PaywallView: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            CircleIconButton(systemImage: "xmark", size: 38, onHero: true) { dismiss() }
+            CircleIconButton(systemImage: "xmark", size: 36, onHero: true) { dismiss() }
                 .accessibilityLabel("Close")
                 .padding(.trailing, 20)
-                .padding(.top, 18)
+                .padding(.top, 16)
         }
         .onAppear {
             appeared = true
             guard isLive else { return }
             bob = true
-            withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true).delay(0.8)) {
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true).delay(0.8)) {
                 pulse = true
             }
         }
@@ -97,82 +98,78 @@ struct PaywallView: View {
 
     private func stage(height: CGFloat) -> some View {
         ZStack(alignment: .bottom) {
-            LilyPad(width: 170, animated: isLive)
+            LilyPad(width: 158, animated: isLive)
 
-            friendView(.octopus, size: 58, x: -104, y: -168, delay: 0.9)
-            friendView(.unicorn, size: 72, x: -124, y: -26, delay: 0)
-            friendView(.dino, size: 72, x: 124, y: -26, delay: 0.45)
+            companion(.octopus, size: 52, x: -84, y: -116, delay: 0.9)
+            companion(.unicorn, size: 68, x: -116, y: -20, delay: 0)
+            companion(.dino, size: 68, x: 116, y: -20, delay: 0.45)
 
             MascotView(
                 progress: 0.92,
                 mood: .ecstatic,
-                size: 150,
+                size: 138,
                 outfits: [.crown],
                 sparkles: true,
                 bands: rainbow,
                 animated: isLive,
                 showsShadow: false
             )
-            .padding(.bottom, 18)
+            .liveMeniscusGlow(strength: 0.14)
+            .padding(.bottom, 16)
         }
-        .padding(.bottom, 18)
+        .padding(.bottom, 12)
         .frame(maxWidth: .infinity)
         .frame(height: height, alignment: .bottom)
         .background(alignment: .bottom) {
-            // Extends above the top so pulling down keeps showing the scene.
-            heroImage(height: height + 180)
+            heroPanorama(height: height + 180)
         }
         .floatIn(appeared, index: 0)
         .accessibilityHidden(true)
     }
 
-    private func heroImage(height: CGFloat) -> some View {
-        Color.clear
+    private func heroPanorama(height: CGFloat) -> some View {
+        PaywallPanoramaView(animated: isLive)
             .frame(height: height)
-            .overlay {
-                Image("hero-paywall")
-                    .resizable()
-                    .scaledToFill()
-            }
             .clipped()
             .overlay(alignment: .bottom) {
-                LinearGradient(stops: [
-                    .init(color: theme.canvas.opacity(0), location: 0),
-                    .init(color: theme.canvas.opacity(0.65), location: 0.55),
-                    .init(color: theme.canvas, location: 1)
-                ], startPoint: .top, endPoint: .bottom)
-                .frame(height: height * 0.3)
+                LinearGradient(
+                    stops: [
+                        .init(color: theme.canvas.opacity(0), location: 0),
+                        .init(color: theme.canvas.opacity(0.68), location: 0.56),
+                        .init(color: theme.canvas, location: 1)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: height * 0.28)
             }
     }
 
-    private func friendView(_ friend: Friend, size: CGFloat, x: CGFloat, y: CGFloat, delay: Double) -> some View {
-        ArtImage(name: friend.imageName, size: size)
-            .background(alignment: .bottom) {
-                Ellipse()
-                    .fill(Palette.shadow.opacity(0.18))
-                    .frame(width: size * 0.62, height: size * 0.12)
-                    .blur(radius: 2)
-                    .offset(y: size * 0.04)
-            }
-            .offset(y: bob ? -5 : 3)
-            .animation(isLive ? Animation.easeInOut(duration: 1.5 + delay * 0.4).repeatForever(autoreverses: true).delay(delay) : nil, value: bob)
+    private func companion(_ friend: Friend, size: CGFloat, x: CGFloat, y: CGFloat, delay: Double) -> some View {
+        FriendView(friend: friend, size: size, animated: isLive)
+            .offset(y: bob ? -4 : 3)
+            .animation(
+                isLive ? Animation.easeInOut(duration: 1.6 + delay * 0.4).repeatForever(autoreverses: true).delay(delay) : nil,
+                value: bob
+            )
             .offset(x: x, y: y)
     }
 
     private var titleBlock: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                ClayIcon(glyph: .crown, size: 40)
+                ClayIcon(glyph: .crown, size: 38)
                 Text("Dewy+")
-                    .font(.display(40))
+                    .font(.display(40, .bold))
+                    .tracking(-0.6)
                     .foregroundStyle(theme.ink)
             }
-            Text("Unlock every friend, world and outfit, and make every sip a little more magical.")
-                .font(.dewy(16, .medium))
+            Text("Unlock every companion, sanctuary and wardrobe piece — and turn every sip into a tiny ritual.")
+                .font(.editorialItalic(16))
                 .foregroundStyle(theme.inkSoft)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 32)
+                .padding(.horizontal, 30)
         }
         .padding(.top, 2)
     }
@@ -181,7 +178,7 @@ struct PaywallView: View {
 
     private let perks: [PaywallPerk] = [
         PaywallPerk(art: .friend(.unicorn), tint: Palette.lilacSoft, title: "Exclusive friends, worlds & outfits", detail: "Stella, Sprout, Inky, four new worlds and the full wardrobe"),
-        PaywallPerk(art: .glyph(.drop), tint: Palette.coralSoft, title: "2× Dew Drops for every goal", detail: "Fill your shop fund twice as fast"),
+        PaywallPerk(art: .glyph(.drop), tint: Palette.coralSoft, title: "2× Dew Drops for every goal", detail: "Fill your sanctuary fund twice as fast"),
         PaywallPerk(art: .glyph(.map), tint: Palette.mintSoft, title: "The full adventure archive", detail: "Revisit every chapter of Dewy's journey"),
         PaywallPerk(art: .symbol("chart.bar.fill", Palette.aqua), tint: Palette.aquaSoft, title: "30-day & yearly insights", detail: "Your rhythm, streaks and caffeine over time"),
         PaywallPerk(art: .glyph(.heart), tint: Palette.pinkSoft, title: "Apple Health history", detail: "Bring your past days in from Health"),
@@ -195,7 +192,7 @@ struct PaywallView: View {
                 if index > 0 {
                     Rectangle()
                         .fill(theme.line)
-                        .frame(height: 1.5)
+                        .frame(height: 1)
                         .padding(.leading, 62)
                 }
                 PaywallPerkRow(perk: perk)
@@ -213,11 +210,11 @@ struct PaywallView: View {
     }
 
     private var plans: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             ForEach(PurchaseManager.Plan.allCases) { plan in
                 PaywallPlanCard(plan: plan, price: price(for: plan), isSelected: selected == plan) {
                     Haptics.select()
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) { selected = plan }
+                    withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) { selected = plan }
                 }
             }
         }
@@ -232,27 +229,24 @@ struct PaywallView: View {
         }
     }
 
-    private var cta: some View {
-        VStack(spacing: 12) {
+    private var stickyBottomBar: some View {
+        VStack(spacing: 9) {
             PrimaryButton(
                 title: selected == .yearly ? "Start free trial" : "Continue",
                 style: .accent,
-                isLoading: purchases.isPurchasing
+                isLoading: purchases.isPurchasing,
+                height: 54
             ) {
                 Task { await buy() }
             }
-            .scaleEffect(pulse ? 1.02 : 1)
+            .scaleEffect(pulse ? 1.015 : 1)
 
             Text(ctaNote)
-                .font(.dewy(13, .semibold))
+                .font(.dewy(12, .bold))
                 .foregroundStyle(theme.inkSoft)
                 .multilineTextAlignment(.center)
                 .contentTransition(.opacity)
-        }
-    }
 
-    private var footer: some View {
-        VStack(spacing: 10) {
             HStack(spacing: 8) {
                 Button("Restore purchases") {
                     Haptics.tap()
@@ -261,17 +255,26 @@ struct PaywallView: View {
                 .buttonStyle(.plain)
                 Text("·")
                 Text("Cancel anytime")
-            }
-            .font(.dewy(13, .semibold))
-            .foregroundStyle(theme.inkSoft)
-
-            HStack(spacing: 18) {
+                Text("·")
                 Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                Text("·")
                 Link("Privacy", destination: URL(string: "https://www.apple.com/legal/privacy/")!)
             }
-            .font(.dewy(12, .semibold))
+            .font(.dewy(11, .semibold))
             .foregroundStyle(theme.inkSoft)
             .tint(theme.inkSoft)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
+        .background {
+            VStack(spacing: 0) {
+                Rectangle().fill(theme.line).frame(height: 1)
+                theme.canvas.opacity(0.96)
+            }
+            .ignoresSafeArea(edges: .bottom)
         }
     }
 
@@ -306,33 +309,32 @@ private struct PaywallPerkRow: View {
     var perk: PaywallPerk
 
     var body: some View {
+        let iconShape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         HStack(spacing: 14) {
             icon
-                .frame(width: 48, height: 48)
+                .frame(width: 46, height: 46)
                 .background {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(LinearGradient(colors: [perk.tint.blended(with: .white, by: 0.35), perk.tint], startPoint: .top, endPoint: .bottom))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(LinearGradient(colors: [.white, .white.opacity(0)], startPoint: .top, endPoint: .center), lineWidth: 1.2)
-                        }
+                    iconShape
+                        .fill(perk.tint)
+                        .overlay(iconShape.stroke(Ink.hairline, lineWidth: 1))
                 }
             VStack(alignment: .leading, spacing: 2) {
                 Text(perk.title)
-                    .font(.dewy(16, .semibold))
+                    .font(.dewy(15.5, .semibold))
                     .foregroundStyle(theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(perk.detail)
-                    .font(.dewy(13, .medium))
+                    .font(.dewy(12.5, .medium))
                     .foregroundStyle(theme.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
             Image(systemName: "checkmark")
-                .font(.system(size: 11, weight: .black))
+                .font(.system(size: 10.5, weight: .bold))
                 .foregroundStyle(theme.accentDeep)
                 .frame(width: 24, height: 24)
                 .background(theme.accentSoft, in: Circle())
+                .overlay(Circle().stroke(theme.accent.opacity(0.22), lineWidth: 0.75))
         }
         .padding(.vertical, 11)
     }
@@ -341,14 +343,14 @@ private struct PaywallPerkRow: View {
     private var icon: some View {
         switch perk.art {
         case .friend(let friend):
-            ArtImage(name: friend.imageName, size: 40)
+            FriendView(friend: friend, size: 38, animated: false)
         case .glyph(let glyph):
-            ClayIcon(glyph: glyph, size: 32)
+            ClayIcon(glyph: glyph, size: 30)
         case .drink(let kind):
-            DrinkIcon(kind: kind, size: 36)
+            DrinkIcon(kind: kind, size: 34)
         case .symbol(let name, let color):
             Image(systemName: name)
-                .font(.system(size: 20, weight: .heavy))
+                .font(.system(size: 19, weight: .semibold))
                 .foregroundStyle(color)
         }
     }
@@ -363,7 +365,7 @@ private struct PaywallPlanCard: View {
     var isSelected: Bool
     var action: () -> Void
 
-    private let shape = RoundedRectangle(cornerRadius: 24, style: .continuous)
+    private let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
 
     var body: some View {
         Button(action: action) {
@@ -371,35 +373,36 @@ private struct PaywallPlanCard: View {
                 checkmark
                 VStack(alignment: .leading, spacing: 3) {
                     Text(plan.title)
-                        .font(.display(19))
+                        .font(.display(19, .semibold))
                         .foregroundStyle(theme.ink)
                     Text(plan.detail)
-                        .font(.dewy(13, .semibold))
+                        .font(.dewy(12.5, .bold))
                         .foregroundStyle(plan == .yearly ? Palette.coralDeep : theme.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 0) {
                     Text(price)
-                        .font(.display(20))
+                        .font(.display(20, .bold))
+                        .monospacedDigit()
                         .foregroundStyle(theme.ink)
                     Text(plan.cadence)
-                        .font(.dewy(12, .bold))
+                        .font(.dewy(11.5, .bold))
                         .foregroundStyle(theme.inkSoft)
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 18)
+            .padding(.vertical, 17)
             .background {
-                ClaySurface(
+                PaperSurface(
                     shape: shape,
-                    fill: isSelected ? Color(hex: 0xF2FAFE) : .white,
-                    glow: isSelected ? Palette.aqua : Palette.shadow,
-                    elevation: isSelected ? 1 : 0.6
+                    fill: isSelected ? Palette.aquaSoft.blended(with: Palette.paper, by: 0.62) : Palette.paper,
+                    tint: isSelected ? Palette.aqua : Palette.shadow,
+                    elevation: isSelected ? 0.95 : 0.55
                 )
             }
             .overlay {
-                shape.strokeBorder(isSelected ? theme.accent : Color.clear, lineWidth: 2.5)
+                shape.strokeBorder(isSelected ? theme.accent : Color.clear, lineWidth: 2.2)
             }
             .overlay(alignment: .topTrailing) {
                 if let badge = plan.badge {
@@ -416,35 +419,39 @@ private struct PaywallPlanCard: View {
     private var checkmark: some View {
         ZStack {
             Circle()
-                .strokeBorder(isSelected ? theme.accent : theme.inkFaint, lineWidth: 2.5)
+                .strokeBorder(isSelected ? theme.accent : theme.inkFaint, lineWidth: 2)
             if isSelected {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .black))
-                    .foregroundStyle(.white)
-                    .frame(width: 26, height: 26)
+                    .font(.system(size: 10.5, weight: .bold))
+                    .foregroundStyle(Palette.paper)
+                    .frame(width: 24, height: 24)
                     .background(theme.accent, in: Circle())
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        .frame(width: 26, height: 26)
+        .frame(width: 24, height: 24)
     }
 
     private func badgeView(_ text: String) -> some View {
         let isYearly = plan == .yearly
-        return Text(text)
-            .font(.dewy(11, .black))
-            .tracking(0.6)
-            .foregroundStyle(isYearly ? Color.white : theme.ink)
+        return Text(text.uppercased())
+            .font(.dewy(10, .bold))
+            .tracking(0.8)
+            .foregroundStyle(Palette.paper)
             .padding(.horizontal, 10)
             .frame(height: 22)
-            .background(isYearly ? Palette.coral : Palette.butter, in: Capsule())
-            .shadow(color: (isYearly ? Palette.coralDeep : Palette.butterDeep).opacity(0.35), radius: 4, x: 0, y: 2)
+            .background(
+                isYearly ? AnyShapeStyle(Palette.coral) : AnyShapeStyle(Palette.gold),
+                in: Capsule()
+            )
+            .overlay(Capsule().stroke((isYearly ? Palette.coralDeep : Color(hex: 0x7A5110)).opacity(0.35), lineWidth: 0.75))
+            .shadow(color: Palette.shadow.opacity(0.18), radius: 4, x: 0, y: 2)
     }
 }
 
 // MARK: - Decorations
 
-/// A fluffy cloud for Dewy to stand on.
+/// A soft cloud silhouette helper.
 struct CloudPuff: Shape {
     func path(in rect: CGRect) -> Path {
         let w = rect.width, h = rect.height

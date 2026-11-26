@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs>
+  <filter id="paperGrain" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="240" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="3" seed="11" result="noise"/>
+    <feColorMatrix type="matrix" values="0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.20  0 0 0 0.065 0" in="noise" result="grain"/>
+    <feComposite in="grain" in2="SourceGraphic" operator="atop"/>
+  </filter>
+  <linearGradient id="enamelMug" x1="0" y1="0" x2="1" y2="0.8">
+    <stop offset="0%" stop-color="#D9987B"/>
+    <stop offset="55%" stop-color="#B96A4F"/>
+    <stop offset="100%" stop-color="#874534"/>
+  </linearGradient>
+  <linearGradient id="cocoaFill" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#8A4F33"/>
+    <stop offset="100%" stop-color="#532B1A"/>
+  </linearGradient>
+</defs>
+<g filter="url(#paperGrain)">
+  <ellipse cx="114" cy="208" rx="64" ry="12" fill="#3B2B23" opacity="0.15"/>
+  <!-- Cozy curling steam -->
+  <path d="M90 66 C82 48 102 40 94 24" fill="none" stroke="#CBBBAE" stroke-width="3.46" stroke-linecap="round" opacity="0.72"/>
+  <path d="M122 58 C114 42 132 34 124 20" fill="none" stroke="#CBBBAE" stroke-width="3.02" stroke-linecap="round" opacity="0.68"/>
+  <!-- Cinnamon stick poking diagonally out right -->
+  <g transform="rotate(24 152 72)">
+    <rect x="145" y="42" width="14" height="58" rx="5" fill="#B56D3B" stroke="#342638" stroke-opacity="0.78" stroke-width="2.59"/>
+    <line x1="150" y1="46" x2="150" y2="92" stroke="#6E3B1C" stroke-width="1.58"/>
+    <ellipse cx="152" cy="45" rx="5.5" ry="2.6" fill="#E3A574" stroke="#342638" stroke-opacity="0.78" stroke-width="1.5"/>
+  </g>
+  <!-- Enamel campfire handle -->
+  <path d="M164 110 C200 108 202 164 162 166" fill="none" stroke="#342638" stroke-opacity="0.78" stroke-width="15" stroke-linecap="round"/>
+  <path d="M164 110 C200 108 202 164 162 166" fill="none" stroke="#CC7E62" stroke-width="5.18" stroke-linecap="round"/>
+  <!-- Enamel mug body with campfire speckles -->
+  <path d="M56 92 L58 184 C59 200 165 200 166 184 L168 92 Z" fill="url(#enamelMug)" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02" stroke-linejoin="round"/>
+  <g fill="#FFF7EB" opacity="0.62">
+    <circle cx="80" cy="130" r="2.2"/><circle cx="102" cy="158" r="2.4"/>
+    <circle cx="144" cy="138" r="2"/><circle cx="132" cy="174" r="2.5"/>
+    <circle cx="88" cy="172" r="1.8"/><circle cx="150" cy="162" r="1.7"/>
+  </g>
+  <path d="M70 112 L71 176" stroke="#FFFDF8" stroke-width="4.68" stroke-linecap="round" opacity="0.65"/>
+  <!-- Rolled dark-ink enamel rim -->
+  <ellipse cx="112" cy="92" rx="56" ry="17" fill="#3B2F42" stroke="#342638" stroke-opacity="0.78" stroke-width="3.02"/>
+  <ellipse cx="112" cy="94" rx="48" ry="13" fill="url(#cocoaFill)"/>
+  <!-- Three plump golden-toasted marshmallows floating on top -->
+  <g stroke="#342638" stroke-opacity="0.78" stroke-width="2.16">
+    <rect x="76" y="76" width="24" height="20" rx="8" fill="#FFF9EE" transform="rotate(-10 88 86)"/>
+    <ellipse cx="88" cy="78" rx="9" ry="4" fill="#E3B178" stroke="none" transform="rotate(-10 88 86)"/>
+    <rect x="103" y="74" width="25" height="21" rx="8" fill="#FFFDF7" transform="rotate(6 115 84)"/>
+    <ellipse cx="115" cy="76" rx="9.5" ry="4" fill="#E0A86C" stroke="none" transform="rotate(6 115 84)"/>
+    <rect x="125" y="80" width="22" height="19" rx="7.5" fill="#FFF8EC" transform="rotate(14 136 89)"/>
+    <ellipse cx="136" cy="82" rx="8" ry="3.5" fill="#DC9E62" stroke="none" transform="rotate(14 136 89)"/>
+  </g>
+</g>
+</svg>

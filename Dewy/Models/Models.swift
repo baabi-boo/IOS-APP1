@@ -535,18 +535,18 @@ enum Friend: String, CaseIterable, Identifiable, Codable {
 
     var species: String {
         switch self {
-        case .cat: "Cat droplet"
-        case .bunny: "Bunny droplet"
-        case .frog: "Frog droplet"
-        case .axolotl: "Axolotl droplet"
-        case .bear: "Bear droplet"
-        case .penguin: "Penguin droplet"
-        case .fox: "Fox droplet"
-        case .chick: "Chick droplet"
-        case .panda: "Panda droplet"
-        case .unicorn: "Unicorn droplet"
-        case .dino: "Dino droplet"
-        case .octopus: "Octopus droplet"
+        case .cat: "Ginger tabby"
+        case .bunny: "Meadow hare"
+        case .frog: "Pond tree-frog"
+        case .axolotl: "Coral axolotl"
+        case .bear: "Honey bear"
+        case .penguin: "Coastal penguin"
+        case .fox: "Woodland fox"
+        case .chick: "Dawn songbird"
+        case .panda: "Bamboo panda"
+        case .unicorn: "Cloud kirin"
+        case .dino: "Moss stegosaur"
+        case .octopus: "Tidepool octopus"
         }
     }
 
@@ -566,8 +566,6 @@ enum Friend: String, CaseIterable, Identifiable, Codable {
         case .octopus: "Holds eight glasses at once."
         }
     }
-
-    var imageName: String { "friend-\(rawValue)" }
 
     /// The friend's signature color: card wash, glow and accents.
     var tint: Color {
@@ -622,7 +620,7 @@ enum OutfitSlot: String, CaseIterable, Codable, Identifiable {
     }
 }
 
-/// Things Dewy can wear. Drawn over the mascot from the asset catalog.
+/// Things Dewy can wear. Drawn natively in SwiftUI Canvas over and behind the mascot.
 enum Outfit: String, CaseIterable, Codable, Identifiable {
     case beanie, crown, flowercrown, bow, sunglasses, partyhat, headphones, froghat, strawhat, wizardhat, chefhat, scarf, bowtie, leafhat
 
@@ -647,13 +645,19 @@ enum Outfit: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var imageName: String { "outfit-\(rawValue)" }
-
     var slot: OutfitSlot {
         switch self {
         case .sunglasses: .face
         case .scarf, .bowtie: .neck
         default: .head
+        }
+    }
+
+    /// Solid hats that completely cover Dewy's upper crown, tucking the droplet curl cleanly inside.
+    var coversCrown: Bool {
+        switch self {
+        case .beanie, .strawhat, .froghat, .wizardhat, .chefhat, .leafhat: true
+        case .crown, .flowercrown, .bow, .partyhat, .headphones, .sunglasses, .scarf, .bowtie: false
         }
     }
 
@@ -789,8 +793,6 @@ enum Chapter: String, CaseIterable, Codable, Identifiable {
         case .lake: "Starlight Lake"
         }
     }
-
-    var imageName: String { "journey-\(rawValue)" }
 
     var tint: Color {
         switch self {
