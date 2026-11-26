@@ -39,8 +39,8 @@ struct GardenView: View {
                     Color.clear
                         .frame(height: 272)
                     VStack(spacing: 22) {
-                        levelCard(flowers: flowers).floatIn(appeared, index: 1)
-                        friendsSection(flowers: flowers).floatIn(appeared, index: 2)
+                        friendsSection(flowers: flowers).floatIn(appeared, index: 1)
+                        levelCard(flowers: flowers).floatIn(appeared, index: 2)
                         gardenCard(totals: totals).floatIn(appeared, index: 3)
                         badgesSection(unlocked: unlocked).floatIn(appeared, index: 4)
                     }

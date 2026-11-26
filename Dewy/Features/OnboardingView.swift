@@ -103,6 +103,11 @@ struct OnboardingView: View {
                 HaloRings(diameter: 340)
                 MascotView(progress: 0.62, mood: .happy, size: 210, bounceTrigger: bounce, bands: welcomeBands)
                     .onTapGesture { bounce += 1; Haptics.tap() }
+                // A couple of Dewy's collectible friends come to say hi.
+                friend(.sunny)
+                    .offset(x: -128, y: 92)
+                friend(.berry)
+                    .offset(x: 128, y: 84)
             }
             .frame(height: 300)
             VStack(spacing: 10) {
@@ -123,6 +128,10 @@ struct OnboardingView: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 22)
+    }
+
+    private func friend(_ friend: DewyFriend) -> some View {
+        MascotView(progress: 0.74, mood: friend.mood, size: 64, accessory: friend.accessory, liquid: friend.liquid)
     }
 
     private var welcomeBands: [LiquidBand] {

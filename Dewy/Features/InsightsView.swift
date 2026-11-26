@@ -91,8 +91,7 @@ struct InsightsView: View {
     private var streakHero: some View {
         let streak = store.currentStreak
         let next = Self.milestones.first { $0 > streak } ?? (streak + 30)
-        let previous = Self.milestones.last { $0 <= streak } ?? 0
-        let ring = Double(streak - previous) / Double(max(next - previous, 1))
+        let ring = Double(streak) / Double(max(next, 1))
 
         return VStack(spacing: 20) {
             ZStack {

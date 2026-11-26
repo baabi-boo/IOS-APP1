@@ -367,9 +367,10 @@ private struct DewyFace: View {
             let halo = Color.white
             let haloWidth = w * 0.022
 
-            // Blink every few seconds.
+            // Blink every few seconds (but never in a still screenshot).
             let cycle = time.truncatingRemainder(dividingBy: 4.2)
-            let blink: CGFloat = cycle < 0.16 ? CGFloat(abs(cycle - 0.08) / 0.08) : 1
+            let blinks = !LaunchOptions.isDemo || LaunchOptions.screenshot == "celebrate"
+            let blink: CGFloat = blinks && cycle < 0.16 ? CGFloat(abs(cycle - 0.08) / 0.08) : 1
             let openness = max(0.08, blink)
 
             // Rosy cheeks

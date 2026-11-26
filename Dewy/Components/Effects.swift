@@ -59,7 +59,7 @@ struct HeroBackdrop: View {
 
     static func drawBubbles(_ context: GraphicsContext, size: CGSize, time t: Double) {
         let span = Double(size.height) + 60
-        for index in 0..<16 {
+        for index in 0..<12 {
             let seed = Double(index)
             let radius = CGFloat(3 + 11 * noise(seed, 1))
             let speed = 12 + 22 * noise(seed, 2)
@@ -67,15 +67,15 @@ struct HeroBackdrop: View {
             let y = size.height + 30 - CGFloat(travel)
             let x = size.width * CGFloat(noise(seed, 3)) + CGFloat(sin(t * 0.7 + seed)) * 12
             let rect = CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2)
-            context.fill(Path(ellipseIn: rect), with: .color(.white.opacity(0.1)))
-            context.stroke(Path(ellipseIn: rect), with: .color(.white.opacity(0.28)), lineWidth: 1.5)
+            context.fill(Path(ellipseIn: rect), with: .color(.white.opacity(0.07)))
+            context.stroke(Path(ellipseIn: rect), with: .color(.white.opacity(0.2)), lineWidth: 1.5)
         }
     }
 
     static func drawTwinkles(_ context: GraphicsContext, size: CGSize, time t: Double) {
+        // Kept near the edges, clear of headlines and numbers.
         let spots: [(Double, Double, Double)] = [
-            (0.08, 0.16, 16), (0.9, 0.12, 12), (0.16, 0.5, 10),
-            (0.86, 0.46, 14), (0.06, 0.82, 12), (0.94, 0.78, 10)
+            (0.05, 0.36, 14), (0.94, 0.25, 12), (0.96, 0.56, 10), (0.07, 0.8, 12)
         ]
         for (index, spot) in spots.enumerated() {
             let pulse = 0.5 + 0.5 * sin(t * 1.6 + Double(index) * 1.3)
