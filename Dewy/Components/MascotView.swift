@@ -1358,10 +1358,16 @@ private struct MascotOutfitLayer: View {
     var body: some View {
         Canvas { context, size in
             let u = size.width / DewyGeometry.canvas.width
-            let headSway = CGFloat(tilt * 0.14 + sin(time * 2.2 - 0.5) * 0.022 + wave * sin(time * 14) * 0.05)
-            let headLift = CGFloat(-wave * 3.0 + sin(time * 2.2 - 0.8) * 0.9)
-            let neckSway = CGFloat(tilt * 0.07 + sin(time * 2.2 - 0.9) * 0.016)
-            let tailWag = CGFloat(tilt * 0.22 + sin(time * 2.4 - 1.1) * 0.055 + wave * sin(time * 13) * 0.09)
+            let swayIdle: Double = sin(time * 2.2 - 0.5) * 0.022
+            let swayWave: Double = wave * sin(time * 14.0) * 0.05
+            let headSway = CGFloat(tilt * 0.14 + swayIdle + swayWave)
+            let liftBob: Double = sin(time * 2.2 - 0.8) * 0.9
+            let headLift = CGFloat(-wave * 3.0 + liftBob)
+            let neckBob: Double = sin(time * 2.2 - 0.9) * 0.016
+            let neckSway = CGFloat(tilt * 0.07 + neckBob)
+            let wagIdle: Double = sin(time * 2.4 - 1.1) * 0.055
+            let wagWave: Double = wave * sin(time * 13.0) * 0.09
+            let tailWag = CGFloat(tilt * 0.22 + wagIdle + wagWave)
 
             // Draw neckwear first, then eyewear, then headwear.
             let ordered = outfits.sorted { lhs, rhs in
